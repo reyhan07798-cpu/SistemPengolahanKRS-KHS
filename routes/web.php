@@ -10,6 +10,8 @@ Route::get('/', function () {
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::view('/admin/dashboard', 'admin.dashboard');
+Route::view('/mahasiswa/dashboard', 'mahasiswa.dashboard');
 
 // Protected Routes
 Route::middleware('auth')->group(function () {
