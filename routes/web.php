@@ -12,6 +12,9 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::view('/admin/dashboard', 'admin.dashboard');
 Route::view('/mahasiswa/dashboard', 'mahasiswa.dashboard');
+Route::view('/dashboard/dosen-wali', 'dosen_wali.dashboard');
+Route::view('/dashboard/dosen-matkul', 'dosen_matkul.dashboard');
+
 
 // Protected Routes
 Route::middleware('auth')->group(function () {
