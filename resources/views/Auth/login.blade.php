@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — Politeknik Negeri Batam</title>
+  <title>Login — Sistem Pengelolaan KRS-KHS</title>
+  <link rel="icon" type="image/png" href="{{ asset('images/Logo-Polibatam.png') }}">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
@@ -343,34 +344,34 @@
         <img src="{{ $logoImage ?? asset('images/logo-polibatam.png') }}" alt="Logo Polibatam">
       </div>
       <div class="logo-name">
-        <span>Politeknik Negeri</span>
-        <span>Batam</span>
+        <span>Sistem KRS-KHS</span>
+        <span>Politeknik Negeri Batam</span>
       </div>
     </div>
 
     <div class="form-header">
       <h2>Masuk ke Akun</h2>
-      <p>Masukkan NIM atau NIP dan kata sandi Anda</p>
+      <p>Masukkan email dan kata sandi Anda</p>
     </div>
 
-    <form id="loginForm" method="POST" action="{{ route('login') }}" novalidate>
+    <form id="loginForm" method="POST" action="/login" novalidate>
       @csrf
 
       <div class="input-group">
-        <label for="nim">NIM / NIP</label>
+        <label for="email">Email</label>
         <div class="input-wrap">
-          <i class="fas fa-id-card fi"></i>
+          <i class="fas fa-envelope fi"></i>
           <input
-            type="text"
-            id="nim"
-            name="nim"
-            value="{{ old('nim') }}"
-            placeholder="Masukkan NIM atau NIP"
+            type="email"
+            id="email"
+            name="email"
+            value="{{ old('email') }}"
+            placeholder="Masukkan email Anda"
             autocomplete="off"
-            @error('nim') class="input-error" @enderror
+            @error('email') class="input-error" @enderror
           >
         </div>
-        @error('nim')
+        @error('email')
           <div class="error-msg">
             <i class="fas fa-exclamation-circle"></i>
             <span>{{ $message }}</span>
@@ -407,7 +408,7 @@
         <span class="bs"><div class="spinner"></div></span>
       </button>
     </form>
-  </div>
+
 
   <script>
     // Toggle password

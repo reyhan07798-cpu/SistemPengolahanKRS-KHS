@@ -1,4 +1,4 @@
-@extends('layout.dosen_matkul')
+@extends('layouts.dosen_matkul')
 
 @section('content')
 

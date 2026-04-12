@@ -1,4 +1,4 @@
-@extends('layout.dosen_wali')
+@extends('layouts.dosen_wali')
 
 @section('content')
     <div class="heading">
