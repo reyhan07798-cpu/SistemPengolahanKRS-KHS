@@ -27,38 +27,42 @@
         }
     </script>
     <style>
-    body {
-        font-family: 'Poppins', sans-serif;
-        background-color: #f4f7fb;
-    }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f4f7fb;
+        }
 
-    .sidebar {
-        width: 250px;
-        min-height: 100vh;
-        background: linear-gradient(180deg, #0ea5a4, #1e3a8a);
-        color: white;
-    }
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #2563eb, #1e3a8a);
+            color: white;
+            padding: 20px;
+        }
 
-    .sidebar a {
-        color: white;
-        display: block;
-        padding: 12px;
-        border-radius: 10px;
-        margin-bottom: 5px;
-        text-decoration: none;
-    }
+        /* MENU */
+        .sidebar a {
+            display: block;
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 10px;
+            text-decoration: none;
+        }
 
-    .sidebar a:hover {
-        background: rgba(255,255,255,0.2);
-    }
+        .sidebar a:hover {
+            background: rgba(255,255,255,0.2);
+        }
 
-    .card-box {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }
-</style>
+        /* CARD */
+        .card-box {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+    </style>
     @stack('styles')
 </head>
 <body style="font-family: 'Poppins', sans-serif;">
