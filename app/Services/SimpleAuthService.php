@@ -55,39 +55,33 @@ class SimpleAuthService
 
     public static function authenticate($identifier, $password)
     {
-        // Cari user berdasarkan identifier
         $user = self::$users[$identifier] ?? null;
 
         if (!$user) {
             return null;
         }
 
-        // Check password
         if ($user['password'] !== $password) {
             return null;
         }
 
-        // Return user data berdasarkan tipe
         if ($user['type'] === 'nim') {
-            // Mahasiswa - hanya NIM
             return [
                 'nim' => $identifier,
-                'nik' => null, // Mahasiswa tidak punya NIK
+                'nik' => null,
                 'email' => $user['email'],
                 'name' => $user['name'],
                 'role' => $user['role'],
             ];
         } elseif ($user['type'] === 'nik') {
-            // Dosen - hanya NIK
             return [
-                'nim' => null, // Dosen tidak punya NIM
+                'nim' => null,
                 'nik' => $identifier,
                 'email' => $user['email'],
                 'name' => $user['name'],
                 'role' => $user['role'],
             ];
         } else {
-            // Admin - identifier khusus
             return [
                 'nim' => null,
                 'nik' => null,

@@ -21,7 +21,6 @@ class SimpleLoginController extends Controller
             'password' => ['required'],
         ]);
 
-        // Authenticate using SimpleAuthService
         $user = SimpleAuthService::authenticate($credentials['identifier'], $credentials['password']);
 
         if (!$user) {
@@ -30,11 +29,9 @@ class SimpleLoginController extends Controller
             ]);
         }
 
-        // Simpan data user ke session
         $request->session()->put('user', $user);
         $request->session()->regenerate();
 
-        // Redirect berdasarkan role
         return $this->redirectByRole($user['role']);
     }
 

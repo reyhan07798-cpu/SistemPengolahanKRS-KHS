@@ -6,12 +6,10 @@ document.getElementById('togglePw').addEventListener('click', function () {
   this.querySelector('i').className = isPw ? 'fas fa-eye-slash' : 'fas fa-eye';
 });
 
-// Loading state saat submit
 document.getElementById('loginForm').addEventListener('submit', function () {
   document.getElementById('btnLogin').classList.add('loading');
 });
 
-// Auto-hapus toast dari flash message setelah 4 detik
 const autoToast = document.getElementById('toastAuto');
 if (autoToast) {
   setTimeout(function () {
