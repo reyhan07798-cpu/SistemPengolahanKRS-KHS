@@ -14,58 +14,10 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'polibatam-blue': '#1e3a8a',
-                        'polibatam-orange': '#f97316',
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #f4f7fb;
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 260px;
-            min-height: 100vh;
-            background: linear-gradient(180deg, #2563eb, #1e3a8a);
-            color: white;
-            padding: 20px;
-        }
-
-        /* MENU */
-        .sidebar a {
-            display: block;
-            padding: 12px;
-            border-radius: 12px;
-            color: white;
-            margin-bottom: 10px;
-            text-decoration: none;
-        }
-
-        .sidebar a:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        /* CARD */
-        .card-box {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-    </style>
+    @vite(['resources/css/app-layout.css', 'resources/js/app-layout.js'])
     @stack('styles')
 </head>
-<body style="font-family: 'Poppins', sans-serif;">
+<body>
 
 <div class="d-flex">
 

@@ -1,0 +1,35 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f4f7fb;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 260px;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #2563eb, #1e3a8a);
+    color: white;
+    padding: 20px;
+}
+
+/* MENU */
+.sidebar a {
+    display: block;
+    padding: 12px;
+    border-radius: 12px;
+    color: white;
+    margin-bottom: 10px;
+    text-decoration: none;
+}
+
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* CARD */
+.card-box {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}

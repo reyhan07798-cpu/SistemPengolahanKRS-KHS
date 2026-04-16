@@ -17,16 +17,16 @@ class SimpleLoginController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'identifier' => ['required', 'string'],
             'password' => ['required'],
         ]);
 
         // Authenticate using SimpleAuthService
-        $user = SimpleAuthService::authenticate($credentials['email'], $credentials['password']);
+        $user = SimpleAuthService::authenticate($credentials['identifier'], $credentials['password']);
 
         if (!$user) {
             throw ValidationException::withMessages([
-                'email' => 'Email atau password salah.',
+                'identifier' => 'NIM, NIK, atau password salah.',
             ]);
         }
 

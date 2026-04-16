@@ -7,319 +7,13 @@
   <link rel="icon" type="image/png" href="{{ asset('images/Logo-Polibatam.png') }}">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <style>
-    :root {
-      --bg: #060b16;
-      --fg: #edf0f7;
-      --muted: #7a8ba8;
-      --accent: #4a9ff5;
-      --accent-hover: #64b0ff;
-      --accent-dark: #2d7ad4;
-      --card: rgba(10, 16, 32, 0.7);
-      --card-border: rgba(74, 159, 245, 0.12);
-      --input-bg: rgba(237, 240, 247, 0.04);
-      --input-border: rgba(237, 240, 247, 0.08);
-      --error: #e74c3c;
-      --success: #27ae60;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--bg);
-      color: var(--fg);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-    }
-
-    .bg-campus {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      background: url('{{ $bgImage ?? asset('images/default-campus.jpg') }}') center/cover no-repeat;
-      transition: opacity 0.8s ease;
-    }
-
-    .bg-campus::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to bottom, rgba(6,11,22,0.85), rgba(6,11,22,0.95));
-    }
-
-    .login-card {
-      position: relative;
-      z-index: 10;
-      width: 100%;
-      max-width: 380px;
-      background: var(--card);
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 2.2rem 2rem;
-      animation: fadeUp 0.7s ease both;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.7rem;
-      margin-bottom: 1.8rem;
-    }
-
-    .logo-box {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
-      background: #fff;
-      border: 1.5px solid transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-
-    .logo-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      padding: 4px;
-      border-radius: 12px;
-    }
-
-    .logo-name { display: flex; flex-direction: column; line-height: 1.15; }
-    .logo-name span:first-child { font-weight: 700; font-size: 1rem; }
-    .logo-name span:last-child { font-size: 0.6rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
-
-    .form-header {
-      text-align: center;
-      margin-bottom: 1.6rem;
-    }
-
-    .form-header h2 { font-weight: 600; font-size: 1.3rem; margin-bottom: 0.25rem; }
-    .form-header p { font-size: 0.82rem; color: var(--muted); font-weight: 300; }
-
-    .input-group { margin-bottom: 1rem; }
-
-    .input-group label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--muted);
-      margin-bottom: 0.4rem;
-      transition: color 0.3s;
-    }
-
-    .input-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    .input-wrap i.fi {
-      position: absolute;
-      left: 0.9rem;
-      font-size: 0.85rem;
-      color: var(--muted);
-      transition: color 0.3s;
-      pointer-events: none;
-    }
-
-    .input-wrap input {
-      width: 100%;
-      padding: 0.72rem 0.9rem 0.72rem 2.5rem;
-      background: var(--input-bg);
-      border: 1.5px solid var(--input-border);
-      border-radius: 10px;
-      color: var(--fg);
-      font-family: inherit;
-      font-size: 0.85rem;
-      outline: none;
-      transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
-    }
-
-    .input-wrap input::placeholder { color: rgba(122,139,168,0.4); }
-
-    .input-wrap input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(74,159,245,0.1);
-      background: rgba(74,159,245,0.03);
-    }
-
-    .input-wrap input.input-error {
-      border-color: var(--error);
-      box-shadow: 0 0 0 3px rgba(231,76,60,0.08);
-    }
-
-    .input-group:hover label { color: var(--accent); }
-    .input-group:hover .input-wrap i.fi { color: var(--accent); }
-    .input-group:hover .input-wrap input {
-      border-color: rgba(74,159,245,0.3);
-      background: rgba(74,159,245,0.02);
-    }
-
-    .toggle-pw {
-      position: absolute;
-      right: 0.8rem;
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 0.85rem;
-      padding: 4px;
-      transition: color 0.2s;
-    }
-
-    .toggle-pw:hover { color: var(--accent); }
-
-    .error-msg {
-      font-size: 0.7rem;
-      color: var(--error);
-      margin-top: 0.3rem;
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      animation: errorIn 0.3s ease;
-    }
-
-    .error-msg i { font-size: 0.65rem; }
-
-    @keyframes errorIn {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .btn-login {
-      width: 100%;
-      padding: 0.78rem;
-      border: none;
-      border-radius: 10px;
-      background: var(--accent);
-      color: #fff;
-      font-family: inherit;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-      box-shadow: 0 2px 12px rgba(74,159,245,0.25);
-      margin-top: 0.4rem;
-    }
-
-    .btn-login:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 18px rgba(74,159,245,0.35);
-    }
-
-    .btn-login:active { transform: translateY(0); }
-
-    .btn-login::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-      transition: left 0.4s;
-    }
-
-    .btn-login:hover::after { left: 100%; }
-    .btn-login.loading { pointer-events: none; opacity: 0.8; }
-    .btn-login .bt { transition: opacity 0.2s; }
-
-    .btn-login .bs {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .btn-login.loading .bt { opacity: 0; }
-    .btn-login.loading .bs { opacity: 1; }
-
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(255,255,255,0.2);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .toast-wrap {
-      position: fixed;
-      top: 1.2rem;
-      right: 1.2rem;
-      z-index: 999;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .toast {
-      padding: 0.75rem 1rem;
-      border-radius: 10px;
-      backdrop-filter: blur(16px);
-      font-size: 0.8rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      animation: tIn 0.3s ease both;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.3);
-    }
-
-    .toast.success { background: rgba(39,174,96,0.15); border: 1px solid rgba(39,174,96,0.3); color: #6edd9a; }
-    .toast.error { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.3); color: #f09080; }
-    .toast.info { background: rgba(74,159,245,0.15); border: 1px solid rgba(74,159,245,0.3); color: var(--accent-hover); }
-
-    @keyframes tIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
-    @keyframes tOut { from { opacity: 1; } to { opacity: 0; transform: translateX(30px); } }
-
-    @media (max-width: 420px) {
-      .login-card { padding: 1.8rem 1.4rem; }
-      .form-header h2 { font-size: 1.15rem; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-    }
-
-    input:focus-visible { outline: none; }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-6px); }
-      40% { transform: translateX(6px); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(4px); }
-    }
-  </style>
+  @vite(['resources/css/login.css', 'resources/js/login.js'])
 </head>
 <body>
 
-  <div class="bg-campus"></div>
+  <div class="bg-campus"
+     style="background: url('{{ asset('images/default-campus.jpg') }}') center/cover no-repeat;">
+</div>
 
   {{-- Toast untuk flash message dari backend --}}
   <div class="toast-wrap">
@@ -351,27 +45,27 @@
 
     <div class="form-header">
       <h2>Masuk ke Akun</h2>
-      <p>Masukkan email dan kata sandi Anda</p>
+      <p>Masukkan NIM/NIK</p>
     </div>
 
     <form id="loginForm" method="POST" action="/login" novalidate>
       @csrf
 
       <div class="input-group">
-        <label for="email">Email</label>
+        <label for="identifier">NIM / NIK</label>
         <div class="input-wrap">
-          <i class="fas fa-envelope fi"></i>
+          <i class="fas fa-id-card fi"></i>
           <input
-            type="email"
-            id="email"
-            name="email"
-            value="{{ old('email') }}"
-            placeholder="Masukkan email Anda"
+            type="text"
+            id="identifier"
+            name="identifier"
+            value="{{ old('identifier') }}"
+            placeholder="Masukan NIM atau NIK"
             autocomplete="off"
-            @error('email') class="input-error" @enderror
+            @error('identifier') class="input-error" @enderror
           >
         </div>
-        @error('email')
+        @error('identifier')
           <div class="error-msg">
             <i class="fas fa-exclamation-circle"></i>
             <span>{{ $message }}</span>
@@ -410,30 +104,5 @@
     </form>
 
 
-  <script>
-    // Toggle password
-    document.getElementById('togglePw').addEventListener('click', function () {
-      const input = document.getElementById('password');
-      const isPw = input.type === 'password';
-      input.type = isPw ? 'text' : 'password';
-      this.querySelector('i').className = isPw ? 'fas fa-eye-slash' : 'fas fa-eye';
-    });
-
-    // Loading state saat submit
-    document.getElementById('loginForm').addEventListener('submit', function () {
-      document.getElementById('btnLogin').classList.add('loading');
-    });
-
-    // Auto-hapus toast dari flash message setelah 4 detik
-    const autoToast = document.getElementById('toastAuto');
-    if (autoToast) {
-      setTimeout(function () {
-        autoToast.style.animation = 'tOut 0.3s ease forwards';
-        autoToast.addEventListener('animationend', function () {
-          autoToast.remove();
-        });
-      }, 4000);
-    }
-  </script>
 </body>
 </html>
