@@ -23,7 +23,7 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="{{ asset('images/Logo huruf _S_ futuristik.png') }}"
+                <img src="{{ asset('images/logo.png') }}"
                      alt="Logo SIPAKAR"
                      class="rounded-circle"
                      style="width: 50px; height: 50px; object-fit: cover;">
@@ -61,21 +61,16 @@
         <div class="container hero-content">
             <div class="row align-items-center justify-content-center">
                 <div class="col-lg-12 text-center" data-aos="fade-right">
-                    <div class="hero-badge">
-                        <i class="bi bi-mortarboard"></i>
-                        Politeknik Negeri Batam
-                    </div>
+                    
                     <h1 class="hero-title">
                         Sistem Informasi <span>Akademik</span> Terintegrasi<br>
                         <small class="text-white-50 fw-normal">Politeknik Negeri Batam</small>
                     </h1>
+                    <br>
                     <p class="hero-subtitle">
-                        Platform digital modern untuk mengelola seluruh aktivitas akademik mahasiswa dengan mudah dan efisien.
-                        Akses Kartu Rencana Studi (KRS) secara online, Kartu Hasil Studi (KHS) real-time, transkrip nilai lengkap,
-                        jadwal kuliah terupdate, informasi pembayaran SPP, dan berbagai layanan akademik lainnya dalam satu sistem
-                        terintegrasi yang aman, user-friendly, dan dapat diakses kapan saja dimana saja melalui perangkat mobile
-                        maupun desktop. Dirancang khusus untuk memenuhi kebutuhan mahasiswa, dosen wali, dosen pengampu mata kuliah,
-                        dan administrator dalam era digital saat ini dengan teknologi terkini dan standar keamanan tinggi.
+                        Platform digital untuk mengelola aktivitas akademik mahasiswa secara mudah dan efisien. 
+                        Akses KRS online, KHS real-time, jadwal kuliah, hingga informasi akademik dalam satu sistem 
+                        terintegrasi yang aman dan user-friendly, kapan saja dan di mana saja.
                     </p>
                 </div>
             </div>
