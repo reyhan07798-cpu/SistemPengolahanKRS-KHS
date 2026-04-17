@@ -20,6 +20,6 @@ Route::middleware('check.simple.auth')->group(function () {
     Route::view('/dashboard/dosen-wali', 'dosen_wali.dashboard');
     Route::view('/dashboard/dosen-matkul', 'dosen_matkul.dashboard');
     Route::get('/dashboard', function () {
-        return view('dashboard');
+        return view('dosen_wali.dashboard');
     })->name('dashboard');
 });
