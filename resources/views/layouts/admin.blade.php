@@ -10,7 +10,7 @@
     <div class="app-wrap">
         <div class="sidebar">
             <div class="brand">
-                <div class="brand-icon">🎓</div>
+                <img src="{{ asset('images/logo.png') }}" alt="Logo SIPAKAR" class="w-8 h-8 object-contain">
                 <div class="brand-text">
                     <h1>SIPAKAR</h1>
                     <p>Beranda Admin</p>
