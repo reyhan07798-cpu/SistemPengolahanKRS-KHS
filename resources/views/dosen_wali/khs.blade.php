@@ -3,7 +3,7 @@
 @section('content')
     <!-- Header -->
     <header class="mb-8">
-        <h1 class="text-2xl font-bold text-dark">Lihat KHS Mahasiswa</h1>
+        <h1 class="text-2xl font-bold text-dark">KHS Mahasiswa</h1>
         <p class="text-sm text-gray-500">Monitor hasil studi mahasiswa bimbingan</p>
     </header>
 

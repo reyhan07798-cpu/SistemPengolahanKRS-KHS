@@ -79,7 +79,7 @@ class KhsMahasiswaController extends Controller
             array_sum(array_column($allMahasiswa, 'ipk')) / $totalMahasiswa : 0;
         $ipkTinggi = count(array_filter($allMahasiswa, fn($m) => $m['ipk'] >= 3.5));
 
-        return view('dosen_wali.khs_mahasiswa', compact(
+        return view('dosen_wali.khs', compact(
             'mahasiswa',
             'filterKelas',
             'totalMahasiswa',

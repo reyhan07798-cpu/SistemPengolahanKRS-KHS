@@ -23,7 +23,7 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="{{ asset('images/Logo huruf _S_ futuristik.png') }}"
+                <img src="{{ asset('images/logo.png') }}"
                      alt="Logo SIPAKAR"
                      class="rounded-circle"
                      style="width: 50px; height: 50px; object-fit: cover;">

@@ -19,7 +19,7 @@ class ProfilController extends Controller
             'program_studi' => 'Teknik Informatika'
         ];
 
-        return view('profil', compact('dosen'));
+        return view('dosen_wali.profil', compact('dosen'));
     }
 
     public function update(Request $request)

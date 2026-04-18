@@ -1,494 +1,143 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>SIPAKAR</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIPAKAR - Dosen Wali</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+        :root {
+            --primary: #2F5D8A;
+            --secondary: #4A7FB5;
+            --dark: #24496B;
+            --white: #FFFFFF;
+            --light-gray: #F4F6F8;
+            --gray: #E0E5EC;
+            --text-gray: #6B7280;
+            --accent-orange: #F4A261;
+            --accent-green: #7FB77E;
+            --accent-blue: #8FBFE0;
         }
 
         body {
-            min-height: 100vh;
-            background: #e5e7eb;
-            color: #111827;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-gray);
+            color: var(--text-gray);
         }
 
-        .app-wrap {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 300px;
-            display: flex;
-            flex-direction: column;
-            background: linear-gradient(180deg, #0f3c91 0%, #0b6dff 45%, #1d99ff 100%);
-            color: white;
-            padding: 28px 22px;
-            box-shadow: 0 20px 45px rgba(6, 53, 107, 0.22);
-        }
-
-        .brand {
+        .text-primary { color: var(--primary); }
+        .bg-primary { background-color: var(--primary); }
+        .bg-secondary { background-color: var(--secondary); }
+        .bg-dark { background-color: var(--dark); }
+        
+        .sidebar-link {
             display: flex;
             align-items: center;
-            gap: 14px;
-            margin-bottom: 30px;
-        }
-
-        .brand-icon {
-            width: 46px;
-            height: 46px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.16);
-            display: grid;
-            place-items: center;
-            font-size: 1.1rem;
-        }
-
-        .brand-text h1 {
-            font-size: 1.1rem;
-            font-weight: 800;
-            line-height: 1.1;
-        }
-
-        .brand-text p {
-            font-size: 0.86rem;
-            color: rgba(255, 255, 255, 0.85);
-            margin-top: 6px;
-        }
-
-        .profile-card {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 18px 18px;
-            border-radius: 24px;
-            background: rgba(255, 255, 255, 0.08);
-            margin-bottom: 28px;
-        }
-
-        .profile-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: #4f46e5;
-            display: grid;
-            place-items: center;
-            font-weight: 700;
-            font-size: 1rem;
-            color: white;
-        }
-
-        .profile-name {
-            font-weight: 700;
-            font-size: 1rem;
-            line-height: 1.2;
-        }
-
-        .profile-email {
-            font-size: 0.85rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
             color: rgba(255, 255, 255, 0.8);
-            margin-top: 4px;
-            line-height: 1.3;
-        }
-
-        .menu-title {
-            font-size: 0.72rem;
-            letter-spacing: 0.16em;
-            color: rgba(255, 255, 255, 0.78);
-            text-transform: uppercase;
-            margin-bottom: 14px;
-        }
-
-        .menu-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .menu-item {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 14px 16px;
-            border-radius: 18px;
             text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
             color: white;
-            transition: background 0.2s ease;
-            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .sidebar-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .menu-item.active {
-            background: rgba(255, 255, 255, 0.18);
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
-        }
-
-        .menu-item:hover {
-            background: rgba(255, 255, 255, 0.16);
-        }
-
-        .menu-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 16px;
-            display: grid;
-            place-items: center;
-            background: rgba(255, 255, 255, 0.12);
-            font-size: 1rem;
-        }
-
-        .menu-label {
-            font-size: 0.95rem;
-            font-weight: 600;
-            flex: 1;
-        }
-
-        .menu-badge {
-            min-width: 22px;
-            padding: 0 8px;
-            border-radius: 999px;
-            background: #fde68a;
-            color: #92400e;
-            font-size: 0.78rem;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .logout-link {
-            margin-top: auto;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            border-radius: 18px;
-            background: rgba(248, 113, 113, 0.18);
-            color: #c90000;
-            text-decoration: none;
-            font-weight: 700;
-            transition: background 0.2s ease;
-        }
-
-        .logout-link:hover {
-            background: rgba(248, 113, 113, 0.26);
-        }
-
-        .logout-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 16px;
-            display: grid;
-            place-items: center;
-            background: rgba(248, 113, 113, 0.24);
-            color: #c90000;
-            font-size: 1rem;
-        }
-
-        .content {
-            flex: 1;
-            padding: 32px;
-        }
-
-        .heading {
-            margin-bottom: 28px;
-        }
-
-        .heading h1 {
-            font-size: 2.1rem;
-            margin-bottom: 10px;
-        }
-
-        .heading p {
-            font-size: 1rem;
-            color: #4b5563;
-            line-height: 1.6;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 18px;
-            margin-bottom: 28px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-        }
-
-        .stat-title {
-            font-size: 0.95rem;
-            color: #6b7280;
-            margin-bottom: 16px;
-        }
-
-        .stat-value {
-            font-size: 2.1rem;
-            font-weight: 800;
-            color: #111827;
-        }
-
-        .panel {
-            background: white;
-            border-radius: 28px;
-            padding: 24px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-            margin-bottom: 28px;
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 22px;
-        }
-
-        .panel-title {
-            font-size: 1.05rem;
-            font-weight: 700;
-        }
-
-        .student-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .student-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 18px;
-            padding: 18px 20px;
-            border-radius: 22px;
-            background: #f8fafc;
-        }
-
-        .student-info {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            min-width: 0;
-        }
-
-        .student-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 16px;
-            display: grid;
-            place-items: center;
-            background: #e5e7eb;
-            color: #111827;
-            font-weight: 700;
-        }
-
-        .student-name {
-            font-weight: 700;
-            font-size: 0.98rem;
-            color: #111827;
-        }
-
-        .student-meta {
-            font-size: 0.92rem;
-            color: #6b7280;
-        }
-
-        .student-values {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .student-ipk strong {
-            display: block;
-            font-size: 1rem;
-            font-weight: 800;
-            color: #111827;
-        }
-
-        .student-ipk span {
-            font-size: 0.85rem;
-            color: #6b7280;
-        }
-
-        .badge {
-            padding: 8px 12px;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-
-        .badge.success {
-            color: #166534;
-            background: #dcfce7;
-        }
-
-        .badge.warning {
-            color: #92400e;
-            background: #fef3c7;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1.6fr 1fr;
-            gap: 20px;
-        }
-
-        .summary-card,
-        .distribution-card {
-            background: white;
-            border-radius: 28px;
-            padding: 24px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-        }
-
-        .summary-card h3,
-        .distribution-card h3 {
-            font-size: 1.05rem;
-            margin-bottom: 18px;
-            font-weight: 700;
-        }
-
-        .summary-list {
-            display: grid;
-            gap: 14px;
-        }
-
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #6b7280;
-            font-size: 0.95rem;
-        }
-
-        .summary-item strong {
-            color: #111827;
-            display: block;
-            font-size: 1rem;
-            margin-top: 4px;
-        }
-
-        .summary-pill {
-            background: #f3f4f6;
-            color: #374151;
-            padding: 6px 12px;
-            border-radius: 999px;
-            font-size: 0.82rem;
-            font-weight: 700;
-        }
-
-        .distribution-row {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 18px;
-            color: #6b7280;
-        }
-
-        .distribution-label {
-            min-width: 90px;
-            font-weight: 600;
-            color: #111827;
-        }
-
-        .distribution-bar {
-            flex: 1;
-            height: 10px;
-            background: #e5e7eb;
-            border-radius: 999px;
-            overflow: hidden;
-        }
-
-        .distribution-fill {
-            height: 100%;
-            width: 65%;
-            background: #0b6dff;
-            border-radius: 999px;
-        }
-
-        .distribution-number {
-            font-weight: 700;
-            color: #111827;
-        }
-
-        @media (max-width: 1120px) {
-            .stats-grid,
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 820px) {
-            .app-wrap {
-                flex-direction: column;
-            }
-
-            .sidebar {
-                width: 100%;
-                height: auto;
-            }
-
-            .content {
-                padding: 24px;
-            }
+        .sidebar-link svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-right: 0.75rem;
         }
     </style>
 </head>
-<body>
-    <div class="app-wrap">
-        <div class="sidebar">
-            <div class="brand">
-                <div class="brand-icon">🎓</div>
-                <div class="brand-text">
-                    <h1>SIPAKAR</h1>
-                    <p>Beranda Dosen Wali</p>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-dark flex flex-col hidden md:flex">
+        <div class="flex-1">
+            <!-- Logo -->
+            <div class="p-6 flex items-center gap-2">
+                <img src="{{ asset('images/logo.png') }}" alt="Logo SIPAKAR" class="w-12 h-12 object-contain">                
+            <div>
+                    <h1 class="font-bold text-white text-lg leading-tight">SIPAKAR</h1>
+                    <p class="text-xs text-gray-300">Beranda Dosen Wali</p>
                 </div>
             </div>
 
-            <div class="profile-card">
-                <div class="profile-avatar">RN</div>
-                <div>
-                    <div class="profile-name">Rusyda Nazhirah Yunus</div>
-                    <div class="profile-email">wali1@univ.ac.id</div>
+            <!-- User Profile -->
+            <div class="px-6 py-4 border-b border-gray-600">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden">
+                        <svg class="w-6 h-6 text-dark" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white truncate w-40">Rusyda Nazhirah Yunus</p>
+                        <p class="text-xs text-gray-300">wali@univ.ac.id</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="menu-title">Menu Utama</div>
-
-            <nav class="menu-list">
-                <a href="#" class="menu-item active">
-                    <span class="menu-icon">▦</span>
-                    <span class="menu-label">Beranda</span>
+            <!-- Navigation -->
+            <nav class="p-4">
+                <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                    </svg>
+                    Beranda
                 </a>
-                <a href="#" class="menu-item">
-                    <span class="menu-icon">📝</span>
-                    <span class="menu-label">Persetujuan KRS</span>
+                <a href="{{ route('krs.verifikasi') }}" class="sidebar-link {{ request()->routeIs('krs.verifikasi') ? 'active' : '' }}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Verifikasi KRS
                 </a>
-                <a href="#" class="menu-item">
-                    <span class="menu-icon">🎓</span>
-                    <span class="menu-label">KHS Mahasiswa</span>
+                <a href="{{ route('khs.index') }}" class="sidebar-link {{ request()->routeIs('khs.*') ? 'active' : '' }}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    KHS Mahasiswa
                 </a>
-                <a href="#" class="menu-item">
-                    <span class="menu-icon">👤</span>
-                    <span class="menu-label">Profil</span>
+                <a href="{{ route('profil.index') }}" class="sidebar-link {{ request()->routeIs('profil.*') ? 'active' : '' }}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    Profil
                 </a>
             </nav>
-
-            <a href="{{ url('/') }}" class="logout-link">
-                <span class="logout-icon">⏻</span>
-                <span>Keluar</span>
-            </a>
         </div>
 
-        <div class="content">
-            @yield('content')
+        <!-- Logout -->
+        <div class="px-4 pb-6 mt-auto border-t border-gray-600 pt-6">
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-500 rounded-lg text-gray-300 hover:bg-white hover:text-dark transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    Keluar
+                </button>
+            </form>
         </div>
-    </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-y-auto p-8">
+        @yield('content')
+    </main>
+
 </body>
 </html>

@@ -23,12 +23,23 @@ Route::delete('/dosen_wali/krs/reject/{nim}', [KrsVerifikasiController::class, '
 
 // Protected Routes - Require Auth
 Route::middleware('check.simple.auth')->group(function () {
+
     Route::post('/logout', [SimpleLoginController::class, 'logout'])->name('logout');
+
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');    
     Route::get('/mahasiswa/dashboard', [MahasiswaController::class, 'index'])->name('mahasiswa.dashboard');    
     Route::get('/dosen_wali/dashboard', [DashboardController::class, 'index'])->name('dosen_wali.dashboard');    
+
     Route::view('/dashboard/dosen-matkul', 'dosen_matkul.dashboard');
-    Route::get('/dashboard', function () {
-        return view('dosen_wali.dashboard');
-    })->name('dashboard');
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // KHS Mahasiswa
+    Route::get('/dosen-wali/khs', [KhsMahasiswaController::class, 'index'])->name('khs.index');
+
+    // Profil
+    Route::get('/dosen-wali/profil', [ProfilController::class, 'index'])->name('profil.index');
+    Route::put('/dosen-wali/profil', [ProfilController::class, 'update'])->name('profil.update');
+    Route::put('/dosen-wali/profil/password', [ProfilController::class, 'updatePassword'])->name('profil.password');
+
 });
