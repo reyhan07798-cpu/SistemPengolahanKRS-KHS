@@ -41,7 +41,7 @@ class SimpleLoginController extends Controller
             'mahasiswa' => '/mahasiswa/dashboard',
             'admin' => '/admin/dashboard',
             'dosen_wali' => '/dosen_wali/dashboard',
-            'dosen_matkul' => '/dashboard/dosen-matkul',
+            'dosen_matkul' => '/dosen_matkul/beranda',
         ];
 
         $url = $redirects[$role] ?? '/dashboard';

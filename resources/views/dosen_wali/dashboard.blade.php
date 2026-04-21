@@ -63,7 +63,11 @@
                 </div>
                 <div class="p-2 bg-red-100 rounded-lg text-red-500">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<<<<<<< HEAD
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M6 18L18 6"></path>                    
+=======
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+>>>>>>> 7e59a2d360d7a28c3d1adda464d3c5a031e28fcf
                     </svg>
                 </div>
             </div>
