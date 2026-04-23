@@ -11,7 +11,6 @@ class KrsVerifikasiController extends Controller
         $filterStatus = $request->input('status', 'semua');
         $filterKelas  = $request->input('kelas', 'semua');
 
-        // Data dummy semua KRS
         $allKrs = [
             [
                 'nama' => 'Irenessa Rosidin',
@@ -60,7 +59,6 @@ class KrsVerifikasiController extends Controller
             ],
         ];
 
-        // Filter data
         $daftarKrs = $allKrs;
         
         if ($filterStatus != 'semua') {
@@ -75,10 +73,8 @@ class KrsVerifikasiController extends Controller
             });
         }
 
-        // Re-index array
         $daftarKrs = array_values($daftarKrs);
 
-        // Hitung statistik berdasarkan data yang difilter
         $stats = [
             'menunggu'  => count(array_filter($allKrs, fn($k) => $k['status'] == 'Menunggu')),
             'disetujui' => count(array_filter($allKrs, fn($k) => $k['status'] == 'Disetujui')),
@@ -88,17 +84,13 @@ class KrsVerifikasiController extends Controller
         return view('dosen_wali.krs-verifikasi', compact('stats', 'daftarKrs', 'filterStatus', 'filterKelas'));
     }
 
-    // Method untuk approve KRS
     public function approve($id)
     {
-        // TODO: Update status di database
         return redirect()->back()->with('success', 'KRS berhasil disetujui');
     }
 
-    // Method untuk reject KRS
     public function reject($id)
     {
-        // TODO: Update status di database
         return redirect()->back()->with('error', 'KRS berhasil ditolak');
     }
 }

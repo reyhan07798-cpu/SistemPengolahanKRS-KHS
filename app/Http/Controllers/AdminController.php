@@ -157,7 +157,6 @@ class AdminController extends Controller
 
     public function indexDosen()
     {
-        // FIX: Tambahkan data fakultas untuk dropdown modal
         $fakultasList = collect([
             'Fakultas Teknik', 'Fakultas Sains', 'Fakultas Ekonomi', 'Fakultas Hukum', 'Fakultas Kedokteran', 'Fakultas Ilmu Komputer'
         ]);
@@ -174,7 +173,6 @@ class AdminController extends Controller
             ]);
         }
 
-        // FIX: Kirim 'fakultasList' ke view
         return view('admin.data_dosen', compact('dosen', 'fakultasList'));
     }
 
@@ -185,7 +183,6 @@ class AdminController extends Controller
 
     public function storeDosen(Request $request)
     {
-        // FIX: Validasi field baru (alamat, password)
         $request->validate([
             'nik' => 'required|string|max:20|unique:dosens,nik',
             'nama' => 'required|string|max:255',
@@ -256,7 +253,6 @@ class AdminController extends Controller
 
     public function indexMatakuliah()
     {
-        // FIX: Siapkan data untuk dropdown modal
         $dosens = collect([]);
         $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
         $days = collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']);
@@ -277,11 +273,9 @@ class AdminController extends Controller
             $matakuliah = collect([
                 (object)['id' => 1, 'kode' => 'IF101', 'nama' => 'Pemrograman Web', 'sks' => 3, 'semester' => '3', 'dosen_pengampu' => 'Dr. Budi Santoso', 'jadwal' => 'Senin, 08:00 - 10:00, Lab Komputer 1'],
                 (object)['id' => 2, 'kode' => 'IF102', 'nama' => 'Pemrograman Berorientasi Objek', 'sks' => 3, 'semester' => '3', 'dosen_pengampu' => 'Prof. Dewi Lestari', 'jadwal' => 'Selasa, 13:00 - 15:00, Lab Komputer 2'],
-                // Tambah data dummy lainnya...
             ]);
         }
 
-        // Kirim data baru ke view: dosens, semesters, days
         return view('admin.data_matakuliah', compact('matakuliah', 'dosens', 'semesters', 'days'));
     }
 
@@ -292,7 +286,6 @@ class AdminController extends Controller
 
     public function storeMatakuliah(Request $request)
     {
-        // FIX: Validasi field baru (kapasitas, hari, jam, ruang)
         $request->validate([
             'kode' => 'required|string|max:20|unique:mata_kuliahs,kode',
             'nama' => 'required|string|max:255',
@@ -306,7 +299,6 @@ class AdminController extends Controller
         ]);
 
         try {
-            // Gabungkan Hari, Jam, Ruang menjadi satu string 'jadwal'
             $jadwalString = $request->hari . ', ' . $request->jam . ', ' . $request->ruang;
             
             $data = $request->all();
@@ -373,7 +365,6 @@ class AdminController extends Controller
 
     public function indexTahunAjaran()
     {
-        // FIX: Generate opsi Tahun Ajaran (misal: 2020/2021 s.d 2030/2031)
         $currentYear = date('Y');
         $tahunOptions = collect();
         for ($i = $currentYear - 2; $i <= $currentYear + 2; $i++) {
@@ -392,7 +383,6 @@ class AdminController extends Controller
             ]);
         }
 
-        // Kirim 'tahunOptions' ke view
         return view('admin.data_tahunajaran', compact('tahunAjaran', 'tahunOptions'));
     }
 
@@ -406,18 +396,11 @@ class AdminController extends Controller
         $request->validate([
             'semester' => 'required|string|in:Ganjil,Genap',
             'tahun_ajaran' => 'required|string|max:20',
-            // Status tidak divalidasi required karena checkbox tidak mengirim value jika unchecked
         ]);
 
         try {
-            // FIX: Logika Switch/Checkbox
-            // Jika checkbox 'status' dicentang, nilai 'Aktif', jika tidak 'Nonaktif'
             $status = $request->has('status') ? 'Aktif' : 'Nonaktif';
 
-            // Optional: Jika set Aktif, nonaktifkan yang lain (hanya boleh 1 aktif)
-            // if ($status == 'Aktif' && Schema::hasTable('tahun_ajarans')) {
-            //     TahunAjaran::query()->update(['status' => 'Nonaktif']);
-            // }
 
             $data = $request->all();
             $data['status'] = $status;
@@ -437,8 +420,6 @@ class AdminController extends Controller
 
     public function indexPaketMK()
     {
-        // FIX: Siapkan data Mata Kuliah untuk checkbox modal
-        // Di aplikasi nyata, ambil dari DB: MataKuliah::all();
         $allMataKuliah = collect([
             (object)['id' => 1, 'kode' => 'DB101', 'nama' => 'Basis Data', 'sks' => 4],
             (object)['id' => 2, 'kode' => 'ENG101', 'nama' => 'Bahasa Inggris', 'sks' => 2],
@@ -457,7 +438,6 @@ class AdminController extends Controller
         } else {
             $paketMK = collect([
                 (object)['id' => 1, 'nama_paket' => 'Paket Semester 1', 'semester' => '1', 'prodi' => 'Teknik Informatika', 'total_sks' => 20, 'jumlah_mk' => 7, 'deskripsi' => 'Mata kuliah dasar'],
-                // ... data dummy lainnya
             ]);
         }
 
@@ -466,7 +446,6 @@ class AdminController extends Controller
 
     public function storePaketMK(Request $request)
     {
-        // Validasi input
         $request->validate([
             'nama_paket' => 'required|string|max:255',
             'semester' => 'required|string',
@@ -476,14 +455,10 @@ class AdminController extends Controller
         ]);
 
         try {
-            // Logika hitung SKS dan Jumlah MK (jika paket hanya menyimpan ringkasan)
-            // Asumsi: kita hitung dari data dummy atau relasi.
-            // Di sini kita hitung manual dari input untuk menyimpan ke field total_sks & jumlah_mk
             
             $selectedIds = $request->mata_kuliah;
             $totalSks = 0;
             
-            // Hitung SKS (Logika sederhana, bisa disesuaikan dengan query DB)
             $dummyMk = collect([
                 1 => 4, 2 => 2, 3 => 3, 4 => 3, 5 => 3, 6 => 3, 7 => 3
             ]);
@@ -498,7 +473,6 @@ class AdminController extends Controller
 
             if (Schema::hasTable('paket_mata_kuliahs')) {
                 $paket = PaketMataKuliah::create($data);
-                // Di sini biasanya ada sync ke pivot table: $paket->mataKuliahs()->sync($selectedIds);
             }
 
             return redirect()->route('admin.paketmk.index')->with('success', 'Data paket berhasil ditambahkan!');

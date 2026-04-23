@@ -9,12 +9,11 @@ class MataKuliah extends Model
 {
     use HasFactory;
 
-    protected $table = 'mata_kuliahs'; // Sesuaikan dengan nama tabel di database
+    protected $table = 'mata_kuliahs';
 
     protected $fillable = [
         'kode_mk',
         'nama',
         'sks',
-        // tambahkan field lain jika ada
     ];
 }

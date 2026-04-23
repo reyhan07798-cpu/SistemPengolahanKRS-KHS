@@ -10,7 +10,6 @@ class KhsMahasiswaController extends Controller
     {
         $filterKelas = $request->input('kelas', 'semua');
 
-        // Data dummy mahasiswa dengan KHS
         $allMahasiswa = [
             [
                 'ranking' => 1,
@@ -64,7 +63,6 @@ class KhsMahasiswaController extends Controller
             ],
         ];
 
-        // Filter
         $mahasiswa = $allMahasiswa;
         if ($filterKelas != 'semua') {
             $mahasiswa = array_filter($mahasiswa, function($m) use ($filterKelas) {
@@ -73,7 +71,6 @@ class KhsMahasiswaController extends Controller
             $mahasiswa = array_values($mahasiswa);
         }
 
-        // Statistik
         $totalMahasiswa = count($allMahasiswa);
         $rataIpk = $totalMahasiswa > 0 ? 
             array_sum(array_column($allMahasiswa, 'ipk')) / $totalMahasiswa : 0;
@@ -90,7 +87,6 @@ class KhsMahasiswaController extends Controller
 
     public function detail($nim)
     {
-        // TODO: Ambil detail KHS mahasiswa dari database
         return redirect()->route('khs.index');
     }
 }

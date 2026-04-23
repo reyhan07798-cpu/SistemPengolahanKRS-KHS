@@ -124,7 +124,6 @@
 <script>
 let mahasiswaData = [];
 
-// Bobot penilaian
 const BOBOT = {
     tugas: 0.20,
     praktikum: 0.15,
@@ -138,16 +137,13 @@ document.getElementById('pilihMK').addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
     
     if (kodeMK) {
-        // Update info MK
         document.getElementById('mkNama').textContent = `${selectedOption.dataset.nama} (${kodeMK})`;
         document.getElementById('mkInfo').textContent = `SKS: ${selectedOption.dataset.sks} | Semester: ${selectedOption.dataset.semester}`;
         document.getElementById('mkJumlah').textContent = selectedOption.dataset.jumlah;
         document.getElementById('inputKodeMK').value = kodeMK;
         
-        // Fetch data mahasiswa
         fetchMahasiswa(kodeMK);
         
-        // Show form, hide empty state
         document.getElementById('formInputNilai').classList.remove('hidden');
         document.getElementById('emptyState').classList.add('hidden');
     } else {
@@ -157,7 +153,6 @@ document.getElementById('pilihMK').addEventListener('change', function() {
 });
 
 function fetchMahasiswa(kodeMK) {
-    // Data dummy - di production ganti dengan fetch API ke backend
     const dummyData = {
         'IF101': [
             { nim: '3312501022', nama: 'Reyhan', kelas: 'A', nilai: { tugas: null, praktikum: null, uts: null, uas: null, kehadiran: null } },
@@ -244,7 +239,6 @@ function renderMahasiswa() {
         container.appendChild(row);
     });
     
-    // Add event listeners untuk auto-calculate
     document.querySelectorAll('.input-nilai').forEach(input => {
         input.addEventListener('input', calculateNilai);
     });
@@ -253,21 +247,18 @@ function renderMahasiswa() {
 function calculateNilai(e) {
     const index = e.target.dataset.index;
     
-    // Get all values for this student
     const tugas = parseFloat(document.querySelector(`input[name="nilai[${index}][tugas]"]`)?.value) || 0;
     const praktikum = parseFloat(document.querySelector(`input[name="nilai[${index}][praktikum]"]`)?.value) || 0;
     const uts = parseFloat(document.querySelector(`input[name="nilai[${index}][uts]"]`)?.value) || 0;
     const uas = parseFloat(document.querySelector(`input[name="nilai[${index}][uas]"]`)?.value) || 0;
     const kehadiran = parseFloat(document.querySelector(`input[name="nilai[${index}][kehadiran]"]`)?.value) || 0;
     
-    // Calculate weighted average with NEW BOBOT
     const total = (tugas * BOBOT.tugas) + 
                   (praktikum * BOBOT.praktikum) + 
                   (uts * BOBOT.uts) + 
                   (uas * BOBOT.uas) + 
                   (kehadiran * BOBOT.kehadiran);
     
-    // Determine grade
     let grade = 'E';
     let gradeColor = 'text-red-600 bg-red-100';
     
@@ -285,12 +276,10 @@ function calculateNilai(e) {
         gradeColor = 'text-orange-700 bg-orange-100';
     }
     
-    // Update display - tambahkan kolom Total & Grade di akhir baris
     const row = e.target.closest('.grid');
     let totalEl = row.querySelector('.nilai-akhir');
     let gradeEl = row.querySelector('.grade-badge');
     
-    // Jika belum ada, buat elemen baru
     if (!totalEl) {
         const actionCell = document.createElement('div');
         actionCell.className = 'col-span-12 md:col-span-1 text-center flex flex-col items-center gap-1';
@@ -303,7 +292,6 @@ function calculateNilai(e) {
         gradeEl = actionCell.querySelector('.grade-badge');
     }
     
-    // Update values
     if (total > 0 || tugas > 0 || praktikum > 0 || uts > 0 || uas > 0 || kehadiran > 0) {
         totalEl.textContent = total.toFixed(1);
         gradeEl.textContent = grade;

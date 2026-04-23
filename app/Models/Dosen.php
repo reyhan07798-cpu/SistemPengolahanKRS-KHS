@@ -9,12 +9,11 @@ class Dosen extends Model
 {
     use HasFactory;
 
-    protected $table = 'dosens'; // Sesuaikan dengan nama tabel di database
+    protected $table = 'dosens';
 
     protected $fillable = [
         'nip',
         'nama',
         'email',
-        // tambahkan field lain jika ada
     ];
 }

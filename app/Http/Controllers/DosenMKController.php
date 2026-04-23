@@ -115,14 +115,13 @@ class DosenMKController extends Controller
     {
         $filterMK = $request->input('mata_kuliah', 'semua');
 
-        // Data dummy mahasiswa dengan mata kuliah yang diambil
         $allMahasiswa = [
             [
                 'no' => 1,
                 'nim' => '3312501017',
                 'nama' => 'Irenessa Rosidin',
                 'kelas' => 'A',
-                'mata_kuliah' => 'IF101 - Pemrograman Dasar',  // ✅ Ganti prodi dengan mata_kuliah
+                'mata_kuliah' => 'IF101 - Pemrograman Dasar',
                 'nilai' => 85.5,
                 'grade' => 'B',
             ],
@@ -164,16 +163,14 @@ class DosenMKController extends Controller
             ],
         ];
 
-        // Filter berdasarkan mata kuliah
         $mahasiswa = $allMahasiswa;
         if ($filterMK != 'semua') {
             $mahasiswa = array_filter($mahasiswa, function($m) use ($filterMK) {
                 return $m['mata_kuliah'] == $filterMK;
             });
-            $mahasiswa = array_values($mahasiswa); // Re-index array
+            $mahasiswa = array_values($mahasiswa);
         }
 
-        // Statistik (dihitung dari data yang difilter)
         $stats = [
             'total_mahasiswa' => count($mahasiswa),
             'nilai_terinput' => count(array_filter($mahasiswa, fn($m) => $m['nilai'] > 0)),
@@ -182,7 +179,6 @@ class DosenMKController extends Controller
                 : 0,
         ];
 
-        // Daftar mata kuliah untuk filter
         $daftarMK = [
             'IF101 - Pemrograman Dasar',
             'IF102 - Basis Data',
@@ -215,8 +211,7 @@ class DosenMKController extends Controller
             'alamat' => 'required|string',
         ]);
 
-        // TODO: Update ke database
-        // auth()->user()->update($validated);
+
 
         return redirect()->back()->with('success', 'Profil berhasil diperbarui');
     }
@@ -228,17 +223,12 @@ class DosenMKController extends Controller
             'password_baru' => ['required', 'min:8', 'confirmed'],
         ]);
 
-        // TODO: Update password ke database
-        // if (!Hash::check($validated['password_lama'], auth()->user()->password)) {
-        //     return back()->withErrors(['password_lama' => 'Password lama salah']);
-        // }
-        // auth()->user()->update(['password' => Hash::make($validated['password_baru'])]);
+
 
         return redirect()->back()->with('success', 'Password berhasil diubah');
     }
         private function hitungNilaiAkhir($item)
     {
-        // Bobot baru: Tugas 20%, Praktikum 15%, UTS 30%, UAS 30%, Kehadiran 5%
         $tugas = $item['tugas'] ?? 0;
         $praktikum = $item['praktikum'] ?? 0;
         $uts = $item['uts'] ?? 0;
@@ -254,7 +244,6 @@ class DosenMKController extends Controller
 
     private function konversiGrade($nilai)
     {
-        // Konversi grade sesuai standar umum
         if ($nilai >= 85) return 'A';      
         if ($nilai >= 70) return 'B';      
         if ($nilai >= 55) return 'C';      
