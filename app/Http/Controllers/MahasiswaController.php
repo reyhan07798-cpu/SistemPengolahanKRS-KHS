@@ -34,6 +34,6 @@ class MahasiswaController extends Controller
             ]
         ];
         
-        return view('mahasiswa.dashboard', compact('data'));
+        return view('mahasiswa.beranda', compact('data'));
     }
 }

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-class DashboardController extends Controller
+class DosenWaliController extends Controller
 {
     public function index()
     {
@@ -42,6 +42,6 @@ class DashboardController extends Controller
             ],
         ];
 
-        return view('dosen_wali.dashboard', compact('stats', 'mahasiswa'));
+        return view('dosen_wali.beranda', compact('stats', 'mahasiswa'));
     }
 }

@@ -38,9 +38,9 @@ class SimpleLoginController extends Controller
     private function redirectByRole($role)
     {
         $redirects = [
-            'mahasiswa' => '/mahasiswa/dashboard',
+            'mahasiswa' => '/mahasiswa/beranda',
             'admin' => '/admin/dashboard',
-            'dosen_wali' => '/dosen_wali/dashboard',
+            'dosen_wali' => '/dosen_wali/beranda',
             'dosen_matkul' => '/dosen_matkul/beranda',
         ];
 

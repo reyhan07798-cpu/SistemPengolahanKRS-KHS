@@ -11,7 +11,7 @@
     <a href="/product">Product</a> |
     <a href="/contact">Contact</a> |
     <a href="/admin/dashboard">Admin</a> |
-    <a href="/mahasiswa/dashboard">Mahasiswa</a>
+    <a href="/mahasiswa/beranda">Mahasiswa</a>
 </nav>
 
 <hr>

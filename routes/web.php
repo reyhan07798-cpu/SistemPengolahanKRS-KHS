@@ -3,10 +3,10 @@
 use App\Http\Controllers\Auth\SimpleLoginController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\MahasiswaController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DosenWaliController;
 use App\Http\Controllers\KrsVerifikasiController;
 use App\Http\Controllers\KhsMahasiswaController;
-use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\ProfilDosenWaliController;
 use App\Http\Controllers\DosenMKController;
 use Illuminate\Support\Facades\Route;
 
@@ -68,13 +68,13 @@ Route::middleware('check.simple.auth')->group(function () {
     // ==========================================
     // MAHASISWA ROUTES
     // ==========================================
-    Route::get('/mahasiswa/dashboard', [MahasiswaController::class, 'index'])->name('mahasiswa.dashboard');
+    Route::get('/mahasiswa/beranda', [MahasiswaController::class, 'index'])->name('mahasiswa.beranda');
 
     // ==========================================
     // DOSEN WALI ROUTES
     // ==========================================
-    Route::get('/dosen_wali/dashboard', [DashboardController::class, 'index'])->name('dosen_wali.dashboard');
-    
+    Route::get('/dosen_wali/beranda', [DosenWaliController::class, 'index'])->name('dosen_wali.beranda');
+
     // KRS Verifikasi
     Route::get('/dosen_wali/krs-verifikasi', [KrsVerifikasiController::class, 'index'])->name('krs.verifikasi');
     Route::patch('/dosen_wali/krs/approve/{nim}', [KrsVerifikasiController::class, 'approve'])->name('krs.approve');
@@ -82,9 +82,9 @@ Route::middleware('check.simple.auth')->group(function () {
 
     // KHS & Profil Dosen Wali
     Route::get('/dosen-wali/khs', [KhsMahasiswaController::class, 'index'])->name('khs.index');
-    Route::get('/dosen-wali/profil', [ProfilController::class, 'index'])->name('profil.index');
-    Route::put('/dosen-wali/profil', [ProfilController::class, 'update'])->name('profil.update');
-    Route::put('/dosen-wali/profil/password', [ProfilController::class, 'updatePassword'])->name('profil.password');
+    Route::get('/dosen-wali/profil', [ProfilDosenWaliController::class, 'index'])->name('profil.index');
+    Route::put('/dosen-wali/profil', [ProfilDosenWaliController::class, 'update'])->name('profil.update');
+    Route::put('/dosen-wali/profil/password', [ProfilDosenWaliController::class, 'updatePassword'])->name('profil.password');
 
     // ==========================================
     // DOSEN MATA KULIAH ROUTES

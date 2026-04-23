@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
-class ProfilController extends Controller
+class ProfilDosenWaliController extends Controller
 {
     public function index()
     {
