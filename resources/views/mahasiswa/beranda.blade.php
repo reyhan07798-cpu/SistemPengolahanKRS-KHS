@@ -7,8 +7,8 @@
         <p class="text-sm text-gray-500">Selamat datang, {{ $data['nama'] }}</p>
     </header>
 
-    <!-- Statistik Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-3 mb-6"> 
+    <!-- Statistik Cards --> 
+    <div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <x-stat-card title="Semester Aktif"
             :value="$data['semester_aktif']"
             icon='<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>'
