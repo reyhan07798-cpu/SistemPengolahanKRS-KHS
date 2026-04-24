@@ -49,8 +49,8 @@
                         }
                     },
                     fontFamily: {
-                        display: ['Space Grotesk', 'sans-serif'],
-                        body: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                        body: ['Poppins', 'sans-serif'],
                     }
                 }
             }
@@ -58,7 +58,7 @@
     </script>
     
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { font-family: 'Poppins', sans-serif; }
         .font-display { font-family: 'Space Grotesk', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #e5e7eb; }

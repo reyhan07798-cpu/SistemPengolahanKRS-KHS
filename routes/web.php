@@ -21,7 +21,7 @@ Route::get('/login', [SimpleLoginController::class, 'showLoginForm'])->name('log
 Route::post('/login', [SimpleLoginController::class, 'login']);
 
 // ==========================================
-// PROTECTED ROUTES (Middleware Auth)
+// PROTECTED ROUTES
 // ==========================================
 Route::middleware('check.simple.auth')->group(function () {
 
@@ -29,13 +29,10 @@ Route::middleware('check.simple.auth')->group(function () {
     Route::post('/logout', [SimpleLoginController::class, 'logout'])->name('logout');
 
     // ==========================================
-    // ADMIN ROUTES
+    // ADMIN
     // ==========================================
-    
-    // 1. Dashboard Admin
     Route::get('/admin/dashboard', [AdminController::class, 'dashboardAdmin'])->name('admin.dashboard');
 
-    // 2. Mahasiswa Routes (CRUD)
     Route::prefix('admin/mahasiswa')->name('admin.mahasiswa.')->group(function () {
         Route::get('/', [AdminController::class, 'indexMahasiswa'])->name('index');
         Route::get('/create', [AdminController::class, 'createMahasiswa'])->name('create');
@@ -45,7 +42,6 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::delete('/{id}', [AdminController::class, 'destroyMahasiswa'])->name('destroy');
     });
 
-    // 3. Dosen Routes (CRUD)
     Route::prefix('admin/dosen')->name('admin.dosen.')->group(function () {
         Route::get('/', [AdminController::class, 'indexDosen'])->name('index');
         Route::get('/create', [AdminController::class, 'createDosen'])->name('create');
@@ -55,7 +51,6 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::delete('/{id}', [AdminController::class, 'destroyDosen'])->name('destroy');
     });
 
-    // 4. Mata Kuliah Routes (CRUD) - BARU DITAMBAHKAN
     Route::prefix('admin/matakuliah')->name('admin.matakuliah.')->group(function () {
         Route::get('/', [AdminController::class, 'indexMatakuliah'])->name('index');
         Route::get('/create', [AdminController::class, 'createMatakuliah'])->name('create');
@@ -66,39 +61,61 @@ Route::middleware('check.simple.auth')->group(function () {
     });
 
     // ==========================================
-    // MAHASISWA ROUTES
+    // MAHASISWA
     // ==========================================
-    Route::get('/mahasiswa/beranda', [MahasiswaController::class, 'index'])->name('mahasiswa.beranda');
+    Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
+        Route::get('/beranda', [MahasiswaController::class, 'index'])->name('beranda');
 
-    // ==========================================
-    // DOSEN WALI ROUTES
-    // ==========================================
-    Route::get('/dosen_wali/beranda', [DosenWaliController::class, 'index'])->name('dosen_wali.beranda');
+        Route::get('/ambil-krs', [MahasiswaController::class, 'ambilKrs'])->name('ambil-krs');
+        Route::post('/ambil-krs', [MahasiswaController::class, 'storeKrs'])->name('store-krs');
 
-    // KRS Verifikasi
-    Route::get('/dosen_wali/krs-verifikasi', [KrsVerifikasiController::class, 'index'])->name('krs.verifikasi');
-    Route::patch('/dosen_wali/krs/approve/{nim}', [KrsVerifikasiController::class, 'approve'])->name('krs.approve');
-    Route::delete('/dosen_wali/krs/reject/{nim}', [KrsVerifikasiController::class, 'reject'])->name('krs.reject');
+        Route::get('/lihat-khs', [KhsMahasiswaController::class, 'index'])->name('lihat-khs');
 
-    // KHS & Profil Dosen Wali
-    Route::get('/dosen-wali/khs', [KhsMahasiswaController::class, 'index'])->name('khs.index');
-    Route::get('/dosen-wali/profil', [ProfilDosenWaliController::class, 'index'])->name('profil.index');
-    Route::put('/dosen-wali/profil', [ProfilDosenWaliController::class, 'update'])->name('profil.update');
-    Route::put('/dosen-wali/profil/password', [ProfilDosenWaliController::class, 'updatePassword'])->name('profil.password');
+        // ✅ RUTE PROFIL MAHASISWA (SHOW + UPDATE)
+        Route::get('/profil', [MahasiswaController::class, 'profil'])->name('profil');
+        Route::put('/profil', [MahasiswaController::class, 'updateProfil'])->name('profil.update');        // ↑ Route ini yang sebelumnya missing, sekarang sudah ditambahkan
+
+    });
 
     // ==========================================
-    // DOSEN MATA KULIAH ROUTES
+    // DOSEN WALI
     // ==========================================
-    Route::get('/dosen_matkul/beranda', [DosenMKController::class, 'index'])->name('dosen_matkul.beranda');
-    Route::get('/dosen_matkul/input-nilai', [DosenMKController::class, 'inputNilai'])->name('dosen_matkul.input-nilai');
-    Route::post('/dosen_matkul/simpan-nilai', [DosenMKController::class, 'simpanNilai'])->name('dosen_matkul.simpan-nilai');
-    Route::get('/dosen_matkul/lihat-nilai', [DosenMKController::class, 'lihatNilai'])->name('dosen_matkul.lihat-nilai');
-    Route::get('/dosen_matkul/profil', [DosenMKController::class, 'profil'])->name('dosen_matkul.profil');
-    Route::put('/dosen_matkul/profil', [DosenMKController::class, 'update'])->name('dosen_matkul.profil.update');
-    Route::put('/dosen_matkul/profil/password', [DosenMKController::class, 'updatePassword'])->name('dosen_matkul.profil.password');
+    Route::prefix('dosen-wali')->name('dosen_wali.')->group(function () {
+        Route::get('/beranda', [DosenWaliController::class, 'index'])->name('beranda');
 
+        // KRS Verifikasi
+        Route::get('/krs-verifikasi', [KrsVerifikasiController::class, 'index'])->name('krs.verifikasi');
+        Route::patch('/krs/approve/{nim}', [KrsVerifikasiController::class, 'approve'])->name('krs.approve');
+        Route::delete('/krs/reject/{nim}', [KrsVerifikasiController::class, 'reject'])->name('krs.reject');
 
-    // 5. Tahun Ajaran Routes (CRUD) - BARU DITAMBAHKAN
+        // ✅ KHS DOSEN (controller sama, beda URL → auto beda logic)
+        Route::get('/khs', [KhsMahasiswaController::class, 'index'])->name('khs');
+
+        // Profil
+        Route::get('/profil', [ProfilDosenWaliController::class, 'index'])->name('profil');
+        Route::post('/dosen-wali/profil/update', [DosenWaliController::class, 'update'])->name('profil.update');        
+        Route::put('/profil/password', [ProfilDosenWaliController::class, 'updatePassword'])->name('profil.password');
+        Route::post('/dosen-wali/profil/update', [DosenWaliController::class, 'updateProfil'])->name('profil.update');
+    });
+
+    // ==========================================
+    // DOSEN MATA KULIAH
+    // ==========================================
+    Route::prefix('dosen_matkul')->name('dosen_matkul.')->group(function () {
+
+        Route::get('/beranda', [DosenMKController::class, 'index'])->name('beranda');
+        Route::get('/input-nilai', [DosenMKController::class, 'inputNilai'])->name('input-nilai');
+        Route::post('/simpan-nilai', [DosenMKController::class, 'simpanNilai'])->name('simpan-nilai');
+        Route::get('/lihat-nilai', [DosenMKController::class, 'lihatNilai'])->name('lihat-nilai');
+
+        Route::get('/profil', [DosenMKController::class, 'profil'])->name('profil');
+        Route::put('/profil', [DosenMKController::class, 'update'])->name('profil.update');
+        Route::put('/profil/password', [DosenMKController::class, 'updatePassword'])->name('profil.password');
+    });
+
+    // ==========================================
+    // ADMIN TAMBAHAN
+    // ==========================================
     Route::prefix('admin/tahun-ajaran')->name('admin.tahunajaran.')->group(function () {
         Route::get('/', [AdminController::class, 'indexTahunAjaran'])->name('index');
         Route::get('/create', [AdminController::class, 'createTahunAjaran'])->name('create');
@@ -108,8 +125,6 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::delete('/{id}', [AdminController::class, 'destroyTahunAjaran'])->name('destroy');
     });
 
-
-    // 6. Paket Mata Kuliah Routes (CRUD)
     Route::prefix('admin/paket-mk')->name('admin.paketmk.')->group(function () {
         Route::get('/', [AdminController::class, 'indexPaketMK'])->name('index');
         Route::get('/create', [AdminController::class, 'createPaketMK'])->name('create');

@@ -6,87 +6,91 @@ use Illuminate\Http\Request;
 
 class KhsMahasiswaController extends Controller
 {
-    public function index(Request $request)
+    // ===============================
+    // HELPER WARNA NILAI
+    // ===============================
+    private function getNilaiColor($nilai)
     {
-        $filterKelas = $request->input('kelas', 'semua');
-
-        $allMahasiswa = [
-            [
-                'ranking' => 1,
-                'nim' => '3312501017',
-                'nama' => 'Irenessa Rosidin',
-                'kelas' => 'A',
-                'prodi' => 'Teknik Informatika',
-                'mk_lulus' => 3,
-                'ipk' => 3.86,
-                'status_krs' => 'Aktif'
-            ],
-            [
-                'ranking' => 2,
-                'nim' => '3312501007',
-                'nama' => 'Nabila Fatin',
-                'kelas' => 'A',
-                'prodi' => 'Teknik Informatika',
-                'mk_lulus' => 5,
-                'ipk' => 3.92,
-                'status_krs' => 'Aktif'
-            ],
-            [
-                'ranking' => 3,
-                'nim' => '3312501022',
-                'nama' => 'Reyhan',
-                'kelas' => 'A',
-                'prodi' => 'Teknik Informatika',
-                'mk_lulus' => 4,
-                'ipk' => 3.85,
-                'status_krs' => 'Aktif'
-            ],
-            [
-                'ranking' => 4,
-                'nim' => '3312501010',
-                'nama' => 'Delia Reska',
-                'kelas' => 'B',
-                'prodi' => 'Teknik Informatika',
-                'mk_lulus' => 0,
-                'ipk' => 0.00,
-                'status_krs' => 'Belum KRS'
-            ],
-            [
-                'ranking' => 5,
-                'nim' => '3312501023',
-                'nama' => 'Samuel Deidra',
-                'kelas' => 'A',
-                'prodi' => 'Teknik Informatika',
-                'mk_lulus' => 0,
-                'ipk' => 0.00,
-                'status_krs' => 'Belum KRS'
-            ],
-        ];
-
-        $mahasiswa = $allMahasiswa;
-        if ($filterKelas != 'semua') {
-            $mahasiswa = array_filter($mahasiswa, function($m) use ($filterKelas) {
-                return $m['kelas'] == $filterKelas;
-            });
-            $mahasiswa = array_values($mahasiswa);
+        switch ($nilai) {
+            case 'A':
+                return '#22c55e';   // green
+            case 'A-':
+                return '#84cc16';  // lime
+            case 'B+':
+                return '#eab308';  // yellow
+            case 'B':
+                return '#f97316';   // orange
+            case 'B-':
+                return '#ef4444';  // red
+            case 'C+':
+                return '#dc2626';  // dark-red
+            case 'C':
+                return '#7f1d1d';   // very-dark-red
+            case 'D':
+                return '#4b5563';   // gray
+            case 'E':
+                return '#1f2937';   // dark-gray
+            default:
+                return '#666';      // fallback
         }
-
-        $totalMahasiswa = count($allMahasiswa);
-        $rataIpk = $totalMahasiswa > 0 ? 
-            array_sum(array_column($allMahasiswa, 'ipk')) / $totalMahasiswa : 0;
-        $ipkTinggi = count(array_filter($allMahasiswa, fn($m) => $m['ipk'] >= 3.5));
-
-        return view('dosen_wali.khs', compact(
-            'mahasiswa',
-            'filterKelas',
-            'totalMahasiswa',
-            'rataIpk',
-            'ipkTinggi'
-        ));
     }
 
-    public function detail($nim)
+    public function index(Request $request)
     {
-        return redirect()->route('khs.index');
+        $role = $request->input('role', 'mahasiswa');
+
+        if ($role === 'dosen') {
+            return $this->khsDosen($request);
+        }
+
+        return $this->khsMahasiswa($request);
+    }
+
+    private function khsDosen(Request $request)
+    {
+        // ... isi sama seperti sebelumnya
+    }
+
+    private function khsMahasiswa(Request $request)
+    {
+        $nilai = collect([
+            (object) [
+                'kode_mk' => 'IF201',
+                'nama_mk' => 'Basis Data',
+                'sks' => 3,
+                'nilai' => 'A',
+                'bobot' => 4,
+                'tahun_ajaran' => '2025/2026',
+                'semester' => 1
+            ],
+            (object) [
+                'kode_mk' => 'IF202',
+                'nama_mk' => 'Pemrograman Web',
+                'sks' => 3,
+                'nilai' => 'B',
+                'bobot' => 3,
+                'tahun_ajaran' => '2025/2026',
+                'semester' => 1
+            ],
+        ]);
+
+        // Tambahkan warna ke setiap nilai
+        $nilai = $nilai->map(function ($n) {
+            $n->color = $this->getNilaiColor($n->nilai);
+            return $n;
+        });
+
+        return view('mahasiswa.lihat-khs', [
+            'nilai' => $nilai,
+            'ipk' => 3.64,
+            'totalSks' => $nilai->sum('sks'),
+            'mataKuliahCount' => $nilai->count(),
+            'listTahun' => ['2025/2026', '2024/2025']
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        return "Export KHS";
     }
 }

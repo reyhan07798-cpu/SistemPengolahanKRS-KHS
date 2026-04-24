@@ -40,7 +40,7 @@ class SimpleLoginController extends Controller
         $redirects = [
             'mahasiswa' => '/mahasiswa/beranda',
             'admin' => '/admin/dashboard',
-            'dosen_wali' => '/dosen_wali/beranda',
+            'dosen_wali' => '/dosen-wali/beranda',
             'dosen_matkul' => '/dosen_matkul/beranda',
         ];
 

@@ -36,11 +36,7 @@
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
             <div class="p-3 bg-red-100 rounded-lg text-red-500">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<<<<<<< HEAD
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M6 18L18 6"></path>                    
-=======
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
->>>>>>> 7e59a2d360d7a28c3d1adda464d3c5a031e28fcf
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </div>
             <div>
@@ -53,7 +49,8 @@
     <!-- Filter Area -->
     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
         <h3 class="font-bold text-dark mb-4">Filter</h3>
-        <form method="GET" action="{{ route('krs.verifikasi') }}">
+        {{-- ✅ Route diperbaiki dengan prefix dosen_wali --}}
+        <form method="GET" action="{{ route('dosen_wali.krs.verifikasi') }}">
             <div class="flex gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 mb-1">Status</label>
@@ -123,7 +120,8 @@
                             <div class="flex gap-2">
                                 @if($krs['status'] == 'Menunggu')
                                 <!-- Tombol Setujui -->
-                                <form action="{{ route('krs.approve', $krs['nim']) }}" method="POST" class="inline">
+                                {{-- ✅ Route diperbaiki dengan prefix dosen_wali --}}
+                                <form action="{{ route('dosen_wali.krs.approve', $krs['nim']) }}" method="POST" class="inline">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="w-8 h-8 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center transition" title="Setujui" onclick="return confirm('Apakah Anda yakin ingin menyetujui KRS ini?')">
@@ -134,7 +132,8 @@
                                 </form>
                                 
                                 <!-- Tombol Tolak -->
-                                <form action="{{ route('krs.reject', $krs['nim']) }}" method="POST" class="inline">
+                                {{-- ✅ Route diperbaiki dengan prefix dosen_wali --}}
+                                <form action="{{ route('dosen_wali.krs.reject', $krs['nim']) }}" method="POST" class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="w-8 h-8 rounded-full bg-red-100 text-red-500 hover:bg-red-200 flex items-center justify-center transition" title="Tolak" onclick="return confirm('Apakah Anda yakin ingin menolak KRS ini?')">

@@ -10,9 +10,9 @@ class DosenWaliController extends Controller
     {
         $stats = [
             'mahasiswa_bimbingan' => 3,
-            'krs_menunggu'        => 0,
-            'krs_disetujui'       => 2,
-            'krs_ditolak'         => 0,
+            'krs_menunggu' => 0,
+            'krs_disetujui' => 2,
+            'krs_ditolak' => 0,
         ];
 
         $mahasiswa = [
@@ -44,4 +44,23 @@ class DosenWaliController extends Controller
 
         return view('dosen_wali.beranda', compact('stats', 'mahasiswa'));
     }
+    public function khs()
+    {
+        // Data dummy mahasiswa bimbingan (nanti bisa diganti dengan query database)
+        $mahasiswa = [
+            [
+                'nama' => 'Reyhan',
+                'nim' => '3312501022',
+                'prodi' => 'Teknik Informatika',
+                'khs' => [
+                    ['matkul' => 'Pemrograman Web', 'sks' => 3, 'nilai' => 'A'],
+                    ['matkul' => 'Basis Data', 'sks' => 3, 'nilai' => 'B+'],
+                ]
+            ],
+            // ... tambah data lainnya
+        ];
+
+        return view('dosen_wali.khs', compact('mahasiswa'));
+    }
+    
 }

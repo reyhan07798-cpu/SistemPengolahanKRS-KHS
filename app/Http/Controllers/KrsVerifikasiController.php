@@ -93,4 +93,4 @@ class KrsVerifikasiController extends Controller
     {
         return redirect()->back()->with('error', 'KRS berhasil ditolak');
     }
-}
+} 
