@@ -14,38 +14,38 @@
             theme: {
                 extend: {
                     colors: {
-                        sidebar: '#4B5320',
-                        'sidebar-hover': '#5d6c29',
-                        'sidebar-active': '#3a4118',
+                        sidebar: '#24496B',
+                        'sidebar-hover': '#2F5D8A',
+                        'sidebar-active': '#1a3a55',
                         'jet-black': {
-                            50: 'rgb(238 244 246)', 100: 'rgb(221 234 238)', 200: 'rgb(187 213 221)',
-                            300: 'rgb(153 192 204)', 400: 'rgb(119 171 187)', 500: 'rgb(85 150 170)',
-                            600: 'rgb(68 120 136)', 700: 'rgb(51 90 102)', 800: 'rgb(34 60 68)',
-                            900: 'rgb(17 30 34)', 950: 'rgb(12 21 24)'
+                            50: '#F9FAFB', 100: '#F3F4F6', 200: '#E5E7EB',
+                            300: '#D1D5DB', 400: '#9CA3AF', 500: '#6B7280',
+                            600: '#4B5563', 700: '#374151', 800: '#1F2937',
+                            900: '#111827', 950: '#030712'
                         },
                         'cerulean': {
-                            50: 'rgb(238 245 247)', 100: 'rgb(220 234 239)', 200: 'rgb(185 213 223)',
-                            300: 'rgb(150 193 207)', 400: 'rgb(115 172 191)', 500: 'rgb(80 151 175)',
-                            600: 'rgb(64 121 140)', 700: 'rgb(48 91 105)', 800: 'rgb(32 60 70)',
-                            900: 'rgb(16 30 35)', 950: 'rgb(11 21 24)'
+                            50: '#EFF4F9', 100: '#DFE9F3', 200: '#BFD3E7',
+                            300: '#9FBEDB', 400: '#7FA8CF', 500: '#4A7FB5',
+                            600: '#3B6691', 700: '#2C4C6D', 800: '#1E3348',
+                            900: '#0F1924', 950: '#080D12'
                         },
                         'tropical-teal': {
-                            50: 'rgb(239 245 245)', 100: 'rgb(223 236 234)', 200: 'rgb(191 217 213)',
-                            300: 'rgb(159 198 193)', 400: 'rgb(128 179 172)', 500: 'rgb(96 159 151)',
-                            600: 'rgb(77 128 121)', 700: 'rgb(57 96 91)', 800: 'rgb(38 64 60)',
-                            900: 'rgb(19 32 30)', 950: 'rgb(13 22 21)'
+                            50: '#F4FAFC', 100: '#E9F5F9', 200: '#D3EBF3',
+                            300: '#BDE1ED', 400: '#8FBFE0', 500: '#72A6CA',
+                            600: '#5B85A2', 700: '#446479', 800: '#2E4351',
+                            900: '#172128', 950: '#0C1014'
                         },
                         'muted-teal': {
-                            50: 'rgb(239 245 240)', 100: 'rgb(224 235 226)', 200: 'rgb(193 215 196)',
-                            300: 'rgb(162 195 167)', 400: 'rgb(131 175 137)', 500: 'rgb(99 156 108)',
-                            600: 'rgb(80 124 86)', 700: 'rgb(60 93 65)', 800: 'rgb(40 62 43)',
-                            900: 'rgb(20 31 22)', 950: 'rgb(14 22 15)'
+                            50: '#F2F8F2', 100: '#E5F0E5', 200: '#CBE1CB',
+                            300: '#B1D2B1', 400: '#97C397', 500: '#7FB77E',
+                            600: '#669265', 700: '#4C6E4C', 800: '#334933',
+                            900: '#192519', 950: '#0D120D'
                         },
                         'tea-green': {
-                            50: 'rgb(242 246 238)', 100: 'rgb(228 238 221)', 200: 'rgb(201 220 188)',
-                            300: 'rgb(174 203 154)', 400: 'rgb(148 186 120)', 500: 'rgb(121 168 87)',
-                            600: 'rgb(97 135 69)', 700: 'rgb(72 101 52)', 800: 'rgb(48 67 35)',
-                            900: 'rgb(24 34 17)', 950: 'rgb(17 24 12)'
+                            50: '#EDF2F7', 100: '#DBE4F0', 200: '#B7C9E1',
+                            300: '#93AED2', 400: '#6F93C3', 500: '#2F5D8A',
+                            600: '#264A6E', 700: '#1C3853', 800: '#132537',
+                            900: '#09131C', 950: '#05090E'
                         }
                     },
                     fontFamily: {
@@ -62,8 +62,8 @@
         .font-display { font-family: 'Space Grotesk', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #e5e7eb; }
-        ::-webkit-scrollbar-thumb { background: rgb(96 159 151); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4B5320; }
+        ::-webkit-scrollbar-thumb { background: #2F5D8A; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #24496B; }
         
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -71,16 +71,16 @@
         .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
         
         .bg-pattern {
-            background-image: radial-gradient(circle at 10% 90%, rgba(121, 168, 87, 0.1) 0%, transparent 40%),
-                              radial-gradient(circle at 90% 10%, rgba(80, 151, 175, 0.08) 0%, transparent 40%);
+            background-image: radial-gradient(circle at 10% 90%, rgba(47, 93, 138, 0.1) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 10%, rgba(74, 127, 181, 0.08) 0%, transparent 40%);
         }
         .nav-link { position: relative; transition: all 0.2s ease; }
         .nav-link::before {
             content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 3px;
-            background: rgb(174 203 154); transform: scaleY(0); transition: transform 0.2s ease;
+            background: #F4A261; transform: scaleY(0); transition: transform 0.2s ease;
         }
         .nav-link:hover::before, .nav-link.active::before { transform: scaleY(1); }
-        .sidebar-active-item { background: rgba(255, 255, 255, 0.1); border-left: 3px solid rgb(174 203 154); }
+        .sidebar-active-item { background: rgba(255, 255, 255, 0.1); border-left: 3px solid #F4A261; }
         .sidebar-mobile { transform: translateX(-100%); transition: transform 0.3s ease; }
         .sidebar-mobile.open { transform: translateX(0); }
     </style>
@@ -97,14 +97,14 @@
             <!-- Logo -->
             <div class="p-6 border-b border-white/10">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-tea-green-300 rounded-lg flex items-center justify-center">
+                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                         <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                         </svg>
                     </div>
                     <div>
                         <h1 class="font-display font-bold text-white text-lg tracking-tight">SIPAKAR</h1>
-                        <p class="text-tea-green-200 text-xs">Sistem Pendidikan Akademik</p>
+                        <p class="text-gray-300 text-xs">Sistem Pendidikan Akademik</p>
                     </div>
                 </div>
             </div>
@@ -242,3 +242,4 @@
     @stack('scripts')
 </body>
 </html>
+
