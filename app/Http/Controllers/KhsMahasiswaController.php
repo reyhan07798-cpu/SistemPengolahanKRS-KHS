@@ -6,9 +6,7 @@ use Illuminate\Http\Request;
 
 class KhsMahasiswaController extends Controller
 {
-    // ===============================
     // HELPER WARNA NILAI
-    // ===============================
     private function getNilaiColor($nilai)
     {
         switch ($nilai) {
@@ -48,7 +46,40 @@ class KhsMahasiswaController extends Controller
 
     private function khsDosen(Request $request)
     {
-        // ... isi sama seperti sebelumnya
+        $nilai = collect([
+            (object) [
+                'kode_mk' => 'IF201',
+                'nama_mk' => 'Basis Data',
+                'sks' => 3,
+                'nilai' => 'A',
+                'bobot' => 4,
+                'tahun_ajaran' => '2025/2026',
+                'semester' => 1
+            ],
+            (object) [
+                'kode_mk' => 'IF202',
+                'nama_mk' => 'Pemrograman Web',
+                'sks' => 3,
+                'nilai' => 'B',
+                'bobot' => 3,
+                'tahun_ajaran' => '2025/2026',
+                'semester' => 1
+            ],
+        ]);
+
+        // Tambahkan warna ke setiap nilai
+        $nilai = $nilai->map(function ($n) {
+            $n->color = $this->getNilaiColor($n->nilai);
+            return $n;
+        });
+
+        return view('dosen.lihat-khs', [
+            'nilai' => $nilai,
+            'ipk' => 3.64,
+            'totalSks' => $nilai->sum('sks'),
+            'mataKuliahCount' => $nilai->count(),
+            'listTahun' => ['2025/2026', '2024/2025']
+        ]);
     }
 
     private function khsMahasiswa(Request $request)

@@ -46,19 +46,17 @@ class MahasiswaController extends Controller
     // =========================
     public function profil()
     {
-        // ✅ Gunakan $data, bukan $mahasiswa
         $data = [
             'nama' => 'Reyhan',
             'nim' => '3312501022',
-            'email' => 'reyhan@gmail.com',  // ✅ Pastikan email ada
+            'email' => 'reyhan@gmail.com', 
             'no_hp' => '08123456789',
             'alamat' => 'Kota Batam',
             'program_studi' => 'Teknik Informatika'
         ];
 
-        return view('mahasiswa.profil', compact('data')); // ✅ compact('data')
+        return view('mahasiswa.profil', compact('data'));
     }
-    // ✅ TAMBAHAN: Method updateProfil (FIX ERROR ROUTE)
     public function updateProfil(Request $request)
     {
         // Validasi input
@@ -71,15 +69,12 @@ class MahasiswaController extends Controller
             'program_studi' => 'required|string|max:100',
         ]);
 
-        // 🔄 Update data user (tabel users)
         $user = Auth::user();
         $user->update([
             'name' => $validated['nama'],
             'email' => $validated['email'],
         ]);
 
-        // 🔄 Update data mahasiswa (tabel mahasiswas) - jika ada relasi
-        // Sesuaikan dengan struktur database kamu
         if ($user->mahasiswa) {
             $user->mahasiswa->update([
                 'nim' => $validated['nim'],
@@ -89,7 +84,6 @@ class MahasiswaController extends Controller
             ]);
         }
 
-        // Redirect kembali ke halaman profil dengan pesan sukses
         return redirect()->route('mahasiswa.profil')
             ->with('success', '✅ Profil berhasil diperbarui!');
     }
@@ -98,7 +92,7 @@ class MahasiswaController extends Controller
     {
         $data = [
             'nama' => 'Reyhan',
-            'email' => 'reyhan@gmail.com',  // ✅ TAMBAHKAN EMAIL
+            'email' => 'reyhan@gmail.com', 
             'semester_aktif' => 2,
             'total_sks' => 20,
             'status_krs' => 'Disetujui',
@@ -174,7 +168,7 @@ class MahasiswaController extends Controller
 
         $data = [
             'nama' => 'Reyhan',
-            'email' => 'reyhan@gmail.com',  // ✅ Sudah ada
+            'email' => 'reyhan@gmail.com', 
         ];
 
         return view('mahasiswa.lihat-khs', compact('nilai', 'ipk', 'totalSks', 'mataKuliahCount', 'data'));

@@ -44,23 +44,67 @@ class DosenWaliController extends Controller
 
         return view('dosen_wali.beranda', compact('stats', 'mahasiswa'));
     }
-    public function khs()
+
+    // ✅ METHOD KHUSUS UNTUK KHS DOSEN WALI
+    public function khs(Request $request)
     {
-        // Data dummy mahasiswa bimbingan (nanti bisa diganti dengan query database)
-        $mahasiswa = [
+        $filterKelas = $request->input('kelas', 'semua');
+
+        // Data dummy mahasiswa bimbingan
+        $allMahasiswa = [
             [
-                'nama' => 'Reyhan',
-                'nim' => '3312501022',
+                'ranking' => 1,
+                'nim' => '3312501017',
+                'nama' => 'Irenessa Rosidin',
+                'kelas' => 'A',
                 'prodi' => 'Teknik Informatika',
-                'khs' => [
-                    ['matkul' => 'Pemrograman Web', 'sks' => 3, 'nilai' => 'A'],
-                    ['matkul' => 'Basis Data', 'sks' => 3, 'nilai' => 'B+'],
-                ]
+                'mk_lulus' => 3,
+                'ipk' => 3.86,
+                'status_krs' => 'Aktif'
             ],
-            // ... tambah data lainnya
+            [
+                'ranking' => 2,
+                'nim' => '3312501007',
+                'nama' => 'Nabila Fatin',
+                'kelas' => 'A',
+                'prodi' => 'Teknik Informatika',
+                'mk_lulus' => 5,
+                'ipk' => 3.92,
+                'status_krs' => 'Aktif'
+            ],
+            [
+                'ranking' => 3,
+                'nim' => '3312501022',
+                'nama' => 'Reyhan',
+                'kelas' => 'A',
+                'prodi' => 'Teknik Informatika',
+                'mk_lulus' => 4,
+                'ipk' => 3.85,
+                'status_krs' => 'Aktif'
+            ],
         ];
 
-        return view('dosen_wali.khs', compact('mahasiswa'));
+        // Filter berdasarkan kelas
+        $mahasiswa = $allMahasiswa;
+        if ($filterKelas != 'semua') {
+            $mahasiswa = array_filter($mahasiswa, function($m) use ($filterKelas) {
+                return $m['kelas'] == $filterKelas;
+            });
+            $mahasiswa = array_values($mahasiswa); // Re-index array
+        }
+
+        // Statistik
+        $totalMahasiswa = count($allMahasiswa);
+        $rataIpk = $totalMahasiswa > 0 ? 
+            array_sum(array_column($allMahasiswa, 'ipk')) / $totalMahasiswa : 0;
+        $ipkTinggi = count(array_filter($allMahasiswa, fn($m) => $m['ipk'] >= 3.5));
+
+        return view('dosen_wali.khs', compact(
+            'mahasiswa',
+            'filterKelas',
+            'totalMahasiswa',
+            'rataIpk',
+            'ipkTinggi'
+        ));
     }
-    
 }

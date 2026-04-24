@@ -20,17 +20,13 @@ Route::get('/', function () {
 Route::get('/login', [SimpleLoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [SimpleLoginController::class, 'login']);
 
-// ==========================================
 // PROTECTED ROUTES
-// ==========================================
 Route::middleware('check.simple.auth')->group(function () {
 
     // Logout
     Route::post('/logout', [SimpleLoginController::class, 'logout'])->name('logout');
 
-    // ==========================================
     // ADMIN
-    // ==========================================
     Route::get('/admin/dashboard', [AdminController::class, 'dashboardAdmin'])->name('admin.dashboard');
 
     Route::prefix('admin/mahasiswa')->name('admin.mahasiswa.')->group(function () {
@@ -60,9 +56,7 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::delete('/{id}', [AdminController::class, 'destroyMatakuliah'])->name('destroy');
     });
 
-    // ==========================================
     // MAHASISWA
-    // ==========================================
     Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
         Route::get('/beranda', [MahasiswaController::class, 'index'])->name('beranda');
 
@@ -71,15 +65,13 @@ Route::middleware('check.simple.auth')->group(function () {
 
         Route::get('/lihat-khs', [KhsMahasiswaController::class, 'index'])->name('lihat-khs');
 
-        // ✅ RUTE PROFIL MAHASISWA (SHOW + UPDATE)
+        // RUTE PROFIL MAHASISWA (SHOW + UPDATE)
         Route::get('/profil', [MahasiswaController::class, 'profil'])->name('profil');
         Route::put('/profil', [MahasiswaController::class, 'updateProfil'])->name('profil.update');        // ↑ Route ini yang sebelumnya missing, sekarang sudah ditambahkan
 
     });
 
-    // ==========================================
     // DOSEN WALI
-    // ==========================================
     Route::prefix('dosen-wali')->name('dosen_wali.')->group(function () {
         Route::get('/beranda', [DosenWaliController::class, 'index'])->name('beranda');
 
@@ -88,9 +80,8 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::patch('/krs/approve/{nim}', [KrsVerifikasiController::class, 'approve'])->name('krs.approve');
         Route::delete('/krs/reject/{nim}', [KrsVerifikasiController::class, 'reject'])->name('krs.reject');
 
-        // ✅ KHS DOSEN (controller sama, beda URL → auto beda logic)
-        Route::get('/khs', [KhsMahasiswaController::class, 'index'])->name('khs');
-
+        // KHS Mahasiswa
+        Route::get('/khs', [DosenWaliController::class, 'khs'])->name('khs');
         // Profil
         Route::get('/profil', [ProfilDosenWaliController::class, 'index'])->name('profil');
         Route::post('/dosen-wali/profil/update', [DosenWaliController::class, 'update'])->name('profil.update');        
@@ -98,9 +89,7 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::post('/dosen-wali/profil/update', [DosenWaliController::class, 'updateProfil'])->name('profil.update');
     });
 
-    // ==========================================
     // DOSEN MATA KULIAH
-    // ==========================================
     Route::prefix('dosen_matkul')->name('dosen_matkul.')->group(function () {
 
         Route::get('/beranda', [DosenMKController::class, 'index'])->name('beranda');
@@ -113,9 +102,7 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::put('/profil/password', [DosenMKController::class, 'updatePassword'])->name('profil.password');
     });
 
-    // ==========================================
     // ADMIN TAMBAHAN
-    // ==========================================
     Route::prefix('admin/tahun-ajaran')->name('admin.tahunajaran.')->group(function () {
         Route::get('/', [AdminController::class, 'indexTahunAjaran'])->name('index');
         Route::get('/create', [AdminController::class, 'createTahunAjaran'])->name('create');
