@@ -38,7 +38,7 @@ class MahasiswaController extends Controller
             ]
         ];
 
-        return view('mahasiswa.beranda', compact('data'));
+        return view('pages.mahasiswa.beranda', compact('data'));
     }
 
     // =========================
@@ -55,7 +55,7 @@ class MahasiswaController extends Controller
             'program_studi' => 'Teknik Informatika'
         ];
 
-        return view('mahasiswa.profil', compact('data'));
+        return view('pages.mahasiswa.profil', compact('data'));
     }
     public function updateProfil(Request $request)
     {
@@ -84,7 +84,7 @@ class MahasiswaController extends Controller
             ]);
         }
 
-        return redirect()->route('mahasiswa.profil')
+        return redirect()->route('pages.mahasiswa.profil')
             ->with('success', '✅ Profil berhasil diperbarui!');
     }
 
@@ -105,7 +105,7 @@ class MahasiswaController extends Controller
             ],
         ];
 
-        return view('mahasiswa.ambil-krs', compact('data'));
+        return view('pages.mahasiswa.ambil-krs', compact('data'));
     }
 
     public function storeKrs(Request $request)
@@ -127,7 +127,7 @@ class MahasiswaController extends Controller
             ]);
         }
 
-        return redirect()->route('mahasiswa.ambil-krs')
+        return redirect()->route('pages.mahasiswa.ambil-krs')
             ->with('success', 'KRS berhasil diajukan dan menunggu persetujuan dosen wali.');
     }
 
@@ -171,6 +171,6 @@ class MahasiswaController extends Controller
             'email' => 'reyhan@gmail.com', 
         ];
 
-        return view('mahasiswa.lihat-khs', compact('nilai', 'ipk', 'totalSks', 'mataKuliahCount', 'data'));
+        return view('pages.mahasiswa.lihat-khs', compact('nilai', 'ipk', 'totalSks', 'mataKuliahCount', 'data'));
     }
 }

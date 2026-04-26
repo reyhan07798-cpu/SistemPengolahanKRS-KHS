@@ -58,7 +58,7 @@
                 </div>
 
                 <!-- Form Body -->
-                <form action="{{ route('admin.matakuliah.store') }}" method="POST" class="mt-6">
+                <form action="{{ route('pages.admin.matakuliah.store') }}" method="POST" class="mt-6">
                     @csrf
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">

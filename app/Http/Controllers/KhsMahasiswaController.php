@@ -73,7 +73,7 @@ class KhsMahasiswaController extends Controller
             return $n;
         });
 
-        return view('dosen.lihat-khs', [
+        return view('pages.dosen.lihat-khs', [
             'nilai' => $nilai,
             'ipk' => 3.64,
             'totalSks' => $nilai->sum('sks'),
@@ -111,7 +111,7 @@ class KhsMahasiswaController extends Controller
             return $n;
         });
 
-        return view('mahasiswa.lihat-khs', [
+        return view('pages.mahasiswa.lihat-khs', [
             'nilai' => $nilai,
             'ipk' => 3.64,
             'totalSks' => $nilai->sum('sks'),

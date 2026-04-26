@@ -40,7 +40,7 @@ class KrsVerifikasiController extends Controller
                 'tanggal' => '16/8/2026'
             ],
             [
-                'nama' => 'Delia Reska',
+                'nama' => 'Della Reska',
                 'nim' => '3312501010',
                 'kelas' => 'B',
                 'mk_count' => 3,
@@ -81,7 +81,7 @@ class KrsVerifikasiController extends Controller
             'ditolak'   => count(array_filter($allKrs, fn($k) => $k['status'] == 'Ditolak')),
         ];
 
-        return view('dosen_wali.krs-verifikasi', compact('stats', 'daftarKrs', 'filterStatus', 'filterKelas'));
+        return view('pages.dosen_wali.krs-verifikasi', compact('stats', 'daftarKrs', 'filterStatus', 'filterKelas'));
     }
 
     public function approve($id)

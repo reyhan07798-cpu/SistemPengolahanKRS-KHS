@@ -56,7 +56,7 @@
                 </div>
 
                 <!-- Form Body -->
-                <form action="{{ route('admin.paketmk.store') }}" method="POST" class="mt-6">
+                <form action="{{ route('pages.admin.paketmk.store') }}" method="POST" class="mt-6">
                     @csrf
                     
                     <div class="space-y-5">
