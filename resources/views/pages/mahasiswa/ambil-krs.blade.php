@@ -34,7 +34,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('mahasiswa.store-krs') }}">
+            <form method="POST" action="{{ route('pages.mahasiswa.store-krs') }}">
                 @csrf
 
                 <div class="overflow-hidden rounded-[1.75rem] border border-slate-200 shadow-sm mb-6">

@@ -59,13 +59,9 @@ Route::middleware('check.simple.auth')->group(function () {
     // MAHASISWA
     Route::prefix('mahasiswa')->name('pages.mahasiswa.')->group(function () {
         Route::get('/beranda', [MahasiswaController::class, 'index'])->name('beranda');
-
         Route::get('/ambil-krs', [MahasiswaController::class, 'ambilKrs'])->name('ambil-krs');
         Route::post('/ambil-krs', [MahasiswaController::class, 'storeKrs'])->name('store-krs');
-
         Route::get('/lihat-khs', [KhsMahasiswaController::class, 'index'])->name('lihat-khs');
-
-        // RUTE PROFIL MAHASISWA (SHOW + UPDATE)
         Route::get('/profil', [MahasiswaController::class, 'profil'])->name('profil');
         Route::put('/profil', [MahasiswaController::class, 'updateProfil'])->name('profil.update');        // ↑ Route ini yang sebelumnya missing, sekarang sudah ditambahkan
 

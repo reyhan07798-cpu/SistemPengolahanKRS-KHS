@@ -41,9 +41,7 @@ class MahasiswaController extends Controller
         return view('pages.mahasiswa.beranda', compact('data'));
     }
 
-    // =========================
-    // ✅ PROFIL MAHASISWA
-    // =========================
+    // PROFIL MAHASISWA
     public function profil()
     {
         $data = [
