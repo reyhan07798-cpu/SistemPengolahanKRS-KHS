@@ -26,7 +26,8 @@
             "Database\\Seeders\\": "database/seeders/"
         },
         "files": [
-            "app/Helpers/AuthHelper.php"
+            "app/Helpers/AuthHelper.php",
+            "app/Helpers/NilaiHelper.php"
         ]
     },
     "autoload-dev": {

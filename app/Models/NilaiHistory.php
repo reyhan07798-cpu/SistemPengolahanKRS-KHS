@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Nilai extends Model
+class NilaiHistory extends Model
 {
-    protected $table = 'nilai';
+    protected $table = 'nilai_history';
 
     protected $fillable = [
         'mahasiswa_id',
@@ -34,3 +34,4 @@ class Nilai extends Model
         return $this->belongsTo(KrsMahasiswa::class, 'krs_id');
     }
 }
+

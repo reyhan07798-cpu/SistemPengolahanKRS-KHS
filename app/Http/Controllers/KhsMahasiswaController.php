@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Nilai;
 use Illuminate\Http\Request;
 
 class KhsMahasiswaController extends Controller
@@ -84,38 +85,90 @@ class KhsMahasiswaController extends Controller
 
     private function khsMahasiswa(Request $request)
     {
-        $nilai = collect([
-            (object) [
-                'kode_mk' => 'IF201',
-                'nama_mk' => 'Basis Data',
-                'sks' => 3,
-                'nilai' => 'A',
-                'bobot' => 4,
-                'tahun_ajaran' => '2025/2026',
-                'semester' => 1
-            ],
-            (object) [
-                'kode_mk' => 'IF202',
-                'nama_mk' => 'Pemrograman Web',
-                'sks' => 3,
-                'nilai' => 'B',
-                'bobot' => 3,
-                'tahun_ajaran' => '2025/2026',
-                'semester' => 1
-            ],
-        ]);
+        $mahasiswaId = auth()->id() ?? 1;
 
-        // Tambahkan warna ke setiap nilai
-        $nilai = $nilai->map(function ($n) {
-            $n->color = $this->getNilaiColor($n->nilai);
-            return $n;
-        });
+        // Ambil semua nilai mahasiswa
+        $nilaiRecords = Nilai::where('mahasiswa_id', $mahasiswaId)
+            ->with(['mataKuliah', 'krs'])
+            ->orderBy('semester', 'asc')
+            ->orderBy('tahun_ajaran', 'desc')
+            ->get();
+
+        // Jika belum ada data di database, gunakan dummy data
+        if ($nilaiRecords->isEmpty()) {
+            $nilai = collect([
+                (object) [
+                    'kode_mk' => 'IF201',
+                    'nama_mk' => 'Basis Data',
+                    'sks' => 3,
+                    'nilai' => 'A',
+                    'bobot' => 4,
+                    'tahun_ajaran' => '2025/2026',
+                    'semester' => 1,
+                    'is_retake' => false,
+                    'nilai_lama' => [],
+                    'color' => '#22c55e',
+                ],
+                (object) [
+                    'kode_mk' => 'IF202',
+                    'nama_mk' => 'Pemrograman Web',
+                    'sks' => 3,
+                    'nilai' => 'B',
+                    'bobot' => 3,
+                    'tahun_ajaran' => '2025/2026',
+                    'semester' => 1,
+                    'is_retake' => false,
+                    'nilai_lama' => [],
+                    'color' => '#f97316',
+                ],
+                (object) [
+                    'kode_mk' => 'IF101',
+                    'nama_mk' => 'Algoritma dan Pemrograman',
+                    'sks' => 3,
+                    'nilai' => 'B+',
+                    'bobot' => 3.3,
+                    'tahun_ajaran' => '2025/2026',
+                    'semester' => 2,
+                    'is_retake' => true,
+                    'nilai_lama' => ['E'],
+                    'color' => '#eab308',
+                ],
+            ]);
+
+            $ipk = 3.43;
+            $totalSks = 9;
+            $mataKuliahCount = 3;
+        } else {
+            // Hitung IPK dengan aturan retake
+            $ipkData = hitungIpkDenganRetake($mahasiswaId);
+            $ipk = $ipkData['ipk'];
+            $totalSks = $ipkData['total_sks'];
+            $mataKuliahCount = $ipkData['total_mk'];
+
+            $nilai = $nilaiRecords->map(function ($item) {
+                $history = getNilaiHistory($item->mahasiswa_id, $item->mata_kuliah_id);
+
+                $n = (object) [
+                    'kode_mk' => $item->mataKuliah->kode_mk ?? '-',
+                    'nama_mk' => $item->mataKuliah->nama ?? 'Mata Kuliah',
+                    'sks' => $item->sks,
+                    'nilai' => $item->nilai,
+                    'bobot' => $item->bobot,
+                    'tahun_ajaran' => $item->tahun_ajaran,
+                    'semester' => $item->semester,
+                    'is_retake' => $item->krs ? $item->krs->is_retake : false,
+                    'nilai_lama' => $history['history']->pluck('nilai')->toArray(),
+                    'color' => $this->getNilaiColor($item->nilai),
+                ];
+                return $n;
+            });
+        }
 
         return view('mahasiswa.lihat-khs', [
             'nilai' => $nilai,
-            'ipk' => 3.64,
-            'totalSks' => $nilai->sum('sks'),
-            'mataKuliahCount' => $nilai->count(),
+            'ipk' => $ipk,
+            'totalSks' => $totalSks,
+            'mataKuliahCount' => $mataKuliahCount,
             'listTahun' => ['2025/2026', '2024/2025']
         ]);
     }

@@ -74,15 +74,23 @@
                             <th class="px-6 py-4 text-center font-semibold">SKS</th>
                             <th class="px-6 py-4 text-center font-semibold">Nilai</th>
                             <th class="px-6 py-4 text-center font-semibold">Bobot</th>
-                            <th class="px-6 py-4 text-center font-semibold">Tahun Ajaran</th>
+                            <th class="px-6 py-4 text-center font-semibold">Status</th>
+                            <th class="px-6 py-4 text-center font-semibold">History</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-slate-200 text-sm text-slate-700">
                         @forelse($nilai as $n)
-                            <tr class="hover:bg-slate-50 transition">
+                            <tr class="hover:bg-slate-50 transition {{ $n->is_retake ? 'bg-amber-50/30' : '' }}">
                                 <td class="px-6 py-4 font-medium text-slate-900">
                                     {{ $n->kode_mk ?? 'IF' . str_pad($loop->index + 201, 3, '0', STR_PAD_LEFT) }}</td>
-                                <td class="px-6 py-4">{{ $n->nama_mk ?? 'Mata Kuliah ' . ($loop->index + 1) }}</td>
+                                <td class="px-6 py-4">
+                                    {{ $n->nama_mk ?? 'Mata Kuliah ' . ($loop->index + 1) }}
+                                    @if($n->is_retake)
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                                            🔄 Pengulangan
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 text-center">{{ $n->sks }}</td>
                                 <td class="px-6 py-4 text-center">
                                     <span
@@ -93,11 +101,35 @@
                                 </td>
 
                                 <td class="px-6 py-4 text-center font-semibold">{{ $n->bobot }}</td>
-                                <td class="px-6 py-4 text-center">{{ $n->tahun_ajaran }}</td>
+                                <td class="px-6 py-4 text-center">
+                                    @if($n->is_retake)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                            Retake
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            Baru
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    @if(!empty($n->nilai_lama))
+                                        <div class="flex items-center justify-center gap-1">
+                                            <span class="text-xs text-slate-400">Lama:</span>
+                                            @foreach($n->nilai_lama as $nilaiLama)
+                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full font-semibold text-white text-xs" style="background-color: {{ getNilaiColor($nilaiLama) }};">
+                                                    {{ $nilaiLama }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-slate-400">-</span>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                                <td colspan="7" class="px-6 py-8 text-center text-slate-500">
                                     <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -110,6 +142,16 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Keterangan IPK --}}
+            <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <p class="text-sm text-blue-800">
+                    <span class="font-semibold">ℹ️ Perhitungan IPK:</span>
+                    IPK dihitung dengan mengambil <span class="font-semibold">nilai terbaik</span> per mata kuliah.
+                    Jika Anda mengulang dan mendapat nilai lebih tinggi, nilai baru yang digunakan.
+                    Total SKS tidak double-count untuk MK yang diulang.
+                </p>
             </div>
         </div>
     </div>
