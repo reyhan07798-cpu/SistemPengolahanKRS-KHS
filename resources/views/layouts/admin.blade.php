@@ -15,33 +15,30 @@
                     <h1>SIPAKAR</h1>
                     <p>Beranda Admin</p>
                 </div>
+            </div>
 
             <div class="menu-title">Menu Utama</div>
 
             <nav class="menu-list">
-                <a href="{{ route('admin.dashboard') }}" class="menu-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('pages.admin.dashboard') }}" class="menu-item {{ request()->routeIs('pages.admin.dashboard') ? 'active' : '' }}">
                     <span class="menu-icon">▦</span>
                     <span class="menu-label">Beranda</span>
                 </a>
-                <a href="{{ route('admin.mahasiswa.index') }}" class="menu-item {{ request()->routeIs('admin.mahasiswa.*') ? 'active' : '' }}">
+                <a href="#" class="menu-item">
                     <span class="menu-icon">👥</span>
                     <span class="menu-label">Data Mahasiswa</span>
                 </a>
-                <a href="{{ route('admin.dosen.index') }}" class="menu-item {{ request()->routeIs('admin.dosen.*') ? 'active' : '' }}">
+                <a href="#" class="menu-item">
                     <span class="menu-icon">👨‍🏫</span>
                     <span class="menu-label">Data Dosen</span>
                 </a>
-                <a href="{{ route('admin.matakuliah.index') }}" class="menu-item {{ request()->routeIs('admin.matakuliah.*') ? 'active' : '' }}">
+                <a href="#" class="menu-item">
                     <span class="menu-icon">📚</span>
                     <span class="menu-label">Data Mata Kuliah</span>
                 </a>
-                <a href="{{ route('admin.tahunajaran.index') }}" class="menu-item {{ request()->routeIs('admin.tahunajaran.*') ? 'active' : '' }}">
+                <a href="#" class="menu-item">
                     <span class="menu-icon">📅</span>
                     <span class="menu-label">Tahun Ajaran</span>
-                </a>
-                <a href="{{ route('admin.paketmk.index') }}" class="menu-item {{ request()->routeIs('admin.paketmk.*') ? 'active' : '' }}">
-                    <span class="menu-icon">📦</span>
-                    <span class="menu-label">Paket MK</span>
                 </a>
             </nav>
 
@@ -54,5 +51,6 @@
         <div class="content">
             @yield('content')
         </div>
+    </div>
 </body>
 </html>

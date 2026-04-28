@@ -11,7 +11,6 @@ class Nilai extends Model
     protected $fillable = [
         'mahasiswa_id',
         'mata_kuliah_id',
-        'krs_id',
         'nilai',
         'bobot',
         'sks',
@@ -27,10 +26,5 @@ class Nilai extends Model
     public function mataKuliah()
     {
         return $this->belongsTo(MataKuliah::class);
-    }
-
-    public function krs()
-    {
-        return $this->belongsTo(KrsMahasiswa::class, 'krs_id');
     }
 }

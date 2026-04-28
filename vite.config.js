@@ -8,13 +8,8 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/css/landing.css',
-                'resources/js/landing.js',
-                'resources/css/admin.css',
-                'resources/css/dosen_wali.css',
-                'resources/css/dosen_matkul.css',
-                'resources/css/mahasiswa.css',
-                'resources/css/login.css',
+                'resources/css/landing.css', // ← TAMBAH
+                'resources/js/landing.js'    // ← TAMBAH
             ],
             refresh: true,
         }),

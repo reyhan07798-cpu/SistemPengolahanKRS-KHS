@@ -42,13 +42,15 @@ class DosenWaliController extends Controller
             ],
         ];
 
-        return view('dosen_wali.beranda', compact('stats', 'mahasiswa'));
+        return view('pages.dosen_wali.beranda', compact('stats', 'mahasiswa'));
     }
 
+    // ✅ METHOD KHUSUS UNTUK KHS DOSEN WALI
     public function khs(Request $request)
     {
         $filterKelas = $request->input('kelas', 'semua');
 
+        // Data dummy mahasiswa bimbingan
         $allMahasiswa = [
             [
                 'ranking' => 1,
@@ -82,20 +84,22 @@ class DosenWaliController extends Controller
             ],
         ];
 
+        // Filter berdasarkan kelas
         $mahasiswa = $allMahasiswa;
         if ($filterKelas != 'semua') {
             $mahasiswa = array_filter($mahasiswa, function($m) use ($filterKelas) {
                 return $m['kelas'] == $filterKelas;
             });
-            $mahasiswa = array_values($mahasiswa);
+            $mahasiswa = array_values($mahasiswa); // Re-index array
         }
 
+        // Statistik
         $totalMahasiswa = count($allMahasiswa);
         $rataIpk = $totalMahasiswa > 0 ? 
             array_sum(array_column($allMahasiswa, 'ipk')) / $totalMahasiswa : 0;
         $ipkTinggi = count(array_filter($allMahasiswa, fn($m) => $m['ipk'] >= 3.5));
 
-        return view('dosen_wali.khs', compact(
+        return view('pages.dosen_wali.khs', compact(
             'mahasiswa',
             'filterKelas',
             'totalMahasiswa',

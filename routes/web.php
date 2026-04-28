@@ -27,9 +27,9 @@ Route::middleware('check.simple.auth')->group(function () {
     Route::post('/logout', [SimpleLoginController::class, 'logout'])->name('logout');
 
     // ADMIN
-    Route::get('/admin/dashboard', [AdminController::class, 'dashboardAdmin'])->name('admin.dashboard');
+    Route::get('/admin/dashboard', [AdminController::class, 'dashboardAdmin'])->name('pages.admin.dashboard');
 
-    Route::prefix('admin/mahasiswa')->name('admin.mahasiswa.')->group(function () {
+    Route::prefix('admin/mahasiswa')->name('pages.admin.mahasiswa.')->group(function () {
         Route::get('/', [AdminController::class, 'indexMahasiswa'])->name('index');
         Route::get('/create', [AdminController::class, 'createMahasiswa'])->name('create');
         Route::post('/', [AdminController::class, 'storeMahasiswa'])->name('store');
@@ -38,7 +38,7 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::delete('/{id}', [AdminController::class, 'destroyMahasiswa'])->name('destroy');
     });
 
-    Route::prefix('admin/dosen')->name('admin.dosen.')->group(function () {
+    Route::prefix('admin/dosen')->name('pages.admin.dosen.')->group(function () {
         Route::get('/', [AdminController::class, 'indexDosen'])->name('index');
         Route::get('/create', [AdminController::class, 'createDosen'])->name('create');
         Route::post('/', [AdminController::class, 'storeDosen'])->name('store');
@@ -47,7 +47,7 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::delete('/{id}', [AdminController::class, 'destroyDosen'])->name('destroy');
     });
 
-    Route::prefix('admin/matakuliah')->name('admin.matakuliah.')->group(function () {
+    Route::prefix('admin/matakuliah')->name('pages.admin.matakuliah.')->group(function () {
         Route::get('/', [AdminController::class, 'indexMatakuliah'])->name('index');
         Route::get('/create', [AdminController::class, 'createMatakuliah'])->name('create');
         Route::post('/', [AdminController::class, 'storeMatakuliah'])->name('store');
@@ -57,18 +57,20 @@ Route::middleware('check.simple.auth')->group(function () {
     });
 
     // MAHASISWA
-    Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
+    Route::prefix('mahasiswa')->name('pages.mahasiswa.')->group(function () {
         Route::get('/beranda', [MahasiswaController::class, 'index'])->name('beranda');
         Route::get('/ambil-krs', [MahasiswaController::class, 'ambilKrs'])->name('ambil-krs');
         Route::post('/ambil-krs', [MahasiswaController::class, 'storeKrs'])->name('store-krs');
         Route::get('/lihat-khs', [KhsMahasiswaController::class, 'index'])->name('lihat-khs');
         Route::get('/profil', [MahasiswaController::class, 'profil'])->name('profil');
         Route::put('/profil', [MahasiswaController::class, 'updateProfil'])->name('profil.update');
+        Route::get('/api/paket-semester', [MahasiswaController::class, 'getPaketSemester'])
+            ->name('api.paket-semester');
 
     });
 
     // DOSEN WALI
-    Route::prefix('dosen-wali')->name('dosen_wali.')->group(function () {
+    Route::prefix('dosen-wali')->name('pages.dosen_wali.')->group(function () {
         Route::get('/beranda', [DosenWaliController::class, 'index'])->name('beranda');
 
         // KRS Verifikasi
@@ -86,7 +88,7 @@ Route::middleware('check.simple.auth')->group(function () {
     });
 
     // DOSEN MATA KULIAH
-    Route::prefix('dosen_matkul')->name('dosen_matkul.')->group(function () {
+    Route::prefix('dosen_matkul')->name('pages.dosen_matkul.')->group(function () {
 
         Route::get('/beranda', [DosenMKController::class, 'index'])->name('beranda');
         Route::get('/input-nilai', [DosenMKController::class, 'inputNilai'])->name('input-nilai');
@@ -99,7 +101,7 @@ Route::middleware('check.simple.auth')->group(function () {
     });
 
     // ADMIN TAMBAHAN
-    Route::prefix('admin/tahun-ajaran')->name('admin.tahunajaran.')->group(function () {
+    Route::prefix('admin/tahun-ajaran')->name('pages.admin.tahunajaran.')->group(function () {
         Route::get('/', [AdminController::class, 'indexTahunAjaran'])->name('index');
         Route::get('/create', [AdminController::class, 'createTahunAjaran'])->name('create');
         Route::post('/', [AdminController::class, 'storeTahunAjaran'])->name('store');
@@ -108,7 +110,7 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::delete('/{id}', [AdminController::class, 'destroyTahunAjaran'])->name('destroy');
     });
 
-    Route::prefix('admin/paket-mk')->name('admin.paketmk.')->group(function () {
+    Route::prefix('admin/paket-mk')->name('pages.admin.paketmk.')->group(function () {
         Route::get('/', [AdminController::class, 'indexPaketMK'])->name('index');
         Route::get('/create', [AdminController::class, 'createPaketMK'])->name('create');
         Route::post('/', [AdminController::class, 'storePaketMK'])->name('store');

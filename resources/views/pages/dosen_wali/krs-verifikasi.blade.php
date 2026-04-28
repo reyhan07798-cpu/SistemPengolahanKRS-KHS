@@ -50,7 +50,7 @@
     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
         <h3 class="font-bold text-dark mb-4">Filter</h3>
         {{-- ✅ Route diperbaiki dengan prefix dosen_wali --}}
-        <form method="GET" action="{{ route('dosen_wali.krs.verifikasi') }}">
+        <form method="GET" action="{{ route('pages.dosen_wali.krs.verifikasi') }}">
             <div class="flex gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 mb-1">Status</label>
@@ -121,7 +121,7 @@
                                 @if($krs['status'] == 'Menunggu')
                                 <!-- Tombol Setujui -->
                                 {{-- ✅ Route diperbaiki dengan prefix dosen_wali --}}
-                                <form action="{{ route('dosen_wali.krs.approve', $krs['nim']) }}" method="POST" class="inline">
+                                <form action="{{ route('pages.dosen_wali.krs.approve', $krs['nim']) }}" method="POST" class="inline">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="w-8 h-8 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center transition" title="Setujui" onclick="return confirm('Apakah Anda yakin ingin menyetujui KRS ini?')">
@@ -133,7 +133,7 @@
                                 
                                 <!-- Tombol Tolak -->
                                 {{-- ✅ Route diperbaiki dengan prefix dosen_wali --}}
-                                <form action="{{ route('dosen_wali.krs.reject', $krs['nim']) }}" method="POST" class="inline">
+                                <form action="{{ route('pages.dosen_wali.krs.reject', $krs['nim']) }}" method="POST" class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="w-8 h-8 rounded-full bg-red-100 text-red-500 hover:bg-red-200 flex items-center justify-center transition" title="Tolak" onclick="return confirm('Apakah Anda yakin ingin menolak KRS ini?')">

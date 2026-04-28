@@ -9,6 +9,7 @@ use App\Models\TahunAjaran;
 use App\Models\PaketMataKuliah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Collection;
 
 class AdminController extends Controller
 {
@@ -32,7 +33,7 @@ class AdminController extends Controller
         $prodis = $mahasiswa->pluck('prodi')->unique()->values();
         $angkatans = $mahasiswa->pluck('angkatan')->unique()->sortDesc()->values();
 
-        return view('admin.dashboard_admin', compact(
+        return view('pages.admin.dashboard_admin', compact(
             'mahasiswa', 'totalMahasiswa', 'totalDosen', 'totalMataKuliah', 'avgIpk', 'prodis', 'angkatans'
         ));
     }
@@ -40,6 +41,7 @@ class AdminController extends Controller
     // ==========================================
     // 2. MAHASISWA CRUD
     // ==========================================
+
     public function indexMahasiswa()
     {
         $dosens = collect([]);
@@ -70,12 +72,12 @@ class AdminController extends Controller
             ]);
         }
 
-        return view('admin.data_mahasiswa', compact('mahasiswa', 'prodis', 'angkatans', 'dosens'));
+        return view('pages.admin.data_mahasiswa', compact('mahasiswa', 'prodis', 'angkatans', 'dosens'));
     }
 
     public function createMahasiswa()
     {
-        return view('admin.mahasiswa_create');
+        return view('pages.admin.mahasiswa_create');
     }
 
     public function storeMahasiswa(Request $request)
@@ -110,7 +112,7 @@ class AdminController extends Controller
         } else {
             $mahasiswa = (object)['id' => $id, 'nim' => '3312501017', 'nama' => 'Irenessa Rosdin', 'prodi' => 'Teknik Informatika', 'kelas' => 'A', 'angkatan' => '2025', 'dosen_wali' => 'Dr. Budi Santoso', 'email' => 'irenessa@campus.ac.id'];
         }
-        return view('admin.mahasiswa_edit', compact('mahasiswa'));
+        return view('pages.admin.mahasiswa_edit', compact('mahasiswa'));
     }
 
     public function updateMahasiswa(Request $request, $id)
@@ -152,6 +154,7 @@ class AdminController extends Controller
     // ==========================================
     // 3. DOSEN CRUD
     // ==========================================
+
     public function indexDosen()
     {
         $fakultasList = collect([
@@ -170,12 +173,12 @@ class AdminController extends Controller
             ]);
         }
 
-        return view('admin.data_dosen', compact('dosen', 'fakultasList'));
+        return view('pages.admin.data_dosen', compact('dosen', 'fakultasList'));
     }
 
     public function createDosen()
     {
-        return view('admin.dosen_create');
+        return view('pages.admin.dosen_create');
     }
 
     public function storeDosen(Request $request)
@@ -207,7 +210,7 @@ class AdminController extends Controller
         } else {
             $dosen = (object)['id' => $id, 'nik' => '198501012020011001', 'nama' => 'Dr. Budi Santoso, M.Kom', 'email' => 'budi.santoso@campus.ac.id', 'tipe_dosen' => 'Dosen Wali', 'fakultas' => 'Fakultas Teknik', 'alamat' => '-'];
         }
-        return view('admin.dosen_edit', compact('dosen'));
+        return view('pages.admin.dosen_edit', compact('dosen'));
     }
 
     public function updateDosen(Request $request, $id)
@@ -247,6 +250,7 @@ class AdminController extends Controller
     // ==========================================
     // 4. MATA KULIAH CRUD
     // ==========================================
+
     public function indexMatakuliah()
     {
         $dosens = collect([]);
@@ -272,12 +276,12 @@ class AdminController extends Controller
             ]);
         }
 
-        return view('admin.data_matakuliah', compact('matakuliah', 'dosens', 'semesters', 'days'));
+        return view('pages.admin.data_matakuliah', compact('matakuliah', 'dosens', 'semesters', 'days'));
     }
 
     public function createMatakuliah()
     {
-        return view('admin.matakuliah_create');
+        return view('pages.admin.matakuliah_create');
     }
 
     public function storeMatakuliah(Request $request)
@@ -316,7 +320,7 @@ class AdminController extends Controller
         } else {
             $matakuliah = (object)['id' => $id, 'kode' => 'IF101', 'nama' => 'Pemrograman Web', 'sks' => 3, 'semester' => '3', 'dosen_pengampu' => 'Dr. Budi Santoso', 'jadwal' => 'Senin, 08:00 - 10:00, Lab Komputer 1'];
         }
-        return view('admin.matakuliah_edit', compact('matakuliah'));
+        return view('pages.admin.matakuliah_edit', compact('matakuliah'));
     }
 
     public function updateMatakuliah(Request $request, $id)
@@ -353,10 +357,12 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Gagal menghapus data.');
         }
     }
+    
 
     // ==========================================
     // 5. TAHUN AJARAN CRUD
     // ==========================================
+
     public function indexTahunAjaran()
     {
         $currentYear = date('Y');
@@ -377,12 +383,12 @@ class AdminController extends Controller
             ]);
         }
 
-        return view('admin.data_tahunajaran', compact('tahunAjaran', 'tahunOptions'));
+        return view('pages.admin.data_tahunajaran', compact('tahunAjaran', 'tahunOptions'));
     }
 
     public function createTahunAjaran()
     {
-        return view('admin.tahunajaran_create');
+        return view('pages.admin.tahunajaran_create');
     }
 
     public function storeTahunAjaran(Request $request)
@@ -395,62 +401,23 @@ class AdminController extends Controller
         try {
             $status = $request->has('status') ? 'Aktif' : 'Nonaktif';
 
+
             $data = $request->all();
             $data['status'] = $status;
 
             if (Schema::hasTable('tahun_ajarans')) {
                 TahunAjaran::create($data);
             }
-            return redirect()->route('admin.tahunajaran.index')->with('success', 'Data tahun ajaran berhasil ditambahkan!');
+            return redirect()->route('pages.admin.tahunajaran.index')->with('success', 'Data tahun ajaran berhasil ditambahkan!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menyimpan data.')->withInput();
         }
     }
-
-    public function editTahunAjaran($id)
-    {
-        if (Schema::hasTable('tahun_ajarans')) {
-            $tahunAjaran = TahunAjaran::findOrFail($id);
-        } else {
-            $tahunAjaran = (object)['id' => $id, 'semester' => 'Ganjil', 'tahun_ajaran' => '2024/2025', 'status' => 'Nonaktif'];
-        }
-        return view('admin.tahunajaran_edit', compact('tahunAjaran'));
-    }
-
-    public function updateTahunAjaran(Request $request, $id)
-    {
-        $request->validate([
-            'semester' => 'required|string|in:Ganjil,Genap',
-            'tahun_ajaran' => 'required|string|max:20',
-        ]);
-
-        try {
-            if (Schema::hasTable('tahun_ajarans')) {
-                $ta = TahunAjaran::findOrFail($id);
-                $ta->update($request->all());
-            }
-            return redirect()->route('admin.tahunajaran.index')->with('success', 'Data tahun ajaran berhasil diupdate!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal update data.');
-        }
-    }
-
-    public function destroyTahunAjaran($id)
-    {
-        try {
-            if (Schema::hasTable('tahun_ajarans')) {
-                $ta = TahunAjaran::findOrFail($id);
-                $ta->delete();
-            }
-            return redirect()->route('admin.tahunajaran.index')->with('success', 'Data tahun ajaran berhasil dihapus!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menghapus data.');
-        }
-    }
-
-    // ==========================================
+    
+       // ==========================================
     // 6. PAKET MATA KULIAH CRUD
     // ==========================================
+
     public function indexPaketMK()
     {
         $allMataKuliah = collect([
@@ -470,127 +437,49 @@ class AdminController extends Controller
             $paketMK = PaketMataKuliah::orderBy('created_at', 'desc')->get();
         } else {
             $paketMK = collect([
-                (object)[
-                    'id' => 1,
-                    'nama_paket' => 'Paket Normal Semester 3',
-                    'semester' => '3',
-                    'prodi' => 'Teknik Informatika',
-                    'total_sks' => 12,
-                    'jumlah_mk' => 4,
-                    'deskripsi' => 'Paket semester 3 untuk Teknik Informatika',
-                    'mata_kuliah_ids' => [1, 3, 4, 5]
-                ],
-                (object)[
-                    'id' => 2,
-                    'nama_paket' => 'Paket Normal Semester 1',
-                    'semester' => '1',
-                    'prodi' => 'Sistem Informasi',
-                    'total_sks' => 9,
-                    'jumlah_mk' => 3,
-                    'deskripsi' => 'Paket semester 1 untuk Sistem Informasi',
-                    'mata_kuliah_ids' => [2, 4, 6]
-                ],
+                (object)['id' => 1, 'nama_paket' => 'Paket Semester 1', 'semester' => '1', 'prodi' => 'Teknik Informatika', 'total_sks' => 20, 'jumlah_mk' => 7, 'deskripsi' => 'Mata kuliah dasar'],
             ]);
         }
 
-        return view('admin.data_paketmk', compact('paketMK', 'allMataKuliah', 'prodis', 'semesters'));
-    }
-
-    public function createPaketMK()
-    {
-        return view('admin.paketmk_create');
+        return view('pages.admin.data_paketmk', compact('paketMK', 'allMataKuliah', 'prodis', 'semesters'));
     }
 
     public function storePaketMK(Request $request)
     {
         $request->validate([
             'nama_paket' => 'required|string|max:255',
-            'semester' => 'required|string|max:10',
-            'prodi' => 'required|string|max:100',
-            'mata_kuliah' => 'required|array',
+            'semester' => 'required|string',
+            'prodi' => 'required|string',
             'deskripsi' => 'nullable|string',
+            'mata_kuliah' => 'required|array', // Array ID mata kuliah yang dipilih
         ]);
 
         try {
+            
+            $selectedIds = $request->mata_kuliah;
             $totalSks = 0;
-            foreach ($request->mata_kuliah as $mkId) {
-                $mk = MataKuliah::find($mkId);
-                if ($mk) $totalSks += $mk->sks;
+            
+            $dummyMk = collect([
+                1 => 4, 2 => 2, 3 => 3, 4 => 3, 5 => 3, 6 => 3, 7 => 3
+            ]);
+
+            foreach ($selectedIds as $id) {
+                $totalSks += $dummyMk[$id] ?? 0;
             }
 
-            $data = $request->all();
+            $data = $request->except('mata_kuliah');
             $data['total_sks'] = $totalSks;
-            $data['jumlah_mk'] = count($request->mata_kuliah);
+            $data['jumlah_mk'] = count($selectedIds);
 
             if (Schema::hasTable('paket_mata_kuliahs')) {
-                PaketMataKuliah::create($data);
+                $paket = PaketMataKuliah::create($data);
             }
-            return redirect()->route('admin.paketmk.index')->with('success', 'Data paket mata kuliah berhasil ditambahkan!');
+
+            return redirect()->route('pages.admin.paketmk.index')->with('success', 'Data paket berhasil ditambahkan!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menyimpan data.')->withInput();
         }
     }
 
-    public function editPaketMK($id)
-    {
-        if (Schema::hasTable('paket_mata_kuliahs')) {
-            $paketMK = PaketMataKuliah::findOrFail($id);
-        } else {
-            $paketMK = (object)[
-                'id' => $id,
-                'nama_paket' => 'Paket Normal Semester 3',
-                'semester' => '3',
-                'prodi' => 'Teknik Informatika',
-                'total_sks' => 12,
-                'jumlah_mk' => 4,
-                'deskripsi' => 'Paket semester 3 untuk Teknik Informatika',
-                'mata_kuliah_ids' => [1, 3, 4, 5]
-            ];
-        }
-        return view('admin.paketmk_edit', compact('paketMK'));
-    }
-
-    public function updatePaketMK(Request $request, $id)
-    {
-        $request->validate([
-            'nama_paket' => 'required|string|max:255',
-            'semester' => 'required|string|max:10',
-            'prodi' => 'required|string|max:100',
-            'mata_kuliah' => 'required|array',
-            'deskripsi' => 'nullable|string',
-        ]);
-
-        try {
-            $totalSks = 0;
-            foreach ($request->mata_kuliah as $mkId) {
-                $mk = MataKuliah::find($mkId);
-                if ($mk) $totalSks += $mk->sks;
-            }
-
-            $data = $request->all();
-            $data['total_sks'] = $totalSks;
-            $data['jumlah_mk'] = count($request->mata_kuliah);
-
-            if (Schema::hasTable('paket_mata_kuliahs')) {
-                $paket = PaketMataKuliah::findOrFail($id);
-                $paket->update($data);
-            }
-            return redirect()->route('admin.paketmk.index')->with('success', 'Data paket mata kuliah berhasil diupdate!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal update data.');
-        }
-    }
-
-    public function destroyPaketMK($id)
-    {
-        try {
-            if (Schema::hasTable('paket_mata_kuliahs')) {
-                $paket = PaketMataKuliah::findOrFail($id);
-                $paket->delete();
-            }
-            return redirect()->route('admin.paketmk.index')->with('success', 'Data paket mata kuliah berhasil dihapus!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menghapus data.');
-        }
-    }
+   
 }

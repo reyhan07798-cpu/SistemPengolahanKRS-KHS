@@ -90,7 +90,7 @@
                 </div>
 
                 <!-- Form Body -->
-                <form action="{{ route('admin.mahasiswa.store') }}" method="POST" class="mt-6">
+                <form action="{{ route('pages.admin.mahasiswa.store') }}" method="POST" class="mt-6">
                     @csrf
                     
                     <!-- Grid Layout -->

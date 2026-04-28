@@ -58,7 +58,7 @@
     <!-- Filter -->
     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
         <h3 class="font-bold text-dark mb-4">Filter</h3>
-        <form method="GET" action="{{ route('dosen_wali.khs') }}">
+        <form method="GET" action="{{ route('pages.dosen_wali.khs') }}">
             <div class="flex gap-4 items-end">
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 mb-1">Kelas</label>

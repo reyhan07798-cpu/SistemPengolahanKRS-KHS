@@ -36,7 +36,7 @@
             </button>
         </div>
 
-        <form action="{{ route('dosen_matkul.profil.update') }}" method="POST" id="formProfil">
+        <form action="{{ route('pages.dosen_matkul.profil.update') }}" method="POST" id="formProfil">
             @csrf
             @method('PUT')
             
@@ -127,7 +127,7 @@
             </button>
         </div>
 
-        <form action="{{ route('dosen_matkul.profil.password') }}" method="POST" id="formPassword" class="hidden">
+        <form action="{{ route('pages.dosen_matkul.profil.password') }}" method="POST" id="formPassword" class="hidden">
             @csrf
             @method('PUT')
             

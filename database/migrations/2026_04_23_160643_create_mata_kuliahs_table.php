@@ -18,6 +18,11 @@ return new class extends Migration
             $table->integer('sks');
             $table->timestamps();
         });
+        Schema::table('mata_kuliah', function (Blueprint $table) {
+            $table->foreignId('semester_id')->nullable()->after('sks')->constrained('semesters')->onDelete('set null');
+            $table->string('tahun_ajaran')->nullable()->after('semester_id');
+            $table->integer('semester_ke')->nullable()->after('tahun_ajaran');
+        });
     }
 
     /**
