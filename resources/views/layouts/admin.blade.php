@@ -20,7 +20,7 @@
             <div class="menu-title">Menu Utama</div>
 
             <nav class="menu-list">
-                <a href="{{ route('admin.dashboard') }}" class="menu-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('pages.admin.dashboard') }}" class="menu-item {{ request()->routeIs('pages.admin.dashboard') ? 'active' : '' }}">
                     <span class="menu-icon">▦</span>
                     <span class="menu-label">Beranda</span>
                 </a>

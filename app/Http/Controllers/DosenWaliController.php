@@ -42,7 +42,7 @@ class DosenWaliController extends Controller
             ],
         ];
 
-        return view('dosen_wali.beranda', compact('stats', 'mahasiswa'));
+        return view('pages.dosen_wali.beranda', compact('stats', 'mahasiswa'));
     }
 
     // ✅ METHOD KHUSUS UNTUK KHS DOSEN WALI
@@ -99,7 +99,7 @@ class DosenWaliController extends Controller
             array_sum(array_column($allMahasiswa, 'ipk')) / $totalMahasiswa : 0;
         $ipkTinggi = count(array_filter($allMahasiswa, fn($m) => $m['ipk'] >= 3.5));
 
-        return view('dosen_wali.khs', compact(
+        return view('pages.dosen_wali.khs', compact(
             'mahasiswa',
             'filterKelas',
             'totalMahasiswa',

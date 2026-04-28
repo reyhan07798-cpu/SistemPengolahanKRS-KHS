@@ -41,6 +41,9 @@
             icon='<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M12 21c4.97 0 9-4.03 9-9S16.97 3 12 3 3 7.03 3 12s4.03 9 9 9z"/></svg>' />
     </div>
 
+    {{-- ============================================================ --}}
+    {{-- FILTER KRS --}}
+    {{-- ============================================================ --}}
     <div class="bg-slate-100 rounded-[2rem] p-6 mb-8">
         <div class="bg-white rounded-[1.75rem] shadow-sm border border-slate-200 p-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -389,3 +392,4 @@
     validasiSks();
     </script>
 @endsection
+

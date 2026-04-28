@@ -72,7 +72,7 @@ class DosenMKController extends Controller
             ],
         ];
 
-        return view('dosen_matkul.beranda', compact('stats', 'mataKuliah', 'mahasiswaTerbaru'));
+        return view('pages.dosen_matkul.beranda', compact('stats', 'mataKuliah', 'mahasiswaTerbaru'));
     }
 
     public function inputNilai()
@@ -108,7 +108,7 @@ class DosenMKController extends Controller
             ],
         ];
 
-        return view('dosen_matkul.input-nilai', compact('mataKuliahList'));
+        return view('pages.dosen_matkul.input-nilai', compact('mataKuliahList'));
     }
 
     public function lihatNilai(Request $request)
@@ -186,7 +186,7 @@ class DosenMKController extends Controller
             'IF104 - Rekayasa Perangkat Lunak',
         ];
 
-        return view('dosen_matkul.lihat-nilai', compact('stats', 'mahasiswa', 'filterMK', 'daftarMK'));
+        return view('pages.dosen_matkul.lihat-nilai', compact('stats', 'mahasiswa', 'filterMK', 'daftarMK'));
     }
 
     public function profil()
@@ -200,7 +200,7 @@ class DosenMKController extends Controller
             'program_studi' => 'Teknik Informatika',
         ];
 
-        return view('dosen_matkul.profil', compact('dosen'));
+        return view('pages.dosen_matkul.profil', compact('dosen'));
     }
         public function update(Request $request)
     {
