@@ -72,7 +72,7 @@ class DosenMKController extends Controller
             ],
         ];
 
-        return view('pages.dosen_matkul.beranda', compact('stats', 'mataKuliah', 'mahasiswaTerbaru'));
+        return view('dosen_matkul.beranda', compact('stats', 'mataKuliah', 'mahasiswaTerbaru'));
     }
 
     public function inputNilai()
@@ -108,7 +108,7 @@ class DosenMKController extends Controller
             ],
         ];
 
-        return view('pages.dosen_matkul.input-nilai', compact('mataKuliahList'));
+        return view('dosen_matkul.input-nilai', compact('mataKuliahList'));
     }
 
     public function lihatNilai(Request $request)
@@ -186,7 +186,7 @@ class DosenMKController extends Controller
             'IF104 - Rekayasa Perangkat Lunak',
         ];
 
-        return view('pages.dosen_matkul.lihat-nilai', compact('stats', 'mahasiswa', 'filterMK', 'daftarMK'));
+        return view('dosen_matkul.lihat-nilai', compact('stats', 'mahasiswa', 'filterMK', 'daftarMK'));
     }
 
     public function profil()
@@ -200,9 +200,10 @@ class DosenMKController extends Controller
             'program_studi' => 'Teknik Informatika',
         ];
 
-        return view('pages.dosen_matkul.profil', compact('dosen'));
+        return view('dosen_matkul.profil', compact('dosen'));
     }
-        public function update(Request $request)
+
+    public function update(Request $request)
     {
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
@@ -210,8 +211,6 @@ class DosenMKController extends Controller
             'no_hp' => 'required|string',
             'alamat' => 'required|string',
         ]);
-
-
 
         return redirect()->back()->with('success', 'Profil berhasil diperbarui');
     }
@@ -223,11 +222,10 @@ class DosenMKController extends Controller
             'password_baru' => ['required', 'min:8', 'confirmed'],
         ]);
 
-
-
         return redirect()->back()->with('success', 'Password berhasil diubah');
     }
-        private function hitungNilaiAkhir($item)
+
+    private function hitungNilaiAkhir($item)
     {
         $tugas = $item['tugas'] ?? 0;
         $praktikum = $item['praktikum'] ?? 0;

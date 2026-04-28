@@ -81,7 +81,7 @@ class KrsVerifikasiController extends Controller
             'ditolak'   => count(array_filter($allKrs, fn($k) => $k['status'] == 'Ditolak')),
         ];
 
-        return view('pages.dosen_wali.krs-verifikasi', compact('stats', 'daftarKrs', 'filterStatus', 'filterKelas'));
+        return view('dosen_wali.krs-verifikasi', compact('stats', 'daftarKrs', 'filterStatus', 'filterKelas'));
     }
 
     public function approve($id)
@@ -93,4 +93,4 @@ class KrsVerifikasiController extends Controller
     {
         return redirect()->back()->with('error', 'KRS berhasil ditolak');
     }
-} 
+}
