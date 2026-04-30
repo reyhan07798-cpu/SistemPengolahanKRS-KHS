@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+
+class LoginController extends Controller
+{
+    public function showLoginForm()
+    {
+        return view('auth.login');
+    }
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'nik_nim' => 'required',
+            'password' => 'required'
+        ]);
+
+        $identifier = $credentials['nik_nim'];
+        $password = $credentials['password'];
+
+        // 1. Cek Mahasiswa (Login pakai NIM)
+        $mahasiswa = \App\Models\Mahasiswa::where('nim', $identifier)->first();
+        if ($mahasiswa && $mahasiswa->password == $password) { // Ganti dengan Hash::check jika terenkripsi
+            session([
+                'user_type' => 'mahasiswa',
+                'user_data' => $mahasiswa,
+                'is_logged_in' => true
+            ]);
+            return redirect()->route('mahasiswa.dashboard');
+        }
+
+        // 2. Cek Dosen (Login pakai NIK)
+        $dosen = \App\Models\Dosen::where('nik', $identifier)->first();
+        if ($dosen && $dosen->password == $password) {
+            session([
+                'user_type' => 'dosen',
+                'user_data' => $dosen,
+                'is_logged_in' => true,
+                // Simulasi Role: Set true/false sesuai database atau dummy
+                'is_wali' => true,  // Ubah jadi false untuk tes tampilan kosong
+                'is_matkul' => true // Ubah jadi false untuk tes tampilan kosong
+            ]);
+            return redirect()->route('dosen.dashboard');
+        }
+
+        return back()->withErrors(['nik_nim' => 'NIK/NIM atau Password salah!']);
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/login');
+    }
+}

@@ -6,6 +6,13 @@ use Illuminate\Http\Request;
 
 class DosenMKController extends Controller
 {
+    protected function checkRole()
+    {
+        if (!session('is_dosen_mk')) {
+            return view('pages.dosen.empty-access', ['roleName' => 'Dosen Mata Kuliah']);
+        }
+        return null;
+    }
     public function index()
     {
         $stats = [

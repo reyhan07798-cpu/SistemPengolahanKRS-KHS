@@ -1,4 +1,4 @@
-@extends('layouts.dosen_mk')
+@extends('layouts.dosen')
 
 @section('content')
     <!-- Header -->

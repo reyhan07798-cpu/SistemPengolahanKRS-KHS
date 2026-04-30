@@ -1,4 +1,4 @@
-@extends('layouts.dosen_wali')
+@extends('layouts.dosen')
 
 @section('content')
     <!-- Header Profile -->
@@ -124,14 +124,13 @@
         </form>
     </div>
 
-    <!-- Ubah Kata Sandi -->
+    <!-- Ubah Kata Sandi (Opsional - Bisa Dihapus Jika Tidak Dipakai) -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div class="flex items-start gap-4 mb-6">
             <div class="p-3 bg-gray-100 rounded-lg">
                 <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                    </path>
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
             </div>
             <div class="flex-1">
@@ -144,35 +143,23 @@
             </button>
         </div>
 
+        <form action="#" method="POST" id="formPassword" class="hidden">
             @csrf
             @method('PUT')
 
             <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Password Lama</label>
-                    <input type="password" name="password_lama"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Password Baru</label>
-                    <input type="password" name="password_baru"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Konfirmasi Password Baru</label>
-                    <input type="password" name="password_baru_confirmation"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-                </div>
+                <input type="password" name="password_lama" placeholder="Kata sandi lama"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <input type="password" name="password_baru" placeholder="Kata sandi baru"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <input type="password" name="password_baru_confirmation" placeholder="Konfirmasi kata sandi baru"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
 
                 <div class="flex gap-2 pt-4">
-                    <button type="submit"
-                        class="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition">
+                    <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                         Simpan Password
                     </button>
-                    <button type="button" onclick="togglePassword()"
-                        class="px-6 py-2 bg-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-400 transition">
+                    <button type="button" onclick="togglePassword()" class="px-6 py-2 bg-gray-300 rounded-lg">
                         Batal
                     </button>
                 </div>

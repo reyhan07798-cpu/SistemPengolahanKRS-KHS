@@ -1,11 +1,53 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+/* Custom styles tambahan */
+:root {
+  --primary: #2F5D8A;
+  --secondary: #4A7FB5;
+  --dark: #24496B;
+}
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #F4F6F8;
+  color: #6B7280;
+}
+
+/* Sidebar styles */
+.sidebar {
+  min-height: 100vh;
+  background: var(--dark);
+  color: white;
+  transition: all 0.3s;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.25rem;
+  border-radius: 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.sidebar-link.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border-left: 4px solid #60A5FA;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+  transition: transform 0.2s;
 }

@@ -1,4 +1,4 @@
-@extends('layouts.dosen_mk')
+@extends('layouts.dosen')
 
 @section('content')
     <!-- Header -->
@@ -58,7 +58,7 @@
     <!-- Filter -->
     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
         <h3 class="font-bold text-dark mb-4">Filter Mata Kuliah</h3>
-        <form method="GET" action="{{ route('pages.dosen_matkul.lihat-nilai') }}">
+        <form method="GET" action="{{ route('dosen.mk.lihat-nilai') }}">
             <div class="flex gap-4 items-end">
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 mb-1">Pilih Mata Kuliah</label>
@@ -73,7 +73,7 @@
                     Terapkan Filter
                 </button>
                 @if($filterMK != 'semua')
-                <a href="{{ route('dosen_matkul.lihat-nilai') }}" class="px-4 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition">
+                <a href="{{ route('dosen.mk.lihat-nilai') }}" class="px-4 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition">
                     Reset
                 </a>
                 @endif

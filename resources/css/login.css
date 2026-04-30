@@ -166,6 +166,13 @@ body {
   background: rgba(74,159,245,0.02);
 }
 
+.hint-text {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 8px;
+    text-align: center;
+}
+
 .toggle-pw {
   position: absolute;
   right: 0.8rem;
