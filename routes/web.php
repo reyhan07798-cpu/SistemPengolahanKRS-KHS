@@ -8,9 +8,12 @@ use App\Http\Controllers\KrsVerifikasiController;
 use App\Http\Controllers\KhsMahasiswaController;
 use App\Http\Controllers\ProfilDosenWaliController;
 use App\Http\Controllers\DosenMKController;
+use App\Http\Controllers\MhsPdfController;  
 use Illuminate\Support\Facades\Route;
 
+// ==========================================
 // PUBLIC ROUTES
+// ==========================================
 Route::get('/', function () {
     return view('landing');
 })->name('landing');
@@ -21,9 +24,10 @@ Route::post('/login', [SimpleLoginController::class, 'login']);
 // PROTECTED ROUTES
 Route::middleware('check.simple.auth')->group(function () {
 
+    // Logout
     Route::post('/logout', [SimpleLoginController::class, 'logout'])->name('logout');
 
-    // ADMIN ROUTES
+    // ADMIN
     Route::get('/admin/dashboard', [AdminController::class, 'dashboardAdmin'])->name('pages.admin.dashboard');
 
     Route::prefix('admin/mahasiswa')->name('pages.admin.mahasiswa.')->group(function () {
@@ -53,6 +57,75 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::delete('/{id}', [AdminController::class, 'destroyMatakuliah'])->name('destroy');
     });
 
+    // MAHASISWA
+    Route::prefix('mahasiswa')->name('pages.mahasiswa.')->group(function () {
+        Route::get('/beranda', [MahasiswaController::class, 'index'])->name('beranda');
+        Route::get('/ambil-krs', [MahasiswaController::class, 'ambilKrs'])->name('ambil-krs');
+        Route::post('/ambil-krs', [MahasiswaController::class, 'storeKrs'])->name('store-krs');
+        Route::get('/lihat-khs', [KhsMahasiswaController::class, 'index'])->name('lihat-khs');
+        Route::get('/profil', [MahasiswaController::class, 'profil'])->name('profil');
+        Route::put('/profil', [MahasiswaController::class, 'updateProfil'])->name('profil.update');
+        Route::get('/api/paket-semester', [MahasiswaController::class, 'getPaketSemester'])
+            ->name('api.paket-semester');
+        Route::get('/mahasiswa/khs/pdf', [MhsPdfController::class, 'exportKhsPdf']);
+
+    });
+
+    // DOSEN WALI
+    Route::prefix('dosen-wali')->name('pages.dosen_wali.')->group(function () {
+        Route::get('/beranda', [DosenWaliController::class, 'index'])->name('beranda');
+
+        // KRS Verifikasi
+        Route::get('/krs-verifikasi', [KrsVerifikasiController::class, 'index'])->name('krs.verifikasi');
+        Route::patch('/krs/approve/{nim}', [KrsVerifikasiController::class, 'approve'])->name('krs.approve');
+        Route::delete('/krs/reject/{nim}', [KrsVerifikasiController::class, 'reject'])->name('krs.reject');
+
+        // KHS Mahasiswa
+        Route::get('/khs', [DosenWaliController::class, 'khs'])->name('khs');
+        // Profil
+        Route::get('/profil', [ProfilDosenWaliController::class, 'index'])->name('profil');
+        Route::post('/dosen-wali/profil/update', [DosenWaliController::class, 'update'])->name('profil.update');        
+        Route::put('/profil/password', [ProfilDosenWaliController::class, 'updatePassword'])->name('profil.password');
+        Route::post('/dosen-wali/profil/update', [DosenWaliController::class, 'updateProfil'])->name('profil.update');
+    });
+
+    // DOSEN GABUNGAN (Wali + Matkul dalam satu sidebar)
+    // Reuse controller yang sudah ada — cuma URL group baru
+    Route::prefix('dosen')->name('pages.dosen.')->group(function () {
+        // Beranda dashboard gabungan
+        Route::get('/beranda', [DosenWaliController::class, 'index'])->name('beranda');
+
+        // Sub-menu: Dosen Wali
+        Route::get('/wali/krs-verifikasi', [KrsVerifikasiController::class, 'index'])->name('wali.krs.verifikasi');
+        Route::patch('/wali/krs/approve/{nim}', [KrsVerifikasiController::class, 'approve'])->name('wali.krs.approve');
+        Route::delete('/wali/krs/reject/{nim}', [KrsVerifikasiController::class, 'reject'])->name('wali.krs.reject');
+        Route::get('/wali/khs', [DosenWaliController::class, 'khs'])->name('wali.khs');
+
+        // Sub-menu: Dosen Matkul
+        Route::get('/matkul/input-nilai', [DosenMKController::class, 'inputNilai'])->name('matkul.input-nilai');
+        Route::post('/matkul/simpan-nilai', [DosenMKController::class, 'simpanNilai'])->name('matkul.simpan-nilai');
+        Route::get('/matkul/lihat-nilai', [DosenMKController::class, 'lihatNilai'])->name('matkul.lihat-nilai');
+
+        // Profil
+        Route::get('/profil', [ProfilDosenWaliController::class, 'index'])->name('profil');
+        Route::post('/profil/update', [DosenWaliController::class, 'updateProfil'])->name('profil.update');
+        Route::put('/profil/password', [ProfilDosenWaliController::class, 'updatePassword'])->name('profil.password');
+    });
+
+    // DOSEN MATA KULIAH
+    Route::prefix('dosen_matkul')->name('pages.dosen_matkul.')->group(function () {
+
+        Route::get('/beranda', [DosenMKController::class, 'index'])->name('beranda');
+        Route::get('/input-nilai', [DosenMKController::class, 'inputNilai'])->name('input-nilai');
+        Route::post('/simpan-nilai', [DosenMKController::class, 'simpanNilai'])->name('simpan-nilai');
+        Route::get('/lihat-nilai', [DosenMKController::class, 'lihatNilai'])->name('lihat-nilai');
+
+        Route::get('/profil', [DosenMKController::class, 'profil'])->name('profil');
+        Route::put('/profil', [DosenMKController::class, 'update'])->name('profil.update');
+        Route::put('/profil/password', [DosenMKController::class, 'updatePassword'])->name('profil.password');
+    });
+
+    // ADMIN TAMBAHAN
     Route::prefix('admin/tahun-ajaran')->name('pages.admin.tahunajaran.')->group(function () {
         Route::get('/', [AdminController::class, 'indexTahunAjaran'])->name('index');
         Route::get('/create', [AdminController::class, 'createTahunAjaran'])->name('create');
@@ -70,76 +143,5 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::put('/{id}', [AdminController::class, 'updatePaketMK'])->name('update');
         Route::delete('/{id}', [AdminController::class, 'destroyPaketMK'])->name('destroy');
     });
-
-    // MAHASISWA ROUTES
-    Route::prefix('mahasiswa')->name('pages.mahasiswa.')->group(function () {
-        Route::get('/beranda', [MahasiswaController::class, 'index'])->name('beranda');
-        Route::get('/ambil-krs', [MahasiswaController::class, 'ambilKrs'])->name('ambil-krs');
-        Route::post('/ambil-krs', [MahasiswaController::class, 'storeKrs'])->name('store-krs');
-        Route::get('/lihat-khs', [KhsMahasiswaController::class, 'index'])->name('lihat-khs');
-        Route::get('/profil', [MahasiswaController::class, 'profil'])->name('profil');
-        Route::put('/profil', [MahasiswaController::class, 'updateProfil'])->name('profil.update');
-        Route::get('/api/paket-semester', [MahasiswaController::class, 'getPaketSemester'])->name('api.paket-semester');
-    });
-
-    // DOSEN ROUTES
-    Route::prefix('dosen')->name('dosen.')->group(function () {
-
-        // Beranda alias (dipakai di empty-access redirect)
-        Route::get('/beranda', function () {
-            return redirect()->route('dosen.wali.beranda');
-        })->name('dashboard');
-
-        // --- Dosen Wali ---
-        Route::prefix('wali')->name('wali.')->group(function () {
-            Route::get('/beranda', [DosenWaliController::class, 'index'])->name('beranda');
-            Route::get('/krs-verifikasi', [DosenWaliController::class, 'verifikasiKrs'])->name('krs-verifikasi');
-            Route::patch('/krs/{nim}/approve', [DosenWaliController::class, 'approveKrs'])->name('krs.approve');
-            Route::delete('/krs/{nim}/reject', [DosenWaliController::class, 'rejectKrs'])->name('krs.reject');
-            Route::get('/khs', [DosenWaliController::class, 'khs'])->name('khs');
-        });
-
-        // --- Dosen Mata Kuliah ---
-        Route::prefix('mk')->name('mk.')->group(function () {
-            Route::get('/beranda', [DosenMKController::class, 'index'])->name('beranda');
-            Route::get('/input-nilai', [DosenMKController::class, 'inputNilai'])->name('input-nilai');
-            Route::post('/simpan-nilai', [DosenMKController::class, 'simpanNilai'])->name('simpan-nilai');
-            Route::get('/lihat-nilai', [DosenMKController::class, 'lihatNilai'])->name('lihat-nilai');
-        });
-
-        // --- Profil Dosen (Shared) ---
-        Route::get('/profil', [ProfilDosenWaliController::class, 'index'])->name('profil');
-        Route::put('/profil', [ProfilDosenWaliController::class, 'update'])->name('profil.update');
-        Route::put('/profil/password', [ProfilDosenWaliController::class, 'updatePassword'])->name('profil.password');
-
-        // Testing Role
-        Route::get('/set-role/{role}', function ($role) {
-            if ($role === 'wali') {
-                session(['is_dosen_wali' => true, 'is_dosen_mk' => false, 'user_name' => 'Dosen Wali Test', 'user_email' => 'wali@test.com']);
-            } elseif ($role === 'mk') {
-                session(['is_dosen_wali' => false, 'is_dosen_mk' => true, 'user_name' => 'Dosen MK Test', 'user_email' => 'mk@test.com']);
-            } elseif ($role === 'both') {
-                session(['is_dosen_wali' => true, 'is_dosen_mk' => true, 'user_name' => 'Dosen Lengkap', 'user_email' => 'lengkap@test.com']);
-            }
-            return redirect()->route('dosen.wali.beranda')->with('success', "✅ Role diubah ke: $role");
-        })->name('set.role');
-    });
-
-    // =========================================================
-    // ALIAS ROUTES — menyamakan nama yang dipanggil di views
-    // =========================================================
-
-    // Dosen Wali aliases
-    Route::get('/dosen/wali/krs-verifikasi-alias', [DosenWaliController::class, 'verifikasiKrs'])->name('pages.dosen_wali.krs.verifikasi');
-    Route::patch('/dosen/wali/krs/{nim}/approve', [DosenWaliController::class, 'approveKrs'])->name('pages.dosen_wali.krs.approve');
-    Route::delete('/dosen/wali/krs/{nim}/reject', [DosenWaliController::class, 'rejectKrs'])->name('pages.dosen_wali.krs.reject');
-    Route::get('/dosen/wali/khs-alias', [DosenWaliController::class, 'khs'])->name('pages.dosen_wali.khs');
-    Route::put('/dosen/wali/profil', [ProfilDosenWaliController::class, 'update'])->name('pages.dosen_wali.profil.update');
-
-    // Dosen MK aliases
-    Route::get('/dosen/mk/lihat-nilai-alias', [DosenMKController::class, 'lihatNilai'])->name('pages.dosen_matkul.lihat-nilai');
-    Route::get('/dosen/mk/lihat-nilai-alias2', [DosenMKController::class, 'lihatNilai'])->name('dosen_matkul.lihat-nilai');
-    Route::put('/dosen/mk/profil', [ProfilDosenWaliController::class, 'update'])->name('pages.dosen_matkul.profil.update');
-    Route::put('/dosen/mk/profil/password', [ProfilDosenWaliController::class, 'updatePassword'])->name('pages.dosen_matkul.profil.password');
 
 });

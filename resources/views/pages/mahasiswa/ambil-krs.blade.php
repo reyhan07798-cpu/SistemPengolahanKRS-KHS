@@ -1,169 +1,172 @@
 @extends('layouts.mahasiswa')
 
+@section('page_title', 'Ambil KRS')
+
 @section('content')
-    <header class="mb-8">
-        <h1 class="text-2xl font-bold text-dark">Ambil KRS</h1>
-        <p class="text-sm text-gray-500">Pilih mata kuliah untuk semester ini. Maksimal 24 SKS.</p>
-    </header>
+    {{-- Page Header --}}
+    <div class="nb-page-header">
+        <div>
+            <span class="nb-eyebrow">Akademik</span>
+            <h1 class="mt-2">Ambil KRS</h1>
+            <p>Pilih mata kuliah untuk semester ini. Maksimal 24 SKS per semester.</p>
+        </div>
+    </div>
 
     @if(session('success'))
-    <div class="mb-8 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-        </svg>
-        {{ session('success') }}
-    </div>
+        <div class="nb-alert nb-alert-success mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined">check_circle</span>
+            {{ session('success') }}
+        </div>
     @endif
 
-    <!-- Info Cards -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Semester Aktif</p>
-                    <h3 class="text-3xl font-bold text-dark mt-2" id="displaySemesterAktif">2</h3>
+    {{-- Info Cards --}}
+    <div class="nb-bento" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+        <div class="nb-stat nb-stat--info nb-stat--ribbon">
+            <div class="flex items-center gap-3">
+                <div class="nb-stat-icon">
+                    <span class="material-symbols-outlined filled">event</span>
                 </div>
-                <div class="p-3 bg-gray-100 rounded-lg">
-                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
+                <p class="nb-stat-label">Semester Aktif</p>
             </div>
+            <div class="nb-stat-value" id="displaySemesterAktif">2</div>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Sisa SKS</p>
-                    <h3 class="text-3xl font-bold text-green-600 mt-2" id="sisaSks">24</h3>
+        <div class="nb-stat nb-stat--accent nb-stat--ribbon">
+            <div class="flex items-center gap-3">
+                <div class="nb-stat-icon">
+                    <span class="material-symbols-outlined filled">verified</span>
                 </div>
-                <div class="p-3 bg-green-100 rounded-lg">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
+                <p class="nb-stat-label">Sisa SKS</p>
             </div>
+            <div class="nb-stat-value" id="sisaSks">24</div>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Status KRS</p>
-                    <h3 class="text-2xl font-bold text-blue-600 mt-2">Belum Diajukan</h3>
+        <div class="nb-stat nb-stat--warning nb-stat--ribbon">
+            <div class="flex items-center gap-3">
+                <div class="nb-stat-icon">
+                    <span class="material-symbols-outlined filled">pending</span>
                 </div>
-                <div class="p-3 bg-blue-100 rounded-lg">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M12 21c4.97 0 9-4.03 9-9S16.97 3 12 3 3 7.03 3 12s4.03 9 9 9z"></path>
-                    </svg>
-                </div>
+                <p class="nb-stat-label">Status KRS</p>
             </div>
+            <div class="nb-stat-value" style="font-size: 1.5rem;">Belum Diajukan</div>
         </div>
     </div>
 
-    <!-- Filter Section -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <h3 class="font-bold text-dark mb-4">Filter Paket Semester</h3>
+    {{-- Filter Section --}}
+    <div class="nb-card mb-6">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="material-symbols-outlined text-primary">filter_list</span>
+            <h3 class="nb-h3">Filter Paket Semester</h3>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tahun Ajaran</label>
-                <select id="filterTahun" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                <label class="nb-label">Tahun Ajaran</label>
+                <select id="filterTahun">
                     <option value="2025/2026" selected>2025/2026</option>
                     <option value="2024/2025">2024/2025</option>
                     <option value="2023/2024">2023/2024</option>
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                <!-- ID ini akan diisi otomatis oleh JavaScript -->
-                <select id="filterSemester" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                    <!-- Opsi akan digenerate otomatis sesuai semester aktif -->
+                <label class="nb-label">Semester</label>
+                <select id="filterSemester">
+                    {{-- Diisi otomatis oleh JS --}}
                 </select>
             </div>
             <div class="flex items-end">
-                <button onclick="loadPaketSemester()" class="w-full px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-secondary transition">
+                <button type="button" onclick="loadPaketSemester()" class="nb-btn nb-btn-primary w-full">
+                    <span class="material-symbols-outlined" style="font-size:18px;">search</span>
                     Tampilkan Paket
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Warning SKS -->
-    <div id="warningSks" class="hidden mb-4 p-4 bg-orange-100 border border-orange-400 text-orange-700 rounded-lg flex items-center gap-2">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-        </svg>
-        <span id="warningText">Anda telah mencapai batas maksimal 24 SKS per semester.</span>
+    {{-- Warning SKS --}}
+    <div id="warningSks" class="hidden mb-4">
+        <div class="nb-alert nb-alert-warning flex items-center gap-2">
+            <span class="material-symbols-outlined">warning</span>
+            <span id="warningText">Anda telah mencapai batas maksimal 24 SKS per semester.</span>
+        </div>
     </div>
 
-    <!-- Form KRS -->
+    {{-- Form KRS --}}
     <form method="POST" action="{{ route('pages.mahasiswa.store-krs') }}" id="formKrs">
         @csrf
         <input type="hidden" name="semester" id="inputSemester" value="2">
         <input type="hidden" name="tahun_ajaran" id="inputTahun" value="2025/2026">
 
-        <!-- Paket Wajib -->
-        <div id="containerWajib" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 hidden">
-            <div class="p-6 border-b border-gray-100 bg-gray-50">
-                <h3 class="font-bold text-dark">📦 Paket Semester <span id="labelSemesterWajib">2</span> (Wajib)</h3>
-                <p class="text-sm text-gray-500">Mata kuliah wajib untuk semester ini</p>
+        {{-- Paket Wajib --}}
+        <div id="containerWajib" class="nb-card-flat mb-6 hidden">
+            <div class="nb-section-header">
+                <div>
+                    <span class="nb-eyebrow" style="color: var(--color-accent-soft);">Paket Semester <span id="labelSemesterWajib">2</span></span>
+                    <h2 class="mt-1">Mata Kuliah Wajib</h2>
+                </div>
+                <span class="nb-badge nb-badge-success">Wajib Diambil</span>
             </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50 text-xs uppercase text-gray-700">
+                <table class="nb-table">
+                    <thead>
                         <tr>
-                            <th class="px-6 py-3 text-center">Pilih</th>
-                            <th class="px-6 py-3 text-left">Kode</th>
-                            <th class="px-6 py-3 text-left">Mata Kuliah</th>
-                            <th class="px-6 py-3 text-left">Dosen</th>
-                            <th class="px-6 py-3 text-center">SKS</th>
-                            <th class="px-6 py-3 text-center">Prasyarat</th>
+                            <th class="text-center">Pilih</th>
+                            <th>Kode</th>
+                            <th>Mata Kuliah</th>
+                            <th>Dosen</th>
+                            <th class="text-center">SKS</th>
+                            <th class="text-center">Prasyarat</th>
                         </tr>
                     </thead>
-                    <tbody id="tabelWajib" class="bg-white divide-y divide-gray-200 text-sm">
-                        <!-- Diisi oleh JavaScript -->
+                    <tbody id="tabelWajib">
+                        {{-- Diisi oleh JavaScript --}}
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Paket Mengulang -->
-        <div id="containerMengulang" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 hidden">
-            <div class="p-6 border-b border-gray-100 bg-gray-50">
-                <h3 class="font-bold text-dark">🔄 Mata Kuliah Mengulang</h3>
-                <p class="text-sm text-gray-500">MK yang belum lulus (nilai D/E) dan bisa diambil ulang</p>
+        {{-- Paket Mengulang --}}
+        <div id="containerMengulang" class="nb-card-flat mb-6 hidden">
+            <div class="nb-section-header" style="background-color: var(--color-warning);">
+                <div>
+                    <span class="nb-eyebrow" style="color: rgba(31,41,55,0.7);">Mengulang</span>
+                    <h2 class="mt-1" style="color: var(--color-ink);">Mata Kuliah Mengulang</h2>
+                </div>
+                <span class="nb-badge nb-badge-stable">Nilai D / E</span>
             </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50 text-xs uppercase text-gray-700">
+                <table class="nb-table">
+                    <thead>
                         <tr>
-                            <th class="px-6 py-3 text-center">Pilih</th>
-                            <th class="px-6 py-3 text-left">Kode</th>
-                            <th class="px-6 py-3 text-left">Mata Kuliah</th>
-                            <th class="px-6 py-3 text-left">Dosen</th>
-                            <th class="px-6 py-3 text-center">SKS</th>
-                            <th class="px-6 py-3 text-center">Nilai Lama</th>
+                            <th class="text-center">Pilih</th>
+                            <th>Kode</th>
+                            <th>Mata Kuliah</th>
+                            <th>Dosen</th>
+                            <th class="text-center">SKS</th>
+                            <th class="text-center">Nilai Lama</th>
                         </tr>
                     </thead>
-                    <tbody id="tabelMengulang" class="bg-white divide-y divide-gray-200 text-sm">
-                        <!-- Diisi oleh JavaScript -->
+                    <tbody id="tabelMengulang">
+                        {{-- Diisi oleh JavaScript --}}
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Summary SKS -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        {{-- Summary SKS --}}
+        <div class="nb-card mb-6">
             <div class="flex flex-wrap justify-between items-center gap-4">
                 <div>
-                    <p class="text-sm text-gray-600">Total SKS Terpilih:</p>
-                    <p class="text-3xl font-bold text-dark" id="totalSks">0</p>
-                    <p class="text-xs text-gray-500">Maksimal: 24 SKS</p>
+                    <p class="nb-label">Total SKS Terpilih</p>
+                    <p class="nb-stat-value mt-1" id="totalSks">0</p>
+                    <p class="text-xs text-muted mt-1 font-bold uppercase tracking-wider">Maksimal: 24 SKS</p>
                 </div>
-                <div class="flex gap-3">
-                    <button type="button" onclick="resetForm()" class="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+                <div class="flex gap-3 flex-wrap">
+                    <button type="button" onclick="resetForm()" class="nb-btn nb-btn-secondary">
+                        <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
                         Reset
                     </button>
-                    <button type="submit" id="btnSubmit" class="px-6 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-secondary transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <button type="submit" id="btnSubmit" class="nb-btn nb-btn-primary" disabled>
+                        <span class="material-symbols-outlined" style="font-size:18px;">send</span>
                         Ajukan KRS
                     </button>
                 </div>
@@ -171,29 +174,20 @@
         </div>
     </form>
 
-    <!-- Empty State -->
-    <div id="emptyState" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        <h3 class="text-lg font-semibold text-gray-700 mb-2">Klik "Tampilkan Paket"</h3>
-        <p class="text-gray-500">Pilih semester dan tahun ajaran, lalu klik tombol untuk melihat mata kuliah.</p>
+    {{-- Empty State --}}
+    <div id="emptyState" class="nb-card text-center py-12">
+        <span class="material-symbols-outlined text-muted" style="font-size:64px;">assignment</span>
+        <h3 class="nb-h3 mt-4">Klik "Tampilkan Paket"</h3>
+        <p class="text-muted mt-2">Pilih semester dan tahun ajaran, lalu klik tombol untuk melihat mata kuliah.</p>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    @push('scripts')
     <script>
-        // ==========================================
-        // 1. SIMULASI DATA MAHASISWA (Dari Database)
-        // ==========================================
-        // Ganti angka ini nanti dengan data dinamis dari controller
-        const semesterAktifMahasiswa = 2; 
+        const semesterAktifMahasiswa = 2;
         const MAX_SKS = 24;
         let selectedSks = 0;
         let paketData = {};
 
-        // ==========================================
-        // 2. DUMMY DATA PAKET SEMESTER
-        // ==========================================
         const dummyData = {
             1: {
                 wajib: [
@@ -233,68 +227,38 @@
             }
         };
 
-        // ==========================================
-        // 3. INIT SAAT HALAMAN LOAD
-        // ==========================================
-        document.addEventListener('DOMContentLoaded', function() {
-            // Tampilkan semester aktif di card atas
+        document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('displaySemesterAktif').textContent = semesterAktifMahasiswa;
-            
-            // Isi dropdown semester secara dinamis (Hanya 1 sampai Semester Aktif)
             const selectSemester = document.getElementById('filterSemester');
-            selectSemester.innerHTML = ''; // Reset options
-            
+            selectSemester.innerHTML = '';
             for (let i = 1; i <= semesterAktifMahasiswa; i++) {
                 const option = document.createElement('option');
                 option.value = i;
-                
-                // Tambahkan label (Aktif) untuk semester saat ini
                 if (i === semesterAktifMahasiswa) {
                     option.textContent = `Semester ${i} (Aktif)`;
-                    option.selected = true; // Default terpilih
+                    option.selected = true;
                 } else {
                     option.textContent = `Semester ${i}`;
                 }
-                
                 selectSemester.appendChild(option);
             }
-
-            console.log(`Halaman Siap. Mahasiswa berada di Semester ${semesterAktifMahasiswa}`);
         });
 
-        // ==========================================
-        // 4. FUNGSI LOAD PAKET
-        // ==========================================
         function loadPaketSemester() {
             const semester = document.getElementById('filterSemester').value;
             const tahun = document.getElementById('filterTahun').value;
-            
-            // Update hidden inputs
             document.getElementById('inputSemester').value = semester;
             document.getElementById('inputTahun').value = tahun;
             document.getElementById('labelSemesterWajib').textContent = semester;
-            
-            // Load data dari dummy
             paketData = dummyData[semester] || { wajib: [], mengulang: [] };
-            
-            // Render tabel
             renderTabel();
-            
-            // Reset form
             resetForm();
-            
-            // Hide empty state
             document.getElementById('emptyState').classList.add('hidden');
         }
 
-        // ==========================================
-        // 5. RENDER TABEL
-        // ==========================================
         function renderTabel() {
             renderTabelSection('tabelWajib', paketData.wajib, false);
             renderTabelSection('tabelMengulang', paketData.mengulang, true);
-            
-            // Show/hide containers
             document.getElementById('containerWajib').classList.toggle('hidden', paketData.wajib.length === 0);
             document.getElementById('containerMengulang').classList.toggle('hidden', paketData.mengulang.length === 0);
         }
@@ -302,86 +266,65 @@
         function renderTabelSection(tbodyId, data, isMengulang) {
             const tbody = document.getElementById(tbodyId);
             tbody.innerHTML = '';
-            
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Tidak ada data</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-muted font-medium">Tidak ada data</td></tr>`;
                 return;
             }
-            
             data.forEach(mk => {
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50 transition';
+                const lastCell = isMengulang
+                    ? `<span class="nb-badge nb-badge-danger">${mk.nilaiLama}</span>`
+                    : `<span class="text-muted text-sm">${mk.prasyarat || '-'}</span>`;
                 row.innerHTML = `
-                    <td class="px-6 py-4 text-center">
-                        <input type="checkbox" 
-                               name="mata_kuliah_ids[]" 
-                               value="${mk.id}" 
-                               data-sks="${mk.sks}"
-                               class="chk-mk h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                               ${isMengulang ? 'data-mengulang="true"' : ''}>
+                    <td class="text-center">
+                        <input type="checkbox" name="mata_kuliah_ids[]" value="${mk.id}" data-sks="${mk.sks}" class="chk-mk nb-no-style w-5 h-5 cursor-pointer accent-current" ${isMengulang ? 'data-mengulang="true"' : ''} style="accent-color: var(--color-accent);">
                     </td>
-                    <td class="px-6 py-4 font-medium text-dark font-mono">${mk.kode}</td>
-                    <td class="px-6 py-4">${mk.matkul}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">${mk.dosen}</td>
-                    <td class="px-6 py-4 text-center font-semibold">${mk.sks}</td>
-                    <td class="px-6 py-4 text-center">
-                        ${isMengulang 
-                            ? `<span class="px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-700">${mk.nilaiLama}</span>`
-                            : `<span class="text-sm text-gray-500">${mk.prasyarat || '-'}</span>`
-                        }
-                    </td>
+                    <td class="font-bold text-primary" style="font-family: var(--font-heading);">${mk.kode}</td>
+                    <td class="font-medium text-ink">${mk.matkul}</td>
+                    <td class="text-sm text-muted">${mk.dosen}</td>
+                    <td class="text-center font-bold">${mk.sks}</td>
+                    <td class="text-center">${lastCell}</td>
                 `;
                 tbody.appendChild(row);
             });
-            
-            // Event listener checkbox
             tbody.querySelectorAll('.chk-mk').forEach(chk => {
                 chk.addEventListener('change', hitungSks);
             });
         }
 
-        // ==========================================
-        // 6. VALIDASI SKS REAL-TIME
-        // ==========================================
         function hitungSks() {
             selectedSks = 0;
             document.querySelectorAll('.chk-mk:checked').forEach(chk => {
                 selectedSks += parseInt(chk.dataset.sks) || 0;
             });
-            
-            // Update display
             document.getElementById('totalSks').textContent = selectedSks;
             document.getElementById('sisaSks').textContent = MAX_SKS - selectedSks;
-            
             const warning = document.getElementById('warningSks');
+            const warningInner = warning.querySelector('.nb-alert');
             const warningText = document.getElementById('warningText');
             const btnSubmit = document.getElementById('btnSubmit');
-            
             if (selectedSks > MAX_SKS) {
                 warning.classList.remove('hidden');
-                warningText.textContent = `Anda telah melebihi batas maksimal ${MAX_SKS} SKS. Total saat ini: ${selectedSks} SKS.`;
-                warning.className = 'mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center gap-2';
+                warningText.textContent = `Anda melebihi batas maksimal ${MAX_SKS} SKS. Total saat ini: ${selectedSks} SKS.`;
+                warningInner.classList.remove('nb-alert-warning');
+                warningInner.classList.add('nb-alert-danger');
                 btnSubmit.disabled = true;
             } else if (selectedSks === MAX_SKS) {
                 warning.classList.remove('hidden');
                 warningText.textContent = `Anda telah mencapai batas maksimal ${MAX_SKS} SKS.`;
-                warning.className = 'mb-4 p-4 bg-orange-100 border border-orange-400 text-orange-700 rounded-lg flex items-center gap-2';
+                warningInner.classList.remove('nb-alert-danger');
+                warningInner.classList.add('nb-alert-warning');
                 btnSubmit.disabled = false;
             } else {
                 warning.classList.add('hidden');
                 btnSubmit.disabled = selectedSks === 0;
             }
-            
-            // Disable checkbox jika sudah mencapai batas
             document.querySelectorAll('.chk-mk:not(:checked)').forEach(chk => {
                 const mkSks = parseInt(chk.dataset.sks) || 0;
                 chk.disabled = (selectedSks + mkSks) > MAX_SKS;
             });
         }
 
-        // ==========================================
-        // 7. RESET FORM
-        // ==========================================
         function resetForm() {
             document.querySelectorAll('.chk-mk').forEach(chk => {
                 chk.checked = false;
@@ -394,8 +337,7 @@
             document.getElementById('btnSubmit').disabled = true;
         }
 
-        // Validasi submit
-        document.getElementById('formKrs').addEventListener('submit', function(e) {
+        document.getElementById('formKrs').addEventListener('submit', function (e) {
             if (selectedSks === 0) {
                 e.preventDefault();
                 alert('Harap pilih minimal satu mata kuliah!');
@@ -408,4 +350,5 @@
             }
         });
     </script>
+    @endpush
 @endsection

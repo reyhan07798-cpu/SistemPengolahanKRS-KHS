@@ -1,5 +1,6 @@
-@extends('layouts.mahasiswa')
+@extends('layouts.dosen')
 
+@section('title', 'Profil Dosen')
 @section('page_title', 'Profil')
 
 @section('content')
@@ -7,17 +8,24 @@
     <div class="nb-card mb-8">
         <div class="flex items-center gap-6 flex-wrap">
             <div class="nb-avatar" style="width: 6rem; height: 6rem; font-size: 2.5rem;">
-                {{ strtoupper(substr(explode(' ', $data['nama'])[0], 0, 1)) }}
+                {{ strtoupper(substr(explode(' ', $dosen['nama'] ?? 'D')[0], 0, 1)) }}
             </div>
             <div class="min-w-0 flex-1">
-                <span class="nb-eyebrow">Mahasiswa</span>
-                <h1 class="nb-h1 mt-1" style="font-size: 2rem;">{{ $data['nama'] }}</h1>
+                <span class="nb-eyebrow">Dosen</span>
+                <h1 class="nb-h1 mt-1" style="font-size: 2rem;">{{ $dosen['nama'] ?? '-' }}</h1>
                 <div class="flex items-center gap-2 mt-3 flex-wrap">
                     <span class="nb-badge nb-badge-primary">
-                        <span class="material-symbols-outlined" style="font-size:14px; margin-right:4px;">school</span>
-                        Teknik Informatika
+                        <span class="material-symbols-outlined" style="font-size:14px; margin-right:4px;">badge</span>
+                        NIP: {{ $dosen['nip'] ?? ($dosen['nidn'] ?? '-') }}
                     </span>
-                    <span class="nb-badge nb-badge-stable">NIM: {{ $data['nim'] }}</span>
+                    <span class="nb-badge nb-badge-stable">
+                        <span class="material-symbols-outlined" style="font-size:14px; margin-right:4px;">school</span>
+                        {{ $dosen['program_studi'] ?? '-' }}
+                    </span>
+                    <span class="nb-badge nb-badge-success">
+                        <span class="material-symbols-outlined" style="font-size:14px; margin-right:4px;">verified</span>
+                        Wali + Matkul
+                    </span>
                 </div>
             </div>
         </div>
@@ -30,7 +38,6 @@
             {{ session('success') }}
         </div>
     @endif
-
     @if($errors->any())
         <div class="nb-alert nb-alert-danger mb-6">
             <div class="flex items-center gap-2 mb-2">
@@ -58,41 +65,26 @@
             </button>
         </div>
 
-        <form action="{{ route('pages.mahasiswa.profil.update') }}" method="POST" id="formProfil">
+        <form action="{{ route('pages.dosen.profil.update') }}" method="POST" id="formProfil">
             @csrf
             @method('PUT')
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="nb-label">Nama Lengkap</label>
-                    <input type="text" name="nama" value="{{ old('nama', $data['nama']) }}" disabled id="inputNama">
-                    @error('nama')
-                        <p class="nb-form-error">{{ $message }}</p>
-                    @enderror
+                    <input type="text" name="nama" value="{{ $dosen['nama'] ?? '' }}" disabled id="inputNama">
                 </div>
-
                 <div>
                     <label class="nb-label">Email</label>
-                    <input type="email" name="email" value="{{ old('email', $data['email']) }}" disabled id="inputEmail">
-                    @error('email')
-                        <p class="nb-form-error">{{ $message }}</p>
-                    @enderror
+                    <input type="email" name="email" value="{{ $dosen['email'] ?? '' }}" disabled id="inputEmail">
                 </div>
-
                 <div>
                     <label class="nb-label">No. HP</label>
-                    <input type="text" name="no_hp" value="{{ old('no_hp', $data['no_hp']) }}" disabled id="inputHp">
-                    @error('no_hp')
-                        <p class="nb-form-error">{{ $message }}</p>
-                    @enderror
+                    <input type="text" name="no_hp" value="{{ $dosen['no_hp'] ?? '' }}" disabled id="inputHp">
                 </div>
-
                 <div>
                     <label class="nb-label">Alamat</label>
-                    <input type="text" name="alamat" value="{{ $data['alamat'] }}" disabled id="inputAlamat">
-                    @error('alamat')
-                        <p class="nb-form-error">{{ $message }}</p>
-                    @enderror
+                    <input type="text" name="alamat" value="{{ $dosen['alamat'] ?? '' }}" disabled id="inputAlamat">
                 </div>
             </div>
 
@@ -127,22 +119,22 @@
             </button>
         </div>
 
-        <form action="#" method="POST" id="formPassword" class="hidden">
+        <form action="{{ route('pages.dosen.profil.password') }}" method="POST" id="formPassword" class="hidden">
             @csrf
             @method('PUT')
 
             <div class="grid grid-cols-1 gap-4">
                 <div>
-                    <label class="nb-label">Kata Sandi Lama</label>
-                    <input type="password" name="password_lama" placeholder="Masukkan kata sandi lama">
+                    <label class="nb-label">Password Lama</label>
+                    <input type="password" name="password_lama" placeholder="Masukkan password lama">
                 </div>
                 <div>
-                    <label class="nb-label">Kata Sandi Baru</label>
-                    <input type="password" name="password_baru" placeholder="Masukkan kata sandi baru">
+                    <label class="nb-label">Password Baru</label>
+                    <input type="password" name="password_baru" placeholder="Masukkan password baru">
                 </div>
                 <div>
-                    <label class="nb-label">Konfirmasi Kata Sandi Baru</label>
-                    <input type="password" name="password_baru_confirmation" placeholder="Ulangi kata sandi baru">
+                    <label class="nb-label">Konfirmasi Password Baru</label>
+                    <input type="password" name="password_baru_confirmation" placeholder="Ulangi password baru">
                 </div>
 
                 <div class="flex gap-3 pt-2 flex-wrap">
@@ -170,8 +162,8 @@
             buttonSimpan.classList.toggle('hidden');
         }
         function togglePassword() {
-            const form = document.getElementById('formPassword');
-            if (form) form.classList.toggle('hidden');
+            const formPassword = document.getElementById('formPassword');
+            if (formPassword) formPassword.classList.toggle('hidden');
         }
     </script>
     @endpush

@@ -1,4 +1,4 @@
-@extends('layouts.dosen_mk')
+@extends('layouts.dosen')
 
 @section('title', 'Lihat Nilai')
 @section('page_title', 'Lihat Nilai')
@@ -7,7 +7,7 @@
     {{-- Page Header --}}
     <div class="nb-page-header">
         <div>
-            <span class="nb-eyebrow">Nilai</span>
+            <span class="nb-eyebrow">Dosen Matkul · Nilai</span>
             <h1 class="mt-2">Nilai Mahasiswa</h1>
             <p>Pantau hasil studi mahasiswa pada mata kuliah yang Anda ampu.</p>
         </div>
@@ -22,7 +22,7 @@
                 </div>
                 <div class="min-w-0">
                     <p class="nb-stat-label">Total Mahasiswa</p>
-                    <p class="nb-stat-value mt-1">{{ $stats['total_mahasiswa'] }}</p>
+                    <p class="nb-stat-value mt-1">{{ $stats['total_mahasiswa'] ?? 0 }}</p>
                 </div>
             </div>
         </div>
@@ -34,7 +34,7 @@
                 </div>
                 <div class="min-w-0">
                     <p class="nb-stat-label">Nilai Terinput</p>
-                    <p class="nb-stat-value mt-1">{{ $stats['nilai_terinput'] }}</p>
+                    <p class="nb-stat-value mt-1">{{ $stats['nilai_terinput'] ?? 0 }}</p>
                 </div>
             </div>
         </div>
@@ -46,7 +46,7 @@
                 </div>
                 <div class="min-w-0">
                     <p class="nb-stat-label">Rata-rata Nilai</p>
-                    <p class="nb-stat-value mt-1">{{ $stats['rata_nilai'] }}</p>
+                    <p class="nb-stat-value mt-1">{{ $stats['rata_nilai'] ?? 0 }}</p>
                 </div>
             </div>
         </div>
@@ -58,19 +58,19 @@
             <span class="material-symbols-outlined text-primary">filter_list</span>
             <h3 class="nb-h3">Filter Mata Kuliah</h3>
         </div>
-        <form method="GET" action="{{ route('pages.dosen_matkul.lihat-nilai') }}">
+        <form method="GET" action="{{ route('pages.dosen.matkul.lihat-nilai') }}">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div class="md:col-span-2">
                     <label class="nb-label">Pilih Mata Kuliah</label>
                     <select name="mata_kuliah">
-                        <option value="semua" {{ $filterMK == 'semua' ? 'selected' : '' }}>Semua Mata Kuliah</option>
-                        @foreach($daftarMK as $mk)
-                            <option value="{{ $mk }}" {{ $filterMK == $mk ? 'selected' : '' }}>{{ $mk }}</option>
+                        <option value="semua" {{ ($filterMK ?? 'semua') == 'semua' ? 'selected' : '' }}>Semua Mata Kuliah</option>
+                        @foreach($daftarMK ?? [] as $mk)
+                            <option value="{{ $mk }}" {{ ($filterMK ?? '') == $mk ? 'selected' : '' }}>{{ $mk }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="nb-btn nb-btn-primary flex-1">
+                <div>
+                    <button type="submit" class="nb-btn nb-btn-primary w-full">
                         <span class="material-symbols-outlined" style="font-size:18px;">search</span>
                         Terapkan
                     </button>
@@ -79,8 +79,7 @@
         </form>
     </div>
 
-    {{-- Info Filter Aktif --}}
-    @if($filterMK != 'semua')
+    @if(($filterMK ?? 'semua') != 'semua')
         <div class="nb-alert nb-alert-info mb-6 flex items-center gap-2">
             <span class="material-symbols-outlined">filter_alt</span>
             <span>Menampilkan data untuk: <strong>{{ $filterMK }}</strong></span>
@@ -94,7 +93,7 @@
                 <span class="nb-eyebrow" style="color: var(--color-accent-soft);">Hasil Studi</span>
                 <h2 class="mt-1">Daftar Nilai Mahasiswa</h2>
             </div>
-            <span class="nb-badge nb-badge-primary">{{ count($mahasiswa) }} data</span>
+            <span class="nb-badge nb-badge-primary">{{ count($mahasiswa ?? []) }} data</span>
         </div>
         <div class="overflow-x-auto">
             <table class="nb-table">
@@ -110,7 +109,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($mahasiswa as $mhs)
+                    @forelse($mahasiswa ?? [] as $mhs)
                         @php
                             $gradeBadge = match($mhs['grade']) {
                                 'A' => 'nb-badge-success',

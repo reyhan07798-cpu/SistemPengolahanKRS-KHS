@@ -56,11 +56,11 @@ class AdminController extends Controller
             }
         } else {
             $mahasiswa = collect([
-                (object)['id' => 1, 'nim' => '3312501017', 'nama' => 'Irenessa Rosdin', 'prodi' => 'Teknik Informatika', 'kelas' => 'A', 'angkatan' => '2025', 'dosen_wali' => 'Dr. Budi Santoso', 'email' => 'irenessa@campus.ac.id'],
-                (object)['id' => 2, 'nim' => '3312501018', 'nama' => 'Nabila Fatin', 'prodi' => 'Sistem Informasi', 'kelas' => 'B', 'angkatan' => '2025', 'dosen_wali' => 'Prof. Dewi Lestari', 'email' => 'nabila@campus.ac.id'],
-                (object)['id' => 3, 'nim' => '3312501019', 'nama' => 'Ahmad Rizki', 'prodi' => 'Teknik Informatika', 'kelas' => 'A', 'angkatan' => '2024', 'dosen_wali' => 'Dr. Budi Santoso', 'email' => 'ahmad.r@campus.ac.id'],
-                (object)['id' => 4, 'nim' => '3312501020', 'nama' => 'Siti Nurhaliza', 'prodi' => 'Teknik Komputer', 'kelas' => 'C', 'angkatan' => '2024', 'dosen_wali' => 'Dr. Eko Prasetyo', 'email' => 'siti.n@campus.ac.id'],
-                (object)['id' => 5, 'nim' => '3312501021', 'nama' => 'Fajar Nugroho', 'prodi' => 'Sistem Informasi', 'kelas' => 'B', 'angkatan' => '2023', 'dosen_wali' => 'Prof. Dewi Lestari', 'email' => 'fajar.n@campus.ac.id'],
+                (object)['id' => 1, 'nim' => '3312501017', 'nama' => 'Irenessa Rosdin', 'prodi' => 'Fakultas Teknik', 'kelas' => 'A', 'angkatan' => '2025', 'dosen_wali' => 'Dr. Budi Santoso', 'email' => 'irenessa@campus.ac.id'],
+                (object)['id' => 2, 'nim' => '3312501018', 'nama' => 'Nabila Fatin', 'prodi' => 'Fakultas Sains', 'kelas' => 'B', 'angkatan' => '2025', 'dosen_wali' => 'Prof. Dewi Lestari', 'email' => 'nabila@campus.ac.id'],
+                (object)['id' => 3, 'nim' => '3312501019', 'nama' => 'Ahmad Rizki', 'prodi' => 'Fakultas Teknik', 'kelas' => 'A', 'angkatan' => '2024', 'dosen_wali' => 'Dr. Budi Santoso', 'email' => 'ahmad.r@campus.ac.id'],
+                (object)['id' => 4, 'nim' => '3312501020', 'nama' => 'Siti Nurhaliza', 'prodi' => 'Fakultas Ilmu Komputer', 'kelas' => 'C', 'angkatan' => '2024', 'dosen_wali' => 'Dr. Eko Prasetyo', 'email' => 'siti.n@campus.ac.id'],
+                (object)['id' => 5, 'nim' => '3312501021', 'nama' => 'Fajar Nugroho', 'prodi' => 'Fakultas Sains', 'kelas' => 'B', 'angkatan' => '2023', 'dosen_wali' => 'Prof. Dewi Lestari', 'email' => 'fajar.n@campus.ac.id'],
             ]);
             $prodis = $mahasiswa->pluck('prodi')->unique()->sort()->values();
             $angkatans = $mahasiswa->pluck('angkatan')->unique()->sortDesc()->values();
@@ -158,18 +158,18 @@ class AdminController extends Controller
     public function indexDosen()
     {
         $fakultasList = collect([
-            'Fakultas Teknik', 'Fakultas Sains', 'Fakultas Ekonomi', 'Fakultas Hukum', 'Fakultas Kedokteran', 'Fakultas Ilmu Komputer'
+            'Prodi Teknik Informatika', 'Prodi Teknologi Rekayasa Multimedia ', 'Prodi Rekayasa Keamanan Siber', 'Prodi Rekayasa Perangkat Lunak', 'Prodi Teknologi Permainan', 'Prodi Animasi'
         ]);
 
         if (Schema::hasTable('dosens')) {
             $dosen = Dosen::orderBy('created_at', 'desc')->get();
         } else {
             $dosen = collect([
-                (object)['id' => 1, 'nik' => '198501012020011001', 'nama' => 'Dr. Budi Santoso, M.Kom', 'email' => 'budi.santoso@campus.ac.id', 'tipe_dosen' => 'Dosen Wali', 'fakultas' => 'Fakultas Teknik', 'alamat' => 'Jl. Pendidikan No. 1'],
-                (object)['id' => 2, 'nik' => '198702152019022002', 'nama' => 'Prof. Dewi Lestari, M.Sc', 'email' => 'dewi.lestari@campus.ac.id', 'tipe_dosen' => 'Dosen Wali', 'fakultas' => 'Fakultas Sains', 'alamat' => 'Jl. Ilmu No. 5'],
-                (object)['id' => 3, 'nik' => '197803102018031003', 'nama' => 'Dr. Eko Prasetyo', 'email' => 'eko.prasetyo@campus.ac.id', 'tipe_dosen' => 'Dosen Mata Kuliah', 'fakultas' => 'Fakultas Teknik', 'alamat' => 'Jl. Teknologi No. 10'],
-                (object)['id' => 4, 'nik' => '198512052021012004', 'nama' => 'Dr. Ani Wijaya', 'email' => 'ani.wijaya@campus.ac.id', 'tipe_dosen' => 'Dosen Mata Kuliah', 'fakultas' => 'Fakultas Ekonomi', 'alamat' => 'Jl. Bisnis No. 2'],
-                (object)['id' => 5, 'nik' => '199001202022011005', 'nama' => 'Ahmad Rizki, M.Kom', 'email' => 'ahmad.rizki@campus.ac.id', 'tipe_dosen' => 'Dosen Mata Kuliah', 'fakultas' => 'Fakultas Ilmu Komputer', 'alamat' => 'Jl. Raya No. 7'],
+                (object)['id' => 1, 'nik' => '198501012020011001', 'nama' => 'Dr. Budi Santoso, M.Kom', 'email' => 'budi.santoso@campus.ac.id', 'tipe_dosen' => 'Dosen Wali', 'fakultas' => 'Prodi Teknik Informatika', 'alamat' => 'Jl. Pendidikan No. 1'],
+                (object)['id' => 2, 'nik' => '198702152019022002', 'nama' => 'Prof. Dewi Lestari, M.Sc', 'email' => 'dewi.lestari@campus.ac.id', 'tipe_dosen' => 'Dosen Wali', 'fakultas' => 'Prodi Teknologi Rekayasa Multimedia', 'alamat' => 'Jl. Ilmu No. 5'],
+                (object)['id' => 3, 'nik' => '197803102018031003', 'nama' => 'Dr. Eko Prasetyo', 'email' => 'eko.prasetyo@campus.ac.id', 'tipe_dosen' => 'Dosen Mata Kuliah', 'fakultas' => 'Prodi Rekayasa Keamanan Siber', 'alamat' => 'Jl. Teknologi No. 10'],
+                (object)['id' => 4, 'nik' => '198512052021012004', 'nama' => 'Dr. Ani Wijaya', 'email' => 'ani.wijaya@campus.ac.id', 'tipe_dosen' => 'Dosen Mata Kuliah', 'fakultas' => 'Prodi Rekayasa Perangkat Lunak', 'alamat' => 'Jl. Bisnis No. 2'],
+                (object)['id' => 5, 'nik' => '199001202022011005', 'nama' => 'Ahmad Rizki, M.Kom', 'email' => 'ahmad.rizki@campus.ac.id', 'tipe_dosen' => 'Dosen Mata Kuliah', 'fakultas' => 'Prodi Teknologi Permainan', 'alamat' => 'Jl. Raya No. 7'],
             ]);
         }
 
@@ -208,7 +208,7 @@ class AdminController extends Controller
         if (Schema::hasTable('dosens')) {
             $dosen = Dosen::findOrFail($id);
         } else {
-            $dosen = (object)['id' => $id, 'nik' => '198501012020011001', 'nama' => 'Dr. Budi Santoso, M.Kom', 'email' => 'budi.santoso@campus.ac.id', 'tipe_dosen' => 'Dosen Wali', 'fakultas' => 'Fakultas Teknik', 'alamat' => '-'];
+            $dosen = (object)['id' => $id, 'nik' => '198501012020011001', 'nama' => 'Dr. Budi Santoso, M.Kom', 'email' => 'budi.santoso@campus.ac.id', 'tipe_dosen' => 'Dosen Wali', 'prodi' => 'Prodi Teknik Informatika', 'alamat' => '-'];
         }
         return view('pages.admin.dosen_edit', compact('dosen'));
     }
@@ -377,9 +377,9 @@ class AdminController extends Controller
         } else {
             $tahunAjaran = collect([
                 (object)['id' => 1, 'semester' => 'Ganjil', 'tahun_ajaran' => '2024/2025', 'status' => 'Nonaktif'],
-                (object)['id' => 2, 'semester' => 'Genap', 'tahun_ajaran' => '2024/2025', 'status' => 'Nonaktif'],
-                (object)['id' => 3, 'semester' => 'Ganjil', 'tahun_ajaran' => '2023/2024', 'status' => 'Aktif'],
-                (object)['id' => 4, 'semester' => 'Genap', 'tahun_ajaran' => '2023/2024', 'status' => 'Nonaktif'],
+                (object)['id' => 2, 'semester' => 'Genap', 'tahun_ajaran' => '2025/2026', 'status' => 'Aktif'],
+                (object)['id' => 3, 'semester' => 'Ganjil', 'tahun_ajaran' => '2026/2027', 'status' => 'Nonaktif'],
+                (object)['id' => 4, 'semester' => 'Genap', 'tahun_ajaran' => '2027/2028', 'status' => 'Nonaktif'],
             ]);
         }
 

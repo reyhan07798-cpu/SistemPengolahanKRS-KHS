@@ -1,11 +1,19 @@
-<div class="{{ $accent }} rounded-2xl p-6 shadow-sm border border-gray-200">
-    <div class="flex items-start justify-between">
-        <div class="flex-1">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{{ $title }}</p>
-            <p class="mt-4 text-4xl font-bold {{ $textColor }}">{{ $value }}</p>
+@props([
+    'title' => '',
+    'value' => '',
+    'icon' => '',
+    'accent' => '',
+    'textColor' => '',
+])
+
+<div {{ $attributes->merge(['class' => 'nb-stat']) }}>
+    <div class="flex items-start justify-between gap-4">
+        <div class="flex-1 min-w-0">
+            <p class="nb-stat-label">{{ $title }}</p>
+            <p class="nb-stat-value mt-3">{{ $value }}</p>
         </div>
         @if($icon)
-            <div class="flex-shrink-0">
+            <div class="nb-stat-icon">
                 {!! $icon !!}
             </div>
         @endif

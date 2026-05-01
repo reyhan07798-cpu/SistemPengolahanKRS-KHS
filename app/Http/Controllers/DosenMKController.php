@@ -6,13 +6,6 @@ use Illuminate\Http\Request;
 
 class DosenMKController extends Controller
 {
-    protected function checkRole()
-    {
-        if (!session('is_dosen_mk')) {
-            return view('pages.dosen.empty-access', ['roleName' => 'Dosen Mata Kuliah']);
-        }
-        return null;
-    }
     public function index()
     {
         $stats = [
@@ -115,7 +108,8 @@ class DosenMKController extends Controller
             ],
         ];
 
-        return view('pages.dosen_matkul.input-nilai', compact('mataKuliahList'));
+        $view = request()->routeIs('pages.dosen.*') ? 'pages.dosen.input-nilai' : 'pages.dosen_matkul.input-nilai';
+        return view($view, compact('mataKuliahList'));
     }
 
     public function lihatNilai(Request $request)
@@ -193,7 +187,8 @@ class DosenMKController extends Controller
             'IF104 - Rekayasa Perangkat Lunak',
         ];
 
-        return view('pages.dosen_matkul.lihat-nilai', compact('stats', 'mahasiswa', 'filterMK', 'daftarMK'));
+        $view = $request->routeIs('pages.dosen.*') ? 'pages.dosen.lihat-nilai' : 'pages.dosen_matkul.lihat-nilai';
+        return view($view, compact('stats', 'mahasiswa', 'filterMK', 'daftarMK'));
     }
 
     public function profil()

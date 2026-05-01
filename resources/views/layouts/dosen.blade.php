@@ -3,378 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIPAKAR - Dosen Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>@yield('title', 'SIPAKAR - Dosen')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
-        :root {
-            --primary: #2F5D8A;
-            --secondary: #4A7FB5;
-            --dark: #24496B;
-            --white: #FFFFFF;
-            --light-gray: #F4F6F8;
-            --gray: #E0E5EC;
-            --text-gray: #6B7280;
-        }
+</head>
+<body data-role="dosen">
+    <div class="nb-overlay" id="nbOverlay" onclick="nbToggleSidebar()"></div>
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--light-gray);
-            color: var(--text-gray);
-            margin: 0;
-            padding: 0;
-        }
+    <div class="nb-app">
 
-        .text-primary { color: var(--primary); }
-        .bg-primary { background-color: var(--primary); }
-        .bg-secondary { background-color: var(--secondary); }
-        .bg-dark { background-color: var(--dark); }
-        .text-dark { color: var(--dark); }
-        .text-white { color: var(--white); }
+        <aside class="nb-sidebar" id="nbSidebar">
+            <div class="nb-sidebar-brand">
+                <div class="w-12 h-12 rounded-full border-2 border-ink bg-white flex items-center justify-center shrink-0 overflow-hidden p-1">
+                    <img src="{{ asset('images/logo-dashboard.png') }}" alt="Logo SIPAKAR" class="w-full h-full object-contain">
+                </div>
+                <div class="min-w-0">
+                    <h1>SIPAKAR</h1>
+                    <p>Dosen</p>        
+                </div>
+            </div>
 
-        /* Sidebar Link Styles */
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.25rem;
-            border-radius: 0.5rem;
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
+            <div class="nb-sidebar-section-title">Menu</div>
 
-        .sidebar-link:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
+            <nav class="nb-sidebar-nav">
+                {{-- Beranda --}}
+                <a href="{{ route('pages.dosen.beranda') }}"
+                   class="nb-nav-item {{ request()->routeIs('pages.dosen.beranda') ? 'active' : '' }}"
+                   data-label="Beranda">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Beranda</span>
+                </a>
 
-        .sidebar-link.active {
-            background-color: rgba(255, 255, 255, 0.15);
-            color: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+                {{-- Group: Dosen Wali --}}
+                @php
+                    $isWaliActive = request()->routeIs('pages.dosen.wali.*');
+                @endphp
+                <div class="nb-nav-group {{ $isWaliActive ? 'open' : '' }}" id="navGroupWali">
+                    <button type="button" class="nb-nav-trigger {{ $isWaliActive ? 'has-active' : '' }}" onclick="nbToggleNavGroup('navGroupWali')" data-label="Dosen Wali">
+                        <span class="material-symbols-outlined">supervisor_account</span>
+                        <span>Dosen Wali</span>
+                        <span class="material-symbols-outlined nb-nav-chevron">expand_more</span>
+                    </button>
+                    <div class="nb-nav-submenu">
+                        <a href="{{ route('pages.dosen.wali.krs.verifikasi') }}"
+                           class="nb-nav-sub-item {{ request()->routeIs('pages.dosen.wali.krs.verifikasi') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined">fact_check</span>
+                            <span>Verifikasi KRS</span>
+                        </a>
+                        <a href="{{ route('pages.dosen.wali.khs') }}"
+                           class="nb-nav-sub-item {{ request()->routeIs('pages.dosen.wali.khs') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined">assessment</span>
+                            <span>KHS Mahasiswa</span>
+                        </a>
+                    </div>
+                </div>
 
-        .sidebar-link svg {
-            width: 1.25rem;
-            height: 1.25rem;
-            margin-right: 0.75rem;
-            flex-shrink: 0;
-        }
+                {{-- Group: Dosen Matkul --}}
+                @php
+                    $isMatkulActive = request()->routeIs('pages.dosen.matkul.*');
+                @endphp
+                <div class="nb-nav-group {{ $isMatkulActive ? 'open' : '' }}" id="navGroupMatkul">
+                    <button type="button" class="nb-nav-trigger {{ $isMatkulActive ? 'has-active' : '' }}" onclick="nbToggleNavGroup('navGroupMatkul')" data-label="Dosen Matkul">
+                        <span class="material-symbols-outlined">co_present</span>
+                        <span>Dosen Matkul</span>
+                        <span class="material-symbols-outlined nb-nav-chevron">expand_more</span>
+                    </button>
+                    <div class="nb-nav-submenu">
+                        <a href="{{ route('pages.dosen.matkul.input-nilai') }}"
+                           class="nb-nav-sub-item {{ request()->routeIs('pages.dosen.matkul.input-nilai') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined">edit_note</span>
+                            <span>Input Nilai</span>
+                        </a>
+                        <a href="{{ route('pages.dosen.matkul.lihat-nilai') }}"
+                           class="nb-nav-sub-item {{ request()->routeIs('pages.dosen.matkul.lihat-nilai') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined">analytics</span>
+                            <span>Lihat Nilai</span>
+                        </a>
+                    </div>
+                </div>
 
-        /* Submenu Styles */
-        .submenu {
-            max-height: 0;
-            overflow: hidden;
-            padding-left: 1rem;
-            margin-left: 1rem;
-            border-left: 2px solid rgba(255, 255, 255, 0.15);
-            transition: max-height 0.3s ease-out;
-        }
+                {{-- Profil --}}
+                <a href="{{ route('pages.dosen.profil') }}"
+                   class="nb-nav-item {{ request()->routeIs('pages.dosen.profil') ? 'active' : '' }}"
+                   data-label="Profil">
+                    <span class="material-symbols-outlined">person</span>
+                    <span>Profil</span>
+                </a>
+            </nav>
 
-        .submenu.open {
-            max-height: 500px;
-            transition: max-height 0.3s ease-in;
-        }
+            <div class="nb-sidebar-footer">
+                <div class="nb-status-dot">Sistem Aktif</div>
+            </div>
+        </aside>
 
-        /* Toggle Button Styles */
-        .toggle-btn {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            color: rgba(255, 255, 255, 0.8);
-            font-family: inherit;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            text-align: left;
-        }
+        <div class="nb-main">
+            <header class="nb-topbar">
+                <div class="flex items-center gap-3">
+                    <button class="nb-btn-icon nb-hamburger" onclick="nbToggleSidebar()" aria-label="Toggle menu">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="min-w-0">
+                        @hasSection('breadcrumb')
+                            @yield('breadcrumb')
+                        @else
+                            <x-breadcrumb :home="route('pages.dosen.beranda')" :items="[
+                                ['label' => 'Dosen', 'url' => route('pages.dosen.beranda')],
+                                ['label' => trim(View::yieldContent('page_title', 'Beranda'))]
+                            ]" />
+                        @endif
+                    </div>
+                </div>
 
-        .toggle-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex flex-col items-end leading-tight pr-2 border-r-2 border-[rgba(31,41,55,0.15)]">
+                        <span class="text-xs font-bold uppercase tracking-wider text-muted" id="nbDate"></span>
+                        <span class="text-sm font-bold text-ink" id="nbTime"></span>
+                    </div>
+                    <div class="nb-popup-anchor">
+                        <button type="button" class="nb-avatar-sm" onclick="nbToggleProfilePopup()" aria-label="Profil pengguna" aria-haspopup="true">
+                            <span class="material-symbols-outlined filled">person</span>
+                        </button>
+                        <div class="nb-popup" id="nbProfilePopup">
+                            <div class="nb-popup-header">
+                                <div class="nb-popup-name">{{ $dosen['nama'] ?? ($data['nama'] ?? 'Dosen') }}</div>
+                                <div class="nb-popup-meta">{{ $dosen['email'] ?? ($data['email'] ?? 'dosen@univ.ac.id') }}</div>
+                            </div>
+                            <div class="nb-popup-body">
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="nb-popup-item danger">
+                                        <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
+                                        Keluar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-        .arrow-icon {
-            width: 1rem;
-            height: 1rem;
-            transition: transform 0.25s;
-            color: rgba(255, 255, 255, 0.5);
-            flex-shrink: 0;
-        }
+            <main class="nb-content">
+                @yield('content')
+            </main>
+        </div>
+    </div>
 
-        .arrow-icon.rotated {
-            transform: rotate(180deg);
-        }
-
-        /* Custom Scrollbar untuk Nav */
-        .nav-scrollable {
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding-right: 4px;
-        }
-
-        .nav-scrollable::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .nav-scrollable::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .nav-scrollable::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-        }
-
-        .nav-scrollable::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-        /* Locked Feature Box */
-        .locked-feature {
-            padding: 0.75rem;
-            font-size: 0.75rem;
-            color: #fca5a5;
-            background: rgba(239, 68, 68, 0.12);
-            border-radius: 0.5rem;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            font-style: italic;
-            margin: 0.25rem 0;
-        }
-
-        .locked-feature span {
-            font-size: 0.625rem;
-            opacity: 0.7;
-        }
-
-        /* Section Title */
-        .section-title {
-            font-size: 0.625rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: rgba(255, 255, 255, 0.38);
-            font-weight: 700;
-            padding: 0 0.5rem;
-            margin: 0 0 0.5rem;
-        }
-    </style>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#2F5D8A',
-                        secondary: '#4A7FB5',
-                        dark: '#24496B',
-                    }
-                }
+        function nbToggleSidebar() {
+            const sidebar = document.getElementById('nbSidebar');
+            const isDesktop = window.innerWidth >= 1024;
+            if (isDesktop) {
+                sidebar?.classList.toggle('collapsed');
+                const collapsed = sidebar?.classList.contains('collapsed');
+                localStorage.setItem('nbSidebarCollapsed', collapsed ? '1' : '0');
+            } else {
+                sidebar?.classList.toggle('open');
+                document.getElementById('nbOverlay')?.classList.toggle('open');
             }
         }
-    </script>
-</head>
-
-<body class="h-screen flex overflow-hidden">
-
-    <aside class="w-64 bg-dark flex flex-col hidden md:flex overflow-hidden">
-        
-        <!-- Logo & Profile (Fixed - Tidak Scroll) -->
-        <div class="flex-shrink-0">
-            <!-- Logo -->
-            <div class="p-6 flex items-center gap-2">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo SIPAKAR" class="w-12 h-12 object-contain">
-                <div>
-                    <h1 class="font-bold text-white text-lg leading-tight">SIPAKAR</h1>
-                    <p class="text-xs text-gray-300">Portal Dosen</p>
-                </div>
-            </div>
-
-            <!-- Profile -->
-            <div class="px-6 py-4 border-b border-gray-600">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden flex-shrink-0">
-                        <svg class="w-6 h-6 text-dark" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                        </svg>
-                    </div>
-                    <div class="overflow-hidden">
-                        <p class="text-sm font-semibold text-white truncate w-40" title="{{ session('user_name') }}">
-                            {{ session('user_name', 'Dosen') }}
-                        </p>
-                        <p class="text-xs text-gray-300">{{ session('role_display', 'Dosen') }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Navigation (Scrollable Area) -->
-        <nav class="flex-1 nav-scrollable">
-            
-            <!-- Dosen Wali Menu -->
-            <div class="mb-1">
-                <button class="toggle-btn" onclick="toggleMenu('wali')" type="button">
-                    <span class="font-medium">Dosen Wali</span>
-                    <svg class="arrow-icon" id="arrow-wali" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-                
-                <div class="submenu" id="submenu-wali">
-                    @if(session('is_dosen_wali'))
-                        <a href="{{ route('dosen.wali.beranda') }}" class="sidebar-link {{ request()->routeIs('dosen.wali.beranda') ? 'active' : '' }}">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                            </svg>
-                            Beranda
-                        </a>
-                        <a href="{{ route('dosen.wali.krs-verifikasi') }}" class="sidebar-link {{ request()->routeIs('dosen.wali.krs-verifikasi') ? 'active' : '' }}">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            Verifikasi KRS
-                        </a>
-                        <a href="{{ route('dosen.wali.khs') }}" class="sidebar-link {{ request()->routeIs('dosen.wali.khs') ? 'active' : '' }}">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                            KHS Mahasiswa
-                        </a>
-                    @else
-                        <div class="locked-feature">
-                            🔒 Fitur Wali<br>
-                            <span>Hanya untuk Dosen Wali</span>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Dosen Mata Kuliah Menu -->
-            <div class="mb-1">
-                <button class="toggle-btn" onclick="toggleMenu('matkul')" type="button">
-                    <span class="font-medium">Dosen Mata Kuliah</span>
-                    <svg class="arrow-icon" id="arrow-matkul" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-                
-                <div class="submenu" id="submenu-matkul">
-                    @if(session('is_dosen_mk'))
-                        <a href="{{ route('dosen.mk.beranda') }}" class="sidebar-link {{ request()->routeIs('dosen.mk.beranda') ? 'active' : '' }}">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                            </svg>
-                            Beranda
-                        </a>
-                        <a href="{{ route('dosen.mk.input-nilai') }}" class="sidebar-link {{ request()->routeIs('dosen.mk.input-nilai') ? 'active' : '' }}">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                            </svg>
-                            Input Nilai
-                        </a>
-                        <a href="{{ route('dosen.mk.lihat-nilai') }}" class="sidebar-link {{ request()->routeIs('dosen.mk.lihat-nilai') ? 'active' : '' }}">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            Lihat Nilai
-                        </a>
-                    @else
-                        <div class="locked-feature">
-                            🔒 Fitur Mata Kuliah<br>
-                            <span>Hanya untuk Dosen Mata Kuliah</span>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Profil Section -->
-            <div class="border-t border-gray-600 pt-4 mt-2">
-                <p class="section-title">Akun</p>
-                <a href="{{ route('dosen.profil') }}" class="sidebar-link {{ request()->routeIs('dosen.profil') ? 'active' : '' }}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                    Profil Saya
-                </a>
-            </div>
-        </nav>
-
-        <!-- Logout (Fixed Bottom - Tidak Scroll) -->
-        <div class="flex-shrink-0 px-4 pb-6 border-t border-gray-600 pt-4">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-500 rounded-lg text-gray-300 hover:bg-white hover:text-dark transition text-sm font-medium">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                    </svg>
-                    Keluar
-                </button>
-            </form>
-        </div>
-        
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto p-8 bg-[#F4F6F8]">
-        @yield('content')
-    </main>
-
-<script>
-    function toggleMenu(name) {
-        var sub = document.getElementById('submenu-' + name);
-        var arrow = document.getElementById('arrow-' + name);
-        if (!sub) return;
-        
-        // Toggle class untuk animasi
-        sub.classList.toggle('open');
-        if (arrow) arrow.classList.toggle('rotated');
-        
-        // Auto-scroll ke submenu jika terbuka dan posisinya terpotong
-        if (sub.classList.contains('open')) {
-            setTimeout(function() {
-                var sidebar = document.querySelector('aside');
-                var subRect = sub.getBoundingClientRect();
-                var sidebarRect = sidebar.getBoundingClientRect();
-                
-                // Jika bagian bawah submenu melewati batas sidebar, scroll ke sana
-                if (subRect.bottom > sidebarRect.bottom - 20) {
-                    sub.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            }, 150); // Delay kecil agar animasi max-height selesai dulu
+        function nbToggleMobileSidebar() {
+            document.getElementById('nbSidebar')?.classList.toggle('open');
+            document.getElementById('nbOverlay')?.classList.toggle('open');
         }
-    }
-    
-    // Auto-buka submenu yang memiliki link aktif saat page load
-    document.addEventListener('DOMContentLoaded', function () {
-        ['wali', 'matkul'].forEach(function (name) {
-            var sub = document.getElementById('submenu-' + name);
-            if (sub && sub.querySelector('.active')) {
-                sub.classList.add('open');
-                var arrow = document.getElementById('arrow-' + name);
-                if (arrow) arrow.classList.add('rotated');
-                
-                // Scroll ke submenu aktif
-                setTimeout(function() {
-                    sub.scrollIntoView({ behavior: 'auto', block: 'nearest' });
-                }, 100);
+        function nbToggleProfilePopup() {
+            document.getElementById('nbProfilePopup')?.classList.toggle('open');
+        }
+        function nbToggleNavGroup(id) {
+            const sidebar = document.getElementById('nbSidebar');
+            const isCollapsed = sidebar?.classList.contains('collapsed');
+            const isDesktop = window.innerWidth >= 1024;
+
+            if (isCollapsed && isDesktop) {
+                // Expand sidebar dulu, lalu pastikan grup terbuka
+                sidebar.classList.remove('collapsed');
+                localStorage.setItem('nbSidebarCollapsed', '0');
+                const group = document.getElementById(id);
+                if (group && !group.classList.contains('open')) {
+                    group.classList.add('open');
+                }
+            } else {
+                // Normal toggle saat sidebar sudah expanded
+                document.getElementById(id)?.classList.toggle('open');
+            }
+        }
+        document.addEventListener('click', function (e) {
+            const popup = document.getElementById('nbProfilePopup');
+            const anchor = popup?.closest('.nb-popup-anchor');
+            if (popup && anchor && !anchor.contains(e.target)) {
+                popup.classList.remove('open');
             }
         });
-    });
-</script>
+        function nbUpdateClock() {
+            const now = new Date();
+            const d = document.getElementById('nbDate');
+            const t = document.getElementById('nbTime');
+            if (d) d.textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            if (t) t.textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            nbUpdateClock();
+            setInterval(nbUpdateClock, 30000);
+            if (window.innerWidth >= 1024 && localStorage.getItem('nbSidebarCollapsed') === '1') {
+                document.getElementById('nbSidebar')?.classList.add('collapsed');
+            }
+        });
+    </script>
+    @stack('scripts')
 
-@stack('scripts')
-
+    <x-confirm-dialog />
 </body>
 </html>

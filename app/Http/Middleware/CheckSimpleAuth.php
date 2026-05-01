@@ -9,11 +9,10 @@ class CheckSimpleAuth
 {
     public function handle(Request $request, Closure $next)
     {
-        // Cek session 'user_id' yang kita set di SimpleLoginController
-        if (!session('user_id')) {
-            return redirect('/login')->withErrors(['msg' => 'Silakan login terlebih dahulu.']);
+        if (!$request->session()->has('user')) {
+            return redirect('/login');
         }
-        
+
         return $next($request);
     }
 }

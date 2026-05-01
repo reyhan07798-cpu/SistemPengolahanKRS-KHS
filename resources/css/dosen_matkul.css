@@ -15,10 +15,10 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg, #0f3c91 0%, #0b6dff 45%, #1d99ff 100%);
+    background: linear-gradient(160deg, #0d4a45 0%, #115E59 40%, #14746e 100%);
     color: white;
     padding: 20px;
-    box-shadow: 0 10px 30px rgba(6, 53, 107, 0.25);
+    box-shadow: 0 10px 30px rgba(10, 59, 55, 0.3);
 }
 
 .sidebar h2 {
@@ -176,7 +176,7 @@ body {
     margin-bottom: 18px;
     font-size: 1.05rem;
     font-weight: 700;
-    color: #0f3c91;
+    color: #115E59;
 }
 
 .panel-body {

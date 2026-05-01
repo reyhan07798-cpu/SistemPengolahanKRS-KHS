@@ -35,7 +35,15 @@ class SimpleAuthService
             'role' => 'admin',
             'email' => 'admin@poltek.com'
         ],
-        // Dosen Wali
+        // Dosen (gabungan: bisa jadi Wali sekaligus Dosen Matkul)
+        '11111111' => [
+            'type' => 'nik',
+            'password' => '11111111',
+            'name' => 'Dr. Dosen, M.kom',
+            'role' => 'dosen',
+            'email' => 'dosen@poltek.com'
+        ],
+        // Legacy — Dosen Wali (untuk kompatibilitas data lama)
         '12345678' => [
             'type' => 'nik',
             'password' => '12345678',
@@ -43,7 +51,7 @@ class SimpleAuthService
             'role' => 'dosen_wali',
             'email' => 'dosen.wali@poltek.com'
         ],
-        // Dosen Matkul 
+        // Legacy — Dosen Matkul (untuk kompatibilitas data lama)
         '87654321' => [
             'type' => 'nik',
             'password' => '87654321',

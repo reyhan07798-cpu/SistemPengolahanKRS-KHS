@@ -2,18 +2,18 @@
     'title' => '',
     'value' => '',
     'icon' => '',
-    'bgColor' => 'bg-gray-100',
-    'textColor' => 'text-gray-500'
+    'bgColor' => '',
+    'textColor' => '',
 ])
 
-<div {{ $attributes->merge(['class' => 'bg-white p-4 rounded-xl shadow-sm border border-gray-100']) }}>
+<div {{ $attributes->merge(['class' => 'nb-stat']) }}>
     <div class="flex items-center gap-3">
-        <div class="p-2 {{ $bgColor }} rounded-lg {{ $textColor }}">
-            {!! $icon !!}
-        </div>
-        <div>
-            <p class="text-xs font-medium text-gray-500">{{ $title }}</p>
-            <p class="text-xl font-bold text-dark">{{ $value }}</p>
-        </div>
+        @if($icon)
+            <div class="nb-stat-icon">
+                {!! $icon !!}
+            </div>
+        @endif
+        <p class="nb-stat-label">{{ $title }}</p>
     </div>
+    <div class="nb-stat-value">{{ $value }}</div>
 </div>

@@ -20,10 +20,10 @@ body {
     width: 300px;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 45%, #2563eb 100%);
+    background: linear-gradient(160deg, #0d4a45 0%, #115E59 40%, #14746e 100%);
     color: white;
     padding: 28px 22px;
-    box-shadow: 0 20px 45px rgba(6, 53, 107, 0.22);
+    box-shadow: 0 20px 45px rgba(10, 59, 55, 0.3);
 }
 
 .brand {
@@ -148,7 +148,7 @@ body {
 .heading h1 {
     font-size: 2.1rem;
     margin-bottom: 10px;
-    color: #1e3a8a;
+    color: #115E59;
 }
 
 .heading p {
@@ -179,7 +179,7 @@ body {
 .stat-value {
     font-size: 2.1rem;
     font-weight: 800;
-    color: #1e3a8a;
+    color: #115E59;
 }
 
 .panel {
@@ -197,7 +197,7 @@ body {
 .panel-title {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #1e3a8a;
+    color: #115E59;
 }
 
 .student-list {

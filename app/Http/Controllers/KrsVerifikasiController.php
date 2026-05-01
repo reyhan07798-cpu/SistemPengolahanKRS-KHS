@@ -81,7 +81,8 @@ class KrsVerifikasiController extends Controller
             'ditolak'   => count(array_filter($allKrs, fn($k) => $k['status'] == 'Ditolak')),
         ];
 
-        return view('pages.dosen_wali.krs-verifikasi', compact('stats', 'daftarKrs', 'filterStatus', 'filterKelas'));
+        $view = $request->routeIs('pages.dosen.*') ? 'pages.dosen.krs-verifikasi' : 'pages.dosen_wali.krs-verifikasi';
+        return view($view, compact('stats', 'daftarKrs', 'filterStatus', 'filterKelas'));
     }
 
     public function approve($id)

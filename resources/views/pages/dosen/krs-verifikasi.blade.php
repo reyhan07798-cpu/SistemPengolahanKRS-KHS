@@ -1,4 +1,4 @@
-@extends('layouts.dosen_wali')
+@extends('layouts.dosen')
 
 @section('title', 'Verifikasi KRS')
 @section('page_title', 'Verifikasi KRS')
@@ -7,7 +7,7 @@
     {{-- Page Header --}}
     <div class="nb-page-header">
         <div>
-            <span class="nb-eyebrow">Persetujuan</span>
+            <span class="nb-eyebrow">Dosen Wali · Persetujuan</span>
             <h1 class="mt-2">Verifikasi KRS</h1>
             <p>Setujui atau tolak pengajuan KRS dari mahasiswa bimbingan Anda.</p>
         </div>
@@ -35,7 +35,7 @@
                 </div>
                 <p class="nb-stat-label">Menunggu Verifikasi</p>
             </div>
-            <div class="nb-stat-value">{{ $stats['menunggu'] }}</div>
+            <div class="nb-stat-value">{{ $stats['menunggu'] ?? 0 }}</div>
         </div>
 
         <div class="nb-stat nb-stat--accent nb-stat--ribbon">
@@ -45,7 +45,7 @@
                 </div>
                 <p class="nb-stat-label">Disetujui</p>
             </div>
-            <div class="nb-stat-value">{{ $stats['disetujui'] }}</div>
+            <div class="nb-stat-value">{{ $stats['disetujui'] ?? 0 }}</div>
         </div>
 
         <div class="nb-stat nb-stat--danger nb-stat--ribbon">
@@ -55,7 +55,7 @@
                 </div>
                 <p class="nb-stat-label">Ditolak</p>
             </div>
-            <div class="nb-stat-value">{{ $stats['ditolak'] }}</div>
+            <div class="nb-stat-value">{{ $stats['ditolak'] ?? 0 }}</div>
         </div>
     </div>
 
@@ -65,23 +65,23 @@
             <span class="material-symbols-outlined text-primary">filter_list</span>
             <h3 class="nb-h3">Filter</h3>
         </div>
-        <form method="GET" action="{{ route('pages.dosen_wali.krs.verifikasi') }}">
+        <form method="GET" action="{{ route('pages.dosen.wali.krs.verifikasi') }}">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>
                     <label class="nb-label">Status</label>
                     <select name="status">
-                        <option value="semua" {{ $filterStatus == 'semua' ? 'selected' : '' }}>Semua</option>
-                        <option value="Menunggu" {{ $filterStatus == 'Menunggu' ? 'selected' : '' }}>Menunggu</option>
-                        <option value="Disetujui" {{ $filterStatus == 'Disetujui' ? 'selected' : '' }}>Disetujui</option>
-                        <option value="Ditolak" {{ $filterStatus == 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
+                        <option value="semua" {{ ($filterStatus ?? 'semua') == 'semua' ? 'selected' : '' }}>Semua</option>
+                        <option value="Menunggu" {{ ($filterStatus ?? '') == 'Menunggu' ? 'selected' : '' }}>Menunggu</option>
+                        <option value="Disetujui" {{ ($filterStatus ?? '') == 'Disetujui' ? 'selected' : '' }}>Disetujui</option>
+                        <option value="Ditolak" {{ ($filterStatus ?? '') == 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
                     </select>
                 </div>
                 <div>
                     <label class="nb-label">Kelas</label>
                     <select name="kelas">
-                        <option value="semua" {{ $filterKelas == 'semua' ? 'selected' : '' }}>Semua</option>
-                        <option value="A" {{ $filterKelas == 'A' ? 'selected' : '' }}>Kelas A</option>
-                        <option value="B" {{ $filterKelas == 'B' ? 'selected' : '' }}>Kelas B</option>
+                        <option value="semua" {{ ($filterKelas ?? 'semua') == 'semua' ? 'selected' : '' }}>Semua</option>
+                        <option value="A" {{ ($filterKelas ?? '') == 'A' ? 'selected' : '' }}>Kelas A</option>
+                        <option value="B" {{ ($filterKelas ?? '') == 'B' ? 'selected' : '' }}>Kelas B</option>
                     </select>
                 </div>
                 <div>
@@ -116,7 +116,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($daftarKrs as $krs)
+                    @forelse($daftarKrs ?? [] as $krs)
                         @php
                             $statusBadge = match($krs['status']) {
                                 'Disetujui' => 'nb-badge-success',
@@ -137,7 +137,7 @@
                             <td class="text-center">
                                 @if($krs['status'] == 'Menunggu')
                                     <div class="flex items-center justify-center gap-2">
-                                        <form action="{{ route('pages.dosen_wali.krs.approve', $krs['nim']) }}" method="POST" class="inline"
+                                        <form action="{{ route('pages.dosen.wali.krs.approve', $krs['nim']) }}" method="POST" class="inline"
                                               data-nb-confirm="true"
                                               data-nb-confirm-variant="primary"
                                               data-nb-confirm-icon="check_circle"
@@ -150,7 +150,7 @@
                                                 <span class="material-symbols-outlined">check</span>
                                             </button>
                                         </form>
-                                        <form action="{{ route('pages.dosen_wali.krs.reject', $krs['nim']) }}" method="POST" class="inline"
+                                        <form action="{{ route('pages.dosen.wali.krs.reject', $krs['nim']) }}" method="POST" class="inline"
                                               data-nb-confirm="true"
                                               data-nb-confirm-icon="cancel"
                                               data-nb-confirm-title="Tolak KRS Mahasiswa?"

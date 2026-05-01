@@ -1,4 +1,4 @@
-@extends('layouts.dosen_mk')
+@extends('layouts.dosen')
 
 @section('title', 'Input Nilai')
 @section('page_title', 'Input Nilai')
@@ -7,7 +7,7 @@
     {{-- Page Header --}}
     <div class="nb-page-header">
         <div>
-            <span class="nb-eyebrow">Penilaian</span>
+            <span class="nb-eyebrow">Dosen Matkul · Penilaian</span>
             <h1 class="mt-2">Input Nilai</h1>
             <p>Input nilai akhir mahasiswa untuk mata kuliah yang Anda ampu.</p>
         </div>
@@ -45,7 +45,7 @@
             <label class="nb-label">Mata Kuliah yang Diampu</label>
             <select id="pilihMK">
                 <option value="">-- Pilih Mata Kuliah --</option>
-                @foreach($mataKuliahList as $mk)
+                @foreach($mataKuliahList ?? [] as $mk)
                     <option value="{{ $mk['kode'] }}"
                             data-nama="{{ $mk['nama'] }}"
                             data-sks="{{ $mk['sks'] }}"
@@ -104,7 +104,6 @@
             </div>
 
             <div class="nb-modal-body">
-                {{-- Info Mahasiswa --}}
                 <div class="nb-info-card flex items-center gap-4 mb-5">
                     <div class="nb-avatar-sm" style="cursor:default;" id="modalAvatar">A</div>
                     <div class="min-w-0">
@@ -113,7 +112,6 @@
                     </div>
                 </div>
 
-                {{-- Form Input Komponen --}}
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="nb-label">Tugas (20%)</label>
@@ -137,7 +135,6 @@
                     </div>
                 </div>
 
-                {{-- Hasil Perhitungan --}}
                 <div class="nb-info-card flex justify-between items-center mt-5">
                     <span class="nb-label" style="margin-bottom:0;">Nilai Akhir & Grade</span>
                     <div class="flex items-center gap-3">
@@ -178,7 +175,7 @@
 
     document.getElementById('pilihMK').addEventListener('change', function () {
         currentMK = this.value;
-        if (currentMK) {
+        if (currentMK && dataNilai[currentMK]) {
             const opt = this.options[this.selectedIndex];
             document.getElementById('tabelJudul').textContent = `Daftar Mahasiswa - ${opt.dataset.nama}`;
             document.getElementById('tabelInfo').textContent = `SKS ${opt.dataset.sks} · Semester ${opt.dataset.semester}`;
