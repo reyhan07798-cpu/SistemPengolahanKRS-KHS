@@ -53,31 +53,50 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php
+@php
                         $ipSemester = [
                             ['sem' => 1, 'tahun' => '2023/2024', 'mk' => 5, 'sks' => 15, 'ips' => 3.60, 'ipk' => 3.60],
                             ['sem' => 2, 'tahun' => '2023/2024', 'mk' => 5, 'sks' => 15, 'ips' => 3.72, 'ipk' => 3.66],
                             ['sem' => 3, 'tahun' => '2024/2025', 'mk' => 5, 'sks' => 15, 'ips' => 3.54, 'ipk' => 3.62],
                             ['sem' => 4, 'tahun' => '2024/2025', 'mk' => 5, 'sks' => 15, 'ips' => 3.68, 'ipk' => 3.64],
                         ];
+                        
+                        // Calculate predikat for each semester
+                        foreach($ipSemester as &$ip) {
+                            $ip['predikat'] = $ip['ips'] >= 3.75 ? 'Dengan Pujian' : 
+                                            ($ip['ips'] >= 3.50 ? 'Sangat Memuaskan' : 
+                                            ($ip['ips'] >= 3.00 ? 'Memuaskan' : 'Cukup'));
+                        }
                     @endphp
-                        @foreach($ipSemester as $ip)
-                            <x-ip-semester-row 
-                                :sem="$ip['sem']"
-                                :tahun="$ip['tahun']"
-                                :mk="$ip['mk']"
-                                :sks="$ip['sks']"
-                                :ips="$ip['ips']"
-                                :ipk="$ip['ipk']"
-                                :predikat="match(true){ $ip['ips']>=3.75 ? 'Dengan Pujian' : ($ip['ips']>=3.50 ? 'Sangat Memuaskan' : ($ip['ips']>=3.00 ? 'Memuaskan' : 'Cukup')) }" 
-                            />
-                        @endforeach
+                    @foreach($ipSemester as $ip)
+                        <x-ip-semester-row 
+                            :sem="$ip['sem']"
+                            :tahun="$ip['tahun']"
+                            :mk="$ip['mk']"
+                            :sks="$ip['sks']"
+                            :ips="$ip['ips']"
+                            :ipk="$ip['ipk']"
+                            :predikat="$ip['predikat']"
+                        />
+                    @endforeach
                 </tbody>
             </table>
         </div>
     </div>
 
-    <x-filter-mahasiswa />
+    <div class="nb-card mb-6">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="material-symbols-outlined text-primary">filter_list</span>
+            <h3 class="nb-h3">Filter Nilai</h3>
+        </div>
+        <x-filter-mahasiswa id-prefix="filter" />
+        <div class="flex items-end mt-4">
+            <button type="button" onclick="filterData()" class="nb-btn nb-btn-primary w-full">
+                <span class="material-symbols-outlined" style="font-size:18px;">search</span>
+                Filter
+            </button>
+        </div>
+    </div>
 
     {{-- Daftar Nilai Table --}}
     <div class="nb-card-flat">
@@ -129,15 +148,23 @@
         </div>
     </div>
 
-    @push('scripts')
+@push('scripts')
         <script>
-            document.getElementById('tahun_ajaran')?.addEventListener('change', filterData);
-            document.getElementById('semester')?.addEventListener('change', filterData);
             function filterData() {
                 const tahunAjaran = document.getElementById('tahun_ajaran').value;
                 const semester = document.getElementById('semester').value;
-                console.log('Filter: Tahun Ajaran = ' + tahunAjaran + ', Semester = ' + semester);
+                
+                document.querySelectorAll('tbody tr').forEach(row => {
+                    const tahunCell = row.cells[row.cells.length - 1].textContent.trim(); // Tahun Ajaran column
+                    const showRow = (!tahunAjaran || tahunCell.includes(tahunAjaran)) && (!semester || tahunCell.includes(semester));
+                    row.style.display = showRow ? '' : 'none';
+                });
             }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('tahun_ajaran')?.addEventListener('change', filterData);
+                document.getElementById('semester')?.addEventListener('change', filterData);
+            });
         </script>
     @endpush
 @endsection
