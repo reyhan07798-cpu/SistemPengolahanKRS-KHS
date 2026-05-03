@@ -12,11 +12,11 @@
             <p>Kelola nilai dan pantau mahasiswa pada mata kuliah yang Anda ampu.</p>
         </div>
         <div class="flex gap-3 flex-wrap">
-            <a href="{{ route('pages.dosen_matkul.input-nilai') }}" class="nb-btn nb-btn-primary">
+            <a href="{{ route('dosen.mk.input-nilai') }}" class="nb-btn nb-btn-primary">
                 <span class="material-symbols-outlined" style="font-size:20px;">edit_note</span>
                 Input Nilai
             </a>
-            <a href="{{ route('pages.dosen_matkul.lihat-nilai') }}" class="nb-btn nb-btn-secondary">
+            <a href="{{ route('dosen.mk.lihat-nilai') }}" class="nb-btn nb-btn-secondary">
                 <span class="material-symbols-outlined" style="font-size:20px;">analytics</span>
                 Lihat Nilai
             </a>

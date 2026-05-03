@@ -123,8 +123,8 @@
                         <tr>
                             <th>Mata Kuliah</th>
                             <th class="text-center">SKS</th>
-                            <th class="text-center">Nilai</th>
-                            <th class="text-center">Bobot</th>
+                            <th class="text-center">Grade</th>
+                            <th class="text-center">Angka (0–4)</th>
                         </tr>
                     </thead>
                     <tbody>

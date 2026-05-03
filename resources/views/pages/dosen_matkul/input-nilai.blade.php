@@ -1,4 +1,4 @@
-@extends('layouts.dosen_mk')
+@extends('layouts.dosen')
 
 @section('title', 'Input Nilai')
 @section('page_title', 'Input Nilai')
@@ -19,6 +19,40 @@
             {{ session('success') }}
         </div>
     @endif
+
+
+    {{-- Filter Tahun Ajaran & Semester --}}
+    <div class="nb-card mb-6">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="material-symbols-outlined text-primary">filter_list</span>
+            <h3 class="nb-h3">Periode Penilaian</h3>
+        </div>
+        <form method="GET" action="{{ route('pages.dosen_matkul.input-nilai') }}">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 items-end">
+                <div>
+                    <label class="nb-label">Tahun Ajaran</label>
+                    <select name="tahun_ajaran">
+                        @foreach($tahunAjaranList as $ta)
+                            <option value="{{ $ta }}" {{ $filterTahunAjaran == $ta ? 'selected' : '' }}>{{ $ta }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="nb-label">Semester</label>
+                    <select name="semester">
+                        @foreach($semesterList as $sem)
+                            <option value="{{ $sem }}" {{ $filterSemester == $sem ? 'selected' : '' }}>{{ $sem }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="nb-btn nb-btn-primary w-full">
+                        <span class="material-symbols-outlined" style="font-size:18px;">search</span> Terapkan
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 
     {{-- Info Bobot Penilaian --}}
     <div class="nb-card mb-6">
@@ -74,7 +108,9 @@
                         <th>NIM</th>
                         <th>Nama Mahasiswa</th>
                         <th class="text-center">Kelas</th>
-                        <th class="text-center">Status Nilai</th>
+                        <th class="text-center">Nilai (0–100)</th>
+                        <th class="text-center">Grade</th>
+                        <th class="text-center">Angka (0–4)</th>
                         <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -138,11 +174,20 @@
                 </div>
 
                 {{-- Hasil Perhitungan --}}
-                <div class="nb-info-card flex justify-between items-center mt-5">
-                    <span class="nb-label" style="margin-bottom:0;">Nilai Akhir & Grade</span>
-                    <div class="flex items-center gap-3">
-                        <span class="font-extrabold text-2xl text-primary" style="font-family: var(--font-heading);" id="modalTotal">-</span>
-                        <span class="nb-badge nb-badge-stable" id="modalGrade">-</span>
+                <div class="nb-info-card mt-5" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center;">
+                    <div>
+                        <p class="nb-label" style="margin-bottom:4px;">Nilai Akhir & Grade</p>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="font-extrabold text-2xl text-primary" style="font-family:var(--font-heading);" id="modalTotal">—</span>
+                            <span class="nb-badge nb-badge-stable" id="modalGrade">—</span>
+                        </div>
+                    </div>
+                    <div style="border-left:2px solid var(--nb-border);padding-left:16px;">
+                        <p class="nb-label" style="margin-bottom:4px;">Angka (0–4)</p>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="font-extrabold text-2xl text-accent" style="font-family:var(--font-heading);" id="modalMutu">—</span>
+                            <span class="text-xs text-muted">Indeks Prestasi</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -198,9 +243,28 @@
         tbody.innerHTML = '';
 
         dataNilai[currentMK].forEach((mhs, idx) => {
-            const statusBadge = mhs.nilai !== null
-                ? `<span class="nb-badge nb-badge-success">${mhs.nilai} (${mhs.grade})</span>`
-                : `<span class="nb-badge nb-badge-stable">Belum Diinput</span>`;
+            function nilaiToMutu(n) {
+                if (n === null) return null;
+                if (n >= 85) return 4.00;
+                if (n >= 80) return 3.75;
+                if (n >= 75) return 3.50;
+                if (n >= 70) return 3.00;
+                if (n >= 65) return 2.75;
+                if (n >= 60) return 2.50;
+                if (n >= 55) return 2.00;
+                if (n >= 40) return 1.00;
+                return 0.00;
+            }
+            const nilaiDisplay = mhs.nilai !== null
+                ? `<span class="font-extrabold text-primary" style="font-family:var(--font-heading);">${mhs.nilai}</span>`
+                : `<span class="nb-badge nb-badge-stable">—</span>`;
+            const gradeDisplay = mhs.grade !== null
+                ? `<span class="nb-badge ${mhs.grade==='A'?'nb-badge-success':mhs.grade==='B'?'nb-badge-primary':'nb-badge-warning'}">${mhs.grade}</span>`
+                : `<span class="nb-badge nb-badge-stable">—</span>`;
+            const mutu = nilaiToMutu(parseFloat(mhs.nilai));
+            const mutuDisplay = mutu !== null
+                ? `<span class="font-extrabold ${mutu>=3.5?'text-accent':mutu>=2.5?'text-primary':'text-muted'}" style="font-family:var(--font-heading);">${mutu.toFixed(2)}</span>`
+                : `<span class="nb-badge nb-badge-stable">—</span>`;
 
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -208,7 +272,9 @@
                 <td class="font-bold text-primary text-sm" style="font-family: var(--font-heading);">${mhs.nim}</td>
                 <td class="font-medium text-ink">${mhs.nama}</td>
                 <td class="text-center"><span class="nb-badge nb-badge-stable">${mhs.kelas}</span></td>
-                <td class="text-center">${statusBadge}</td>
+                <td class="text-center">${nilaiDisplay}</td>
+                <td class="text-center">${gradeDisplay}</td>
+                <td class="text-center">${mutuDisplay}</td>
                 <td class="text-center">
                     <button type="button" onclick="openModal(${idx})" class="nb-btn nb-btn-primary nb-btn-sm">
                         <span class="material-symbols-outlined" style="font-size:14px;">${mhs.nilai !== null ? 'edit' : 'add'}</span>
@@ -262,10 +328,27 @@
         else if (total >= 55) { grade = 'C'; badge = 'nb-badge-warning'; }
         else if (total >= 40) { grade = 'D'; badge = 'nb-badge-warning'; }
 
-        document.getElementById('modalTotal').textContent = total > 0 ? total.toFixed(1) : '-';
+        document.getElementById('modalTotal').textContent = total > 0 ? total.toFixed(1) : '—';
         const gradeEl = document.getElementById('modalGrade');
-        gradeEl.textContent = total > 0 ? grade : '-';
+        gradeEl.textContent = total > 0 ? grade : '—';
         gradeEl.className = `nb-badge ${total > 0 ? badge : 'nb-badge-stable'}`;
+
+        // Hitung mutu 0-4
+        let mutu = 0;
+        if (total >= 85) mutu = 4.00;
+        else if (total >= 80) mutu = 3.75;
+        else if (total >= 75) mutu = 3.50;
+        else if (total >= 70) mutu = 3.00;
+        else if (total >= 65) mutu = 2.75;
+        else if (total >= 60) mutu = 2.50;
+        else if (total >= 55) mutu = 2.00;
+        else if (total >= 40) mutu = 1.00;
+        const mutuEl = document.getElementById('modalMutu');
+        if (mutuEl) {
+            mutuEl.textContent = total > 0 ? mutu.toFixed(2) : '—';
+            mutuEl.className = `font-extrabold text-2xl ${mutu >= 3.5 ? 'text-accent' : mutu >= 2.5 ? 'text-primary' : 'text-muted'}`;
+            mutuEl.style.fontFamily = 'var(--font-heading)';
+        }
     }
 
     function setupModalListeners() {

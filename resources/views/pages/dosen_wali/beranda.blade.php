@@ -12,11 +12,11 @@
             <p>Pantau status KRS dan progres akademik mahasiswa bimbingan Anda.</p>
         </div>
         <div class="flex gap-3 flex-wrap">
-            <a href="{{ route('pages.dosen_wali.krs.verifikasi') }}" class="nb-btn nb-btn-secondary">
+            <a href="{{ route('dosen.wali.krs-verifikasi') }}" class="nb-btn nb-btn-secondary">
                 <span class="material-symbols-outlined" style="font-size:20px;">fact_check</span>
                 Verifikasi KRS
             </a>
-            <a href="{{ route('pages.dosen_wali.khs') }}" class="nb-btn nb-btn-primary">
+            <a href="{{ route('dosen.wali.khs') }}" class="nb-btn nb-btn-primary">
                 <span class="material-symbols-outlined" style="font-size:20px;">assessment</span>
                 Lihat KHS
             </a>
@@ -73,7 +73,7 @@
                 <span class="nb-eyebrow">Bimbingan</span>
                 <h3 class="nb-h3 mt-1">Mahasiswa Bimbingan</h3>
             </div>
-            <a href="{{ route('pages.dosen_wali.khs') }}" class="nb-btn nb-btn-secondary nb-btn-sm">
+            <a href="{{ route('dosen.wali.khs') }}" class="nb-btn nb-btn-secondary nb-btn-sm">
                 Lihat Semua
                 <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward</span>
             </a>

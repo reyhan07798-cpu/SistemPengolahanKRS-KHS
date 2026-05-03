@@ -1,4 +1,4 @@
-@extends('layouts.dosen_wali')
+@extends('layouts.dosen')
 
 @section('title', 'Profil Dosen Wali')
 @section('page_title', 'Profil')

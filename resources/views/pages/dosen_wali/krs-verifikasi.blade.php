@@ -1,10 +1,9 @@
-@extends('layouts.dosen_wali')
+@extends('layouts.dosen')
 
 @section('title', 'Verifikasi KRS')
 @section('page_title', 'Verifikasi KRS')
 
 @section('content')
-    {{-- Page Header --}}
     <div class="nb-page-header">
         <div>
             <span class="nb-eyebrow">Persetujuan</span>
@@ -15,44 +14,34 @@
 
     @if(session('success'))
         <div class="nb-alert nb-alert-success mb-6 flex items-center gap-2">
-            <span class="material-symbols-outlined">check_circle</span>
-            {{ session('success') }}
+            <span class="material-symbols-outlined">check_circle</span> {{ session('success') }}
         </div>
     @endif
     @if(session('error'))
         <div class="nb-alert nb-alert-danger mb-6 flex items-center gap-2">
-            <span class="material-symbols-outlined">error</span>
-            {{ session('error') }}
+            <span class="material-symbols-outlined">error</span> {{ session('error') }}
         </div>
     @endif
 
     {{-- Summary Cards --}}
-    <div class="nb-bento" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+    <div class="nb-bento" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
         <div class="nb-stat nb-stat--warning nb-stat--ribbon">
             <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">schedule</span>
-                </div>
-                <p class="nb-stat-label">Menunggu Verifikasi</p>
+                <div class="nb-stat-icon"><span class="material-symbols-outlined filled">schedule</span></div>
+                <p class="nb-stat-label">Menunggu</p>
             </div>
             <div class="nb-stat-value">{{ $stats['menunggu'] }}</div>
         </div>
-
         <div class="nb-stat nb-stat--accent nb-stat--ribbon">
             <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">check_circle</span>
-                </div>
+                <div class="nb-stat-icon"><span class="material-symbols-outlined filled">check_circle</span></div>
                 <p class="nb-stat-label">Disetujui</p>
             </div>
             <div class="nb-stat-value">{{ $stats['disetujui'] }}</div>
         </div>
-
         <div class="nb-stat nb-stat--danger nb-stat--ribbon">
             <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">cancel</span>
-                </div>
+                <div class="nb-stat-icon"><span class="material-symbols-outlined filled">cancel</span></div>
                 <p class="nb-stat-label">Ditolak</p>
             </div>
             <div class="nb-stat-value">{{ $stats['ditolak'] }}</div>
@@ -66,28 +55,45 @@
             <h3 class="nb-h3">Filter</h3>
         </div>
         <form method="GET" action="{{ route('pages.dosen_wali.krs.verifikasi') }}">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 items-end">
+                <div>
+                    <label class="nb-label">Tahun Ajaran</label>
+                    <select name="tahun_ajaran">
+                        <option value="semua" {{ $filterTahunAjaran == 'semua' ? 'selected' : '' }}>Semua</option>
+                        @foreach($tahunAjaranList as $ta)
+                            <option value="{{ $ta }}" {{ $filterTahunAjaran == $ta ? 'selected' : '' }}>{{ $ta }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="nb-label">Semester</label>
+                    <select name="semester">
+                        <option value="semua" {{ $filterSemester == 'semua' ? 'selected' : '' }}>Semua</option>
+                        @foreach($semesterList as $sem)
+                            <option value="{{ $sem }}" {{ $filterSemester == $sem ? 'selected' : '' }}>{{ $sem }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <div>
                     <label class="nb-label">Status</label>
                     <select name="status">
-                        <option value="semua" {{ $filterStatus == 'semua' ? 'selected' : '' }}>Semua</option>
+                        <option value="semua"    {{ $filterStatus == 'semua'    ? 'selected' : '' }}>Semua</option>
                         <option value="Menunggu" {{ $filterStatus == 'Menunggu' ? 'selected' : '' }}>Menunggu</option>
-                        <option value="Disetujui" {{ $filterStatus == 'Disetujui' ? 'selected' : '' }}>Disetujui</option>
-                        <option value="Ditolak" {{ $filterStatus == 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
+                        <option value="Disetujui"{{ $filterStatus == 'Disetujui'? 'selected' : '' }}>Disetujui</option>
+                        <option value="Ditolak"  {{ $filterStatus == 'Ditolak'  ? 'selected' : '' }}>Ditolak</option>
                     </select>
                 </div>
                 <div>
                     <label class="nb-label">Kelas</label>
                     <select name="kelas">
                         <option value="semua" {{ $filterKelas == 'semua' ? 'selected' : '' }}>Semua</option>
-                        <option value="A" {{ $filterKelas == 'A' ? 'selected' : '' }}>Kelas A</option>
-                        <option value="B" {{ $filterKelas == 'B' ? 'selected' : '' }}>Kelas B</option>
+                        <option value="A"     {{ $filterKelas == 'A'     ? 'selected' : '' }}>Kelas A</option>
+                        <option value="B"     {{ $filterKelas == 'B'     ? 'selected' : '' }}>Kelas B</option>
                     </select>
                 </div>
                 <div>
                     <button type="submit" class="nb-btn nb-btn-primary w-full">
-                        <span class="material-symbols-outlined" style="font-size:18px;">search</span>
-                        Terapkan
+                        <span class="material-symbols-outlined" style="font-size:18px;">search</span> Terapkan
                     </button>
                 </div>
             </div>
@@ -98,8 +104,8 @@
     <div class="nb-card-flat">
         <div class="nb-section-header">
             <div>
-                <span class="nb-eyebrow" style="color: var(--color-accent-soft);">Pengajuan</span>
-                <h2 class="mt-1">Daftar KRS Mahasiswa</h2>
+                <span class="nb-eyebrow" style="color:var(--color-accent-soft);">Pengajuan</span>
+                <h2 class="mt-1">Daftar KRS — {{ $filterTahunAjaran == 'semua' ? 'Semua Tahun' : $filterTahunAjaran }} / {{ $filterSemester == 'semua' ? 'Semua Semester' : $filterSemester }}</h2>
             </div>
         </div>
         <div class="overflow-x-auto">
@@ -108,8 +114,8 @@
                     <tr>
                         <th>Mahasiswa</th>
                         <th class="text-center">Kelas</th>
-                        <th class="text-center">Mata Kuliah</th>
-                        <th class="text-center">Total SKS</th>
+                        <th class="text-center">MK</th>
+                        <th class="text-center">SKS</th>
                         <th class="text-center">Status</th>
                         <th class="hidden md:table-cell">Tanggal</th>
                         <th class="text-center">Aksi</th>
@@ -120,8 +126,8 @@
                         @php
                             $statusBadge = match($krs['status']) {
                                 'Disetujui' => 'nb-badge-success',
-                                'Ditolak' => 'nb-badge-danger',
-                                default => 'nb-badge-warning',
+                                'Ditolak'   => 'nb-badge-danger',
+                                default     => 'nb-badge-warning',
                             };
                         @endphp
                         <tr>
@@ -138,26 +144,22 @@
                                 @if($krs['status'] == 'Menunggu')
                                     <div class="flex items-center justify-center gap-2">
                                         <form action="{{ route('pages.dosen_wali.krs.approve', $krs['nim']) }}" method="POST" class="inline"
-                                              data-nb-confirm="true"
-                                              data-nb-confirm-variant="primary"
+                                              data-nb-confirm="true" data-nb-confirm-variant="primary"
                                               data-nb-confirm-icon="check_circle"
                                               data-nb-confirm-title="Setujui KRS Mahasiswa?"
-                                              data-nb-confirm-desc="Mahasiswa akan menerima notifikasi bahwa KRS-nya telah disetujui."
+                                              data-nb-confirm-desc="Mahasiswa akan diberitahu bahwa KRS-nya disetujui."
                                               data-nb-confirm-button="Ya, Setujui">
-                                            @csrf
-                                            @method('PATCH')
+                                            @csrf @method('PATCH')
                                             <button type="submit" class="nb-row-action success" title="Setujui">
                                                 <span class="material-symbols-outlined">check</span>
                                             </button>
                                         </form>
                                         <form action="{{ route('pages.dosen_wali.krs.reject', $krs['nim']) }}" method="POST" class="inline"
-                                              data-nb-confirm="true"
-                                              data-nb-confirm-icon="cancel"
+                                              data-nb-confirm="true" data-nb-confirm-icon="cancel"
                                               data-nb-confirm-title="Tolak KRS Mahasiswa?"
-                                              data-nb-confirm-desc="Mahasiswa akan diminta mengajukan ulang KRS-nya."
+                                              data-nb-confirm-desc="Mahasiswa diminta mengajukan ulang KRS-nya."
                                               data-nb-confirm-button="Ya, Tolak">
-                                            @csrf
-                                            @method('DELETE')
+                                            @csrf @method('DELETE')
                                             <button type="submit" class="nb-row-action danger" title="Tolak">
                                                 <span class="material-symbols-outlined" style="font-size:16px;">close</span>
                                             </button>
@@ -172,7 +174,7 @@
                         <tr>
                             <td colspan="7" class="text-center py-12">
                                 <span class="material-symbols-outlined text-muted" style="font-size:48px;">inbox</span>
-                                <p class="mt-2 text-muted font-medium">Tidak ada data KRS yang ditemukan.</p>
+                                <p class="mt-2 text-muted font-medium">Tidak ada data KRS.</p>
                             </td>
                         </tr>
                     @endforelse
