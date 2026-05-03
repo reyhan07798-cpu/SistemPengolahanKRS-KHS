@@ -1,20 +1,24 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'SIPAKAR - Mahasiswa')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
+
 <body data-role="mahasiswa">
     <div class="nb-overlay" id="nbOverlay" onclick="nbToggleSidebar()"></div>
 
     <div class="nb-app">
-
+        <!-- Sidebar -->
         <aside class="nb-sidebar" id="nbSidebar">
             <div class="nb-sidebar-brand">
-                <div class="w-12 h-12 rounded-full border-2 border-ink bg-white flex items-center justify-center shrink-0 overflow-hidden p-1">
-                    <img src="{{ asset('images/logo-dashboard.png') }}" alt="Logo SIPAKAR" class="w-full h-full object-contain">
+                <div
+                    class="w-12 h-12 rounded-full border-2 border-white/20 bg-white flex items-center justify-center shrink-0 overflow-hidden p-1">
+                    <img src="{{ asset('images/logo-dashboard.png') }}" alt="Logo SIPAKAR"
+                        class="w-full h-full object-contain">
                 </div>
                 <div class="min-w-0">
                     <h1>SIPAKAR</h1>
@@ -26,33 +30,33 @@
 
             <nav class="nb-sidebar-nav">
                 <a href="{{ route('pages.mahasiswa.beranda') }}"
-                   class="nb-nav-item {{ request()->routeIs('pages.mahasiswa.beranda') ? 'active' : '' }}"
-                   data-label="Beranda">
+                    class="nb-nav-item {{ request()->routeIs('pages.mahasiswa.beranda') ? 'active' : '' }}"
+                    data-label="Beranda">
                     <span class="material-symbols-outlined">dashboard</span>
                     <span>Beranda</span>
                 </a>
                 <a href="{{ route('pages.mahasiswa.ambil-krs') }}"
-                   class="nb-nav-item {{ request()->routeIs('pages.mahasiswa.ambil-krs') ? 'active' : '' }}"
-                   data-label="Ambil KRS">
+                    class="nb-nav-item {{ request()->routeIs('pages.mahasiswa.ambil-krs') ? 'active' : '' }}"
+                    data-label="Ambil KRS">
                     <span class="material-symbols-outlined">assignment</span>
                     <span>Ambil KRS</span>
                 </a>
                 <a href="{{ route('pages.mahasiswa.lihat-khs') }}"
-                   class="nb-nav-item {{ request()->routeIs('pages.mahasiswa.lihat-khs') ? 'active' : '' }}"
-                   data-label="Lihat KHS">
+                    class="nb-nav-item {{ request()->routeIs('pages.mahasiswa.lihat-khs') ? 'active' : '' }}"
+                    data-label="Lihat KHS">
                     <span class="material-symbols-outlined">grade</span>
                     <span>Lihat KHS</span>
                 </a>
                 <a href="{{ route('pages.mahasiswa.profil') }}"
-                   class="nb-nav-item {{ request()->routeIs('pages.mahasiswa.profil') ? 'active' : '' }}"
-                   data-label="Profil">
+                    class="nb-nav-item {{ request()->routeIs('pages.mahasiswa.profil') ? 'active' : '' }}"
+                    data-label="Profil">
                     <span class="material-symbols-outlined">person</span>
                     <span>Profil</span>
                 </a>
             </nav>
 
             <div class="nb-sidebar-footer">
-                <div class="nb-status-dot">Sistem Aktif</div>
+                <div class="nb-status-dot"><span>Sistem Aktif</span></div>
             </div>
         </aside>
 
@@ -66,21 +70,24 @@
                         @hasSection('breadcrumb')
                             @yield('breadcrumb')
                         @else
-                            <x-breadcrumb :home="route('pages.mahasiswa.beranda')" :items="[
-                                ['label' => 'Mahasiswa', 'url' => route('pages.mahasiswa.beranda')],
-                                ['label' => trim(View::yieldContent('page_title', 'Beranda'))]
-                            ]" />
+                            <div class="nb-breadcrumb">
+                                <a href="{{ route('pages.mahasiswa.beranda') }}">Mahasiswa</a>
+                                <span class="sep">/</span>
+                                <span>{{ trim(View::yieldContent('page_title', 'Beranda')) }}</span>
+                            </div>
+
                         @endif
                     </div>
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <div class="hidden sm:flex flex-col items-end leading-tight pr-2 border-r-2 border-[rgba(31,41,55,0.15)]">
-                        <span class="text-xs font-bold uppercase tracking-wider text-muted" id="nbDate"></span>
-                        <span class="text-sm font-bold text-ink" id="nbTime"></span>
+                    <div class="hidden sm:flex flex-col items-end leading-tight nb-clock">
+                        <span class="date" id="nbDate"></span>
+                        <span class="time" id="nbTime"></span>
                     </div>
                     <div class="nb-popup-anchor">
-                        <button type="button" class="nb-avatar-sm" onclick="nbToggleProfilePopup()" aria-label="Profil pengguna" aria-haspopup="true">
+                        <button type="button" class="nb-avatar-sm" onclick="nbToggleProfilePopup()"
+                            aria-label="Profil pengguna" aria-haspopup="true">
                             <span class="material-symbols-outlined filled">person</span>
                         </button>
                         <div class="nb-popup" id="nbProfilePopup">
@@ -154,4 +161,5 @@
 
     <x-confirm-dialog />
 </body>
+
 </html>

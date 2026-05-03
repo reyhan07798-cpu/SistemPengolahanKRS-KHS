@@ -40,7 +40,7 @@
                 @endphp
                 <div class="nb-nav-group {{ $isWaliActive ? 'open' : '' }}" id="navGroupWali">
                     <button type="button" class="nb-nav-trigger {{ $isWaliActive ? 'has-active' : '' }}" 
-                            onclick="nbToggleNavGroup('navGroupWali')">
+                            onclick="nbToggleNavGroup('navGroupWali')" data-label="Dosen Wali">
                         <span class="material-symbols-outlined">supervisor_account</span>
                         <span>Dosen Wali</span>
                         <span class="material-symbols-outlined nb-nav-chevron">expand_more</span>
@@ -72,7 +72,7 @@
                 @endphp
                 <div class="nb-nav-group {{ $isMatkulActive ? 'open' : '' }}" id="navGroupMatkul">
                     <button type="button" class="nb-nav-trigger {{ $isMatkulActive ? 'has-active' : '' }}" 
-                            onclick="nbToggleNavGroup('navGroupMatkul')">
+                            onclick="nbToggleNavGroup('navGroupMatkul')" data-label="Dosen Matkul">
                         <span class="material-symbols-outlined">co_present</span>
                         <span>Dosen Matkul</span>
                         <span class="material-symbols-outlined nb-nav-chevron">expand_more</span>
@@ -99,7 +99,7 @@
 
                 {{-- Profil --}}
                 <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding-top: 8px;">
-                    <a href="{{ route('dosen.profil') }}" class="nb-nav-item {{ request()->routeIs('dosen.profil') ? 'active' : '' }}">
+                    <a href="{{ route('dosen.profil') }}" class="nb-nav-item {{ request()->routeIs('dosen.profil') ? 'active' : '' }}" data-label="Profil Saya">
                         <span class="material-symbols-outlined">person</span>
                         <span>Profil Saya</span>
                     </a>
