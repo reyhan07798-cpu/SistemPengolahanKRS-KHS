@@ -13,7 +13,7 @@
 
         <aside class="nb-sidebar" id="nbSidebar">
             <div class="nb-sidebar-brand">
-                <div class="w-12 h-12 rounded-full border-2 border-ink bg-white flex items-center justify-center shrink-0 overflow-hidden p-1">
+                <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white flex items-center justify-center shrink-0 overflow-hidden p-1">
                     <img src="{{ asset('images/logo-dashboard.png') }}" alt="Logo SIPAKAR" class="w-full h-full object-contain">
                 </div>
                 <div class="min-w-0">
@@ -69,7 +69,7 @@
             </nav>
 
             <div class="nb-sidebar-footer">
-                <div class="nb-status-dot">Sistem Aktif</div>
+                <div class="nb-status-dot"><span>Sistem Aktif</span></div>
             </div>
         </aside>
 
@@ -83,18 +83,19 @@
                         @hasSection('breadcrumb')
                             @yield('breadcrumb')
                         @else
-                            <x-breadcrumb :home="route('pages.admin.dashboard')" :items="[
-                                ['label' => 'Admin', 'url' => route('pages.admin.dashboard')],
-                                ['label' => trim(View::yieldContent('page_title', 'Dashboard'))]
-                            ]" />
+                            <div class="nb-breadcrumb">
+                                <a href="{{ route('pages.admin.dashboard') }}">Admin</a>
+                                <span class="sep">/</span>
+                                <span>{{ trim(View::yieldContent('page_title', 'Dashboard')) }}</span>
+                            </div>
                         @endif
                     </div>
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <div class="hidden sm:flex flex-col items-end leading-tight pr-2 border-r-2 border-[rgba(31,41,55,0.15)]">
-                        <span class="text-xs font-bold uppercase tracking-wider text-muted" id="nbDate"></span>
-                        <span class="text-sm font-bold text-ink" id="nbTime"></span>
+                    <div class="hidden sm:flex flex-col items-end leading-tight nb-clock">
+                        <span class="date" id="nbDate"></span>
+                        <span class="time" id="nbTime"></span>
                     </div>
                     <div class="nb-popup-anchor">
                         <button type="button" class="nb-avatar-sm" onclick="nbToggleProfilePopup()" aria-label="Profil pengguna" aria-haspopup="true">
