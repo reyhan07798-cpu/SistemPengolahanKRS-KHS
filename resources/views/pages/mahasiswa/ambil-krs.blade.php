@@ -19,66 +19,26 @@
         </div>
     @endif
 
-    {{-- Info Cards --}}
-    <div class="nb-bento" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
-        <div class="nb-stat nb-stat--info nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">event</span>
-                </div>
-                <p class="nb-stat-label">Semester Aktif</p>
-            </div>
-            <div class="nb-stat-value" id="displaySemesterAktif">2</div>
-        </div>
+    <x-stat-bento 
+        :stats="['semester_aktif' => 2, 'sisa_sks' => 24, 'status_krs' => 'Belum Diajukan']"
+        :config="[
+            'semester_aktif' => ['color' => 'nb-stat--info', 'icon' => 'event', 'label' => 'Semester Aktif'],
+            'sisa_sks' => ['color' => 'nb-stat--accent', 'icon' => 'verified', 'label' => 'Sisa SKS'],
+            'status_krs' => ['color' => 'nb-stat--warning', 'icon' => 'pending', 'label' => 'Status KRS']
+        ]" 
+        stat-value-style="'font-size: 1.5rem;'" />
 
-        <div class="nb-stat nb-stat--accent nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">verified</span>
-                </div>
-                <p class="nb-stat-label">Sisa SKS</p>
-            </div>
-            <div class="nb-stat-value" id="sisaSks">24</div>
-        </div>
-
-        <div class="nb-stat nb-stat--warning nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">pending</span>
-                </div>
-                <p class="nb-stat-label">Status KRS</p>
-            </div>
-            <div class="nb-stat-value" style="font-size: 1.5rem;">Belum Diajukan</div>
-        </div>
-    </div>
-
-    {{-- Filter Section --}}
     <div class="nb-card mb-6">
         <div class="flex items-center gap-3 mb-4">
             <span class="material-symbols-outlined text-primary">filter_list</span>
             <h3 class="nb-h3">Filter Paket Semester</h3>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <label class="nb-label">Tahun Ajaran</label>
-                <select id="filterTahun">
-                    <option value="2025/2026" selected>2025/2026</option>
-                    <option value="2024/2025">2024/2025</option>
-                    <option value="2023/2024">2023/2024</option>
-                </select>
-            </div>
-            <div>
-                <label class="nb-label">Semester</label>
-                <select id="filterSemester">
-                    {{-- Diisi otomatis oleh JS --}}
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button type="button" onclick="loadPaketSemester()" class="nb-btn nb-btn-primary w-full">
-                    <span class="material-symbols-outlined" style="font-size:18px;">search</span>
-                    Tampilkan Paket
-                </button>
-            </div>
+        <x-filter-mahasiswa tahun-label="Tahun Ajaran" semester-label="Semester" id-prefix="filter" />
+        <div class="flex items-end mt-4">
+            <button type="button" onclick="loadPaketSemester()" class="nb-btn nb-btn-primary w-full">
+                <span class="material-symbols-outlined" style="font-size:18px;">search</span>
+                Tampilkan Paket
+            </button>
         </div>
     </div>
 

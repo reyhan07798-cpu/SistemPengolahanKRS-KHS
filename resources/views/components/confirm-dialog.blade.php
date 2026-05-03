@@ -1,18 +1,26 @@
-{{-- Singleton confirm dialog. Dipasang sekali di layout, dipanggil
-     via [data-nb-confirm] attribute di tombol/form. --}}
-<div class="nb-confirm-overlay" id="nbConfirmOverlay" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="nb-confirm-card" id="nbConfirmCard" data-variant="danger" onclick="event.stopPropagation()">
-        <button type="button" class="nb-confirm-close" id="nbConfirmClose" aria-label="Tutup">
-            <span class="material-symbols-outlined" style="font-size:18px;">close</span>
-        </button>
-        <div class="nb-confirm-icon-wrap">
-            <span class="material-symbols-outlined nb-confirm-icon" id="nbConfirmIcon">notifications_active</span>
-        </div>
-        <h3 class="nb-confirm-title" id="nbConfirmTitle">Konfirmasi</h3>
-        <p class="nb-confirm-desc" id="nbConfirmDesc">Apakah Anda yakin ingin melanjutkan tindakan ini?</p>
-        <div class="nb-confirm-actions">
-            <button type="button" class="nb-confirm-btn-confirm" id="nbConfirmConfirm">Ya, Lanjutkan</button>
-            <button type="button" class="nb-confirm-btn-cancel" id="nbConfirmCancel">Batal</button>
-        </div>
+<div id="confirmDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="nb-card p-6 max-w-md w-full mx-4">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="material-symbols-outlined text-warning text-2xl">warning</span>
+      <h3 class="nb-h3">Konfirmasi</h3>
     </div>
+    <p class="text-muted mb-6" id="confirmMessage"></p>
+    <div class="flex gap-3 justify-end">
+      <button id="confirmCancel" class="nb-btn nb-btn-secondary">Batal</button>
+      <button id="confirmOk" class="nb-btn nb-btn-danger">Hapus</button>
+    </div>
+  </div>
 </div>
+
+<script>
+  function showConfirm(message, callback) {
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmDialog').classList.remove('hidden');
+    document.getElementById('confirmOk').onclick = callback;
+  }
+  
+  document.getElementById('confirmCancel').onclick = () => {
+    document.getElementById('confirmDialog').classList.add('hidden');
+  };
+</script>
+

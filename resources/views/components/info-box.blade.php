@@ -1,9 +1,16 @@
-@props([
-    'label' => '',
-    'value' => ''
-])
+@props(['message' => '', 'type' => 'info'])
 
-<div class="mb-4">
-    <p class="nb-label">{{ $label }}</p>
-    <p class="text-base font-bold text-ink">{{ $value ?? '-' }}</p>
+@php
+  $alertClass = match($type) {
+    'success' => 'nb-alert-success',
+    'warning' => 'nb-alert-warning',
+    'danger' => 'nb-alert-danger',
+    default => 'nb-alert-info',
+  };
+@endphp
+
+<div class="{{ $alertClass }} flex items-center gap-2 p-4 rounded-lg">
+  <span class="material-symbols-outlined">info</span>
+  <span>{{ $message }}</span>
 </div>
+

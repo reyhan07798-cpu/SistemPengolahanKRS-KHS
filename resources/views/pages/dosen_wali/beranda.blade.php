@@ -4,67 +4,24 @@
 @section('page_title', 'Beranda')
 
 @section('content')
-    {{-- Page Header --}}
-    <div class="nb-page-header">
-        <div>
-            <span class="nb-eyebrow">Dosen Wali</span>
-            <h1 class="mt-2">Selamat Datang</h1>
-            <p>Pantau status KRS dan progres akademik mahasiswa bimbingan Anda.</p>
-        </div>
-        <div class="flex gap-3 flex-wrap">
-            <a href="{{ route('dosen.wali.krs-verifikasi') }}" class="nb-btn nb-btn-secondary">
-                <span class="material-symbols-outlined" style="font-size:20px;">fact_check</span>
-                Verifikasi KRS
-            </a>
-            <a href="{{ route('dosen.wali.khs') }}" class="nb-btn nb-btn-primary">
-                <span class="material-symbols-outlined" style="font-size:20px;">assessment</span>
-                Lihat KHS
-            </a>
-        </div>
-    </div>
+<x-hero-header-dosen 
+    eyebrow="Dosen Wali"
+    description="Pantau status KRS dan progres akademik mahasiswa bimbingan Anda."
+    :buttons="[
+        ['label' => 'Verifikasi KRS', 'route' => route('dosen.wali.krs-verifikasi'), 'icon' => 'fact_check', 'variant' => 'nb-btn-secondary'],
+        ['label' => 'Lihat KHS', 'route' => route('dosen.wali.khs'), 'icon' => 'assessment']
+    ]" 
+/>
 
-    {{-- Statistik Cards --}}
-    <div class="nb-bento" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-        <div class="nb-stat nb-stat--info nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">groups</span>
-                </div>
-                <p class="nb-stat-label">Mahasiswa Bimbingan</p>
-            </div>
-            <div class="nb-stat-value">{{ $stats['mahasiswa_bimbingan'] }}</div>
-        </div>
-
-        <div class="nb-stat nb-stat--warning nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">schedule</span>
-                </div>
-                <p class="nb-stat-label">KRS Menunggu</p>
-            </div>
-            <div class="nb-stat-value">{{ $stats['krs_menunggu'] }}</div>
-        </div>
-
-        <div class="nb-stat nb-stat--accent nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">check_circle</span>
-                </div>
-                <p class="nb-stat-label">KRS Disetujui</p>
-            </div>
-            <div class="nb-stat-value">{{ $stats['krs_disetujui'] }}</div>
-        </div>
-
-        <div class="nb-stat nb-stat--danger nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">cancel</span>
-                </div>
-                <p class="nb-stat-label">KRS Ditolak</p>
-            </div>
-            <div class="nb-stat-value">{{ $stats['krs_ditolak'] }}</div>
-        </div>
-    </div>
+<x-stat-bento 
+    :stats="$stats"
+    :config="[
+        'mahasiswa_bimbingan' => ['color' => 'nb-stat--info', 'icon' => 'groups', 'label' => 'Mahasiswa Bimbingan'],
+        'krs_menunggu' => ['color' => 'nb-stat--warning', 'icon' => 'schedule', 'label' => 'KRS Menunggu'],
+        'krs_disetujui' => ['color' => 'nb-stat--accent', 'icon' => 'check_circle', 'label' => 'KRS Disetujui'],
+        'krs_ditolak' => ['color' => 'nb-stat--danger', 'icon' => 'cancel', 'label' => 'KRS Ditolak']
+    ]"
+/>
 
     {{-- Daftar Mahasiswa Bimbingan --}}
     <div class="nb-card mb-8">

@@ -4,67 +4,24 @@
 @section('page_title', 'Beranda')
 
 @section('content')
-    {{-- Page Header --}}
-    <div class="nb-page-header">
-        <div>
-            <span class="nb-eyebrow">Dosen Mata Kuliah</span>
-            <h1 class="mt-2">Selamat Datang</h1>
-            <p>Kelola nilai dan pantau mahasiswa pada mata kuliah yang Anda ampu.</p>
-        </div>
-        <div class="flex gap-3 flex-wrap">
-            <a href="{{ route('dosen.mk.input-nilai') }}" class="nb-btn nb-btn-primary">
-                <span class="material-symbols-outlined" style="font-size:20px;">edit_note</span>
-                Input Nilai
-            </a>
-            <a href="{{ route('dosen.mk.lihat-nilai') }}" class="nb-btn nb-btn-secondary">
-                <span class="material-symbols-outlined" style="font-size:20px;">analytics</span>
-                Lihat Nilai
-            </a>
-        </div>
-    </div>
+<x-hero-header-dosen 
+    eyebrow="Dosen Mata Kuliah"
+    description="Kelola nilai dan pantau mahasiswa pada mata kuliah yang Anda ampu."
+    :buttons="[
+        ['label' => 'Input Nilai', 'route' => route('dosen.mk.input-nilai'), 'icon' => 'edit_note'],
+        ['label' => 'Lihat Nilai', 'route' => route('dosen.mk.lihat-nilai'), 'icon' => 'analytics', 'variant' => 'nb-btn-secondary']
+    ]" 
+/>
 
-    {{-- Statistik Cards --}}
-    <div class="nb-bento" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-        <div class="nb-stat nb-stat--info nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">menu_book</span>
-                </div>
-                <p class="nb-stat-label">Mata Kuliah Diampu</p>
-            </div>
-            <div class="nb-stat-value">{{ $stats['mata_kuliah_diampu'] }}</div>
-        </div>
-
-        <div class="nb-stat nb-stat--primary nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">groups</span>
-                </div>
-                <p class="nb-stat-label">Total Mahasiswa</p>
-            </div>
-            <div class="nb-stat-value">{{ $stats['total_mahasiswa'] }}</div>
-        </div>
-
-        <div class="nb-stat nb-stat--accent nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">edit_note</span>
-                </div>
-                <p class="nb-stat-label">Nilai Diinput</p>
-            </div>
-            <div class="nb-stat-value">{{ $stats['nilai_diinput'] }}</div>
-        </div>
-
-        <div class="nb-stat nb-stat--warning nb-stat--ribbon">
-            <div class="flex items-center gap-3">
-                <div class="nb-stat-icon">
-                    <span class="material-symbols-outlined filled">pending_actions</span>
-                </div>
-                <p class="nb-stat-label">Belum Dinilai</p>
-            </div>
-            <div class="nb-stat-value">{{ $stats['belum_dinilai'] }}</div>
-        </div>
-    </div>
+<x-stat-bento 
+    :stats="$stats"
+    :config="[
+        'mata_kuliah_diampu' => ['color' => 'nb-stat--info', 'icon' => 'menu_book', 'label' => 'Mata Kuliah Diampu'],
+        'total_mahasiswa' => ['color' => 'nb-stat--primary', 'icon' => 'groups', 'label' => 'Total Mahasiswa'],
+        'nilai_diinput' => ['color' => 'nb-stat--accent', 'icon' => 'edit_note', 'label' => 'Nilai Diinput'],
+        'belum_dinilai' => ['color' => 'nb-stat--warning', 'icon' => 'pending_actions', 'label' => 'Belum Dinilai']
+    ]"
+/>
 
     {{-- Mata Kuliah yang Diampu --}}
     <div class="nb-card mb-8">
