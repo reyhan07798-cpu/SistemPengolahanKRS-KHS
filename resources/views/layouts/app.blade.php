@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIPAKAR - @yield('title', 'Sistem Pendidikan Akademik')</title>
+<title>SIPAKAR - @yield('title', 'Sistem Pendidikan Akademik')</title>
+    <link rel="icon" type="image/png" sizes="16x16 32x32" href="{{ asset('images/logo.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/logo.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
@@ -14,7 +16,8 @@
         <aside class="nb-sidebar" id="nbSidebar">
             <div class="nb-sidebar-brand">
                 <div class="w-10 h-10 bg-white border-2 border-ink rounded-md flex items-center justify-center flex-shrink-0">
-                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo SIPAKAR" class="w-6 h-6 object-contain" onerror="this.nextElementSibling.style.display='block'">
+                    <svg class="w-6 h-6 text-primary fallback-logo" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                     </svg>
                 </div>

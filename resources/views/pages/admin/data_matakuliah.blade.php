@@ -30,7 +30,22 @@
         </div>
     @endif
 
+    {{-- Filter Card --}}
+    <div class="nb-card mb-6">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="material-symbols-outlined text-primary">search</span>
+            <h3 class="nb-h3">Filter & Pencarian</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div class="md:col-span-2">
+                <label class="nb-label">Cari MK</label>
+                <input type="text" id="searchInput" placeholder="Cari kode atau nama mata kuliah...">
+            </div>
+        </div>
+    </div>
+
     {{-- Table Card --}}
+
     <div class="nb-card-flat">
         <div class="nb-section-header">
             <div>
@@ -74,9 +89,14 @@
                 @csrf
                 <div class="nb-modal-body">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                        <div>
+                        <div class="md:col-span-2">
                             <label class="nb-label">Kode MK <span class="text-danger">*</span></label>
                             <input type="text" name="kode" value="{{ old('kode') }}" placeholder="IF101" required>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="nb-label">Nama Mata Kuliah <span class="text-danger">*</span></label>
+                            <input type="text" name="nama" value="{{ old('nama') }}" placeholder="Pemrograman Web" required>
                         </div>
 
                         <div>
@@ -90,11 +110,6 @@
                             </select>
                         </div>
 
-                        <div class="md:col-span-2">
-                            <label class="nb-label">Nama Mata Kuliah <span class="text-danger">*</span></label>
-                            <input type="text" name="nama" value="{{ old('nama') }}" placeholder="Pemrograman Web" required>
-                        </div>
-
                         <div>
                             <label class="nb-label">Semester <span class="text-danger">*</span></label>
                             <select name="semester" required>
@@ -105,10 +120,7 @@
                             </select>
                         </div>
 
-                        <div>
-                            <label class="nb-label">Kapasitas</label>
-                            <input type="number" name="kapasitas" value="{{ old('kapasitas', 40) }}" placeholder="40">
-                        </div>
+
 
                         <div class="md:col-span-2">
                             <label class="nb-label">Dosen Pengampu <span class="text-danger">*</span></label>
@@ -210,6 +222,17 @@
             tableBody.appendChild(row);
         });
     }
+
+    function applyFilters() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = rawData.filter(mk => 
+            mk.kode.toLowerCase().includes(searchTerm) || 
+            mk.nama.toLowerCase().includes(searchTerm)
+        );
+        renderTable(filtered);
+    }
+
+    document.getElementById('searchInput').addEventListener('keyup', applyFilters);
 
     document.addEventListener('DOMContentLoaded', () => {
         renderTable(rawData);

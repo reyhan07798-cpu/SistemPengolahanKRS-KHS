@@ -30,7 +30,15 @@ class AdminController extends Controller
         $totalDosen = 5;
         $totalMataKuliah = 10;
         $avgIpk = $mahasiswa->avg('ipk');
-        $prodis = $mahasiswa->pluck('prodi')->unique()->values();
+$prodis = collect([
+    'Teknik Informatika',
+    'Sistem Informasi', 
+    'Teknologi Rekayasa Multimedia',
+    'Rekayasa Keamanan Siber',
+    'Rekayasa Perangkat Lunak',
+    'Teknologi Permainan',
+    'Animasi'
+]);
         $angkatans = $mahasiswa->pluck('angkatan')->unique()->sortDesc()->values();
 
         return view('pages.admin.dashboard_admin', compact(
@@ -48,7 +56,15 @@ class AdminController extends Controller
 
         if (Schema::hasTable('mahasiswas')) {
             $mahasiswa = Mahasiswa::orderBy('created_at', 'desc')->get();
-            $prodis = Mahasiswa::distinct()->pluck('prodi')->sort()->values();
+$prodis = collect([
+    'Teknik Informatika',
+    'Sistem Informasi', 
+    'Teknologi Rekayasa Multimedia',
+    'Rekayasa Keamanan Siber',
+    'Rekayasa Perangkat Lunak',
+    'Teknologi Permainan',
+    'Animasi'
+]);
             $angkatans = Mahasiswa::distinct()->pluck('angkatan')->sortDesc()->values();
             
             if (Schema::hasTable('dosens')) {
@@ -56,13 +72,21 @@ class AdminController extends Controller
             }
         } else {
             $mahasiswa = collect([
-                (object)['id' => 1, 'nim' => '3312501017', 'nama' => 'Irenessa Rosdin', 'prodi' => 'Fakultas Teknik', 'kelas' => 'A', 'angkatan' => '2025', 'dosen_wali' => 'Dr. Budi Santoso', 'email' => 'irenessa@campus.ac.id'],
-                (object)['id' => 2, 'nim' => '3312501018', 'nama' => 'Nabila Fatin', 'prodi' => 'Fakultas Sains', 'kelas' => 'B', 'angkatan' => '2025', 'dosen_wali' => 'Prof. Dewi Lestari', 'email' => 'nabila@campus.ac.id'],
-                (object)['id' => 3, 'nim' => '3312501019', 'nama' => 'Ahmad Rizki', 'prodi' => 'Fakultas Teknik', 'kelas' => 'A', 'angkatan' => '2024', 'dosen_wali' => 'Dr. Budi Santoso', 'email' => 'ahmad.r@campus.ac.id'],
-                (object)['id' => 4, 'nim' => '3312501020', 'nama' => 'Siti Nurhaliza', 'prodi' => 'Fakultas Ilmu Komputer', 'kelas' => 'C', 'angkatan' => '2024', 'dosen_wali' => 'Dr. Eko Prasetyo', 'email' => 'siti.n@campus.ac.id'],
-                (object)['id' => 5, 'nim' => '3312501021', 'nama' => 'Fajar Nugroho', 'prodi' => 'Fakultas Sains', 'kelas' => 'B', 'angkatan' => '2023', 'dosen_wali' => 'Prof. Dewi Lestari', 'email' => 'fajar.n@campus.ac.id'],
+                (object)['id' => 1, 'nim' => '3312501017', 'nama' => 'Irenessa Rosdin', 'prodi' => 'Teknik Informatika', 'kelas' => 'A', 'angkatan' => '2025', 'dosen_wali' => 'Dr. Budi Santoso', 'email' => 'irenessa@campus.ac.id'],
+                (object)['id' => 2, 'nim' => '3312501018', 'nama' => 'Nabila Fatin', 'prodi' => 'Teknik Informatika', 'kelas' => 'B', 'angkatan' => '2025', 'dosen_wali' => 'Prof. Dewi Lestari', 'email' => 'nabila@campus.ac.id'],
+                (object)['id' => 3, 'nim' => '3312501022', 'nama' => 'Reyhan', 'prodi' => 'Teknik Informatika', 'kelas' => 'A', 'angkatan' => '2025', 'dosen_wali' => 'Dr. Budi Santoso', 'email' => 'Reyhan@campus.ac.id'],
+                (object)['id' => 4, 'nim' => '3312501020', 'nama' => 'Siti Nurhaliza', 'prodi' => 'Teknik Informatika', 'kelas' => 'C', 'angkatan' => '2024', 'dosen_wali' => 'Dr. Eko Prasetyo', 'email' => 'siti.n@campus.ac.id'],
+                (object)['id' => 5, 'nim' => '3312501021', 'nama' => 'Fajar Nugroho', 'prodi' => 'Teknik Informatika', 'kelas' => 'B', 'angkatan' => '2023', 'dosen_wali' => 'Prof. Dewi Lestari', 'email' => 'fajar.n@campus.ac.id'],
             ]);
-            $prodis = $mahasiswa->pluck('prodi')->unique()->sort()->values();
+$prodis = collect([
+    'Teknik Informatika',
+    'Sistem Informasi', 
+    'Teknologi Rekayasa Multimedia',
+    'Rekayasa Keamanan Siber',
+    'Rekayasa Perangkat Lunak',
+    'Teknologi Permainan',
+    'Animasi'
+]);
             $angkatans = $mahasiswa->pluck('angkatan')->unique()->sortDesc()->values();
             
             $dosens = collect([
@@ -157,9 +181,15 @@ class AdminController extends Controller
 
     public function indexDosen()
     {
-        $fakultasList = collect([
-            'Prodi Teknik Informatika', 'Prodi Teknologi Rekayasa Multimedia ', 'Prodi Rekayasa Keamanan Siber', 'Prodi Rekayasa Perangkat Lunak', 'Prodi Teknologi Permainan', 'Prodi Animasi'
-        ]);
+$prodis = collect([
+    'Teknik Informatika',
+    'Sistem Informasi', 
+    'Teknologi Rekayasa Multimedia',
+    'Rekayasa Keamanan Siber',
+    'Rekayasa Perangkat Lunak',
+    'Teknologi Permainan',
+    'Animasi'
+]);
 
         if (Schema::hasTable('dosens')) {
             $dosen = Dosen::orderBy('created_at', 'desc')->get();
@@ -173,7 +203,7 @@ class AdminController extends Controller
             ]);
         }
 
-        return view('pages.admin.data_dosen', compact('dosen', 'fakultasList'));
+        return view('pages.admin.data_dosen', compact('dosen', 'prodis'));
     }
 
     public function createDosen()

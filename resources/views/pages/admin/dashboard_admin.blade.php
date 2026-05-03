@@ -73,7 +73,7 @@
                 <span class="nb-eyebrow" style="color: var(--color-accent-soft);">Akademik</span>
                 <h2 class="mt-1">Peringkat IPK Mahasiswa</h2>
             </div>
-            <div class="flex gap-3 flex-wrap items-center">
+            <div class="flex gap-3 items-center flex-nowrap">
                 <select id="filterProdi" onchange="filterTable()" style="min-width: 180px;">
                     <option value="">Semua Prodi</option>
                     @foreach($prodis as $prodi)

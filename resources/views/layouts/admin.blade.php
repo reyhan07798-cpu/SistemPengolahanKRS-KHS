@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'SIPAKAR - Admin Beranda')</title>
+<title>@yield('title', 'SIPAKAR - Admin Beranda')</title>
+    <link rel="icon" type="image/png" sizes="16x16 32x32" href="{{ asset('images/logo.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/logo.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body data-role="admin">
@@ -14,7 +16,7 @@
         <aside class="nb-sidebar" id="nbSidebar">
             <div class="nb-sidebar-brand">
                 <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white flex items-center justify-center shrink-0 overflow-hidden p-1">
-                    <img src="{{ asset('images/logo-dashboard.png') }}" alt="Logo SIPAKAR" class="w-full h-full object-contain">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo SIPAKAR" class="w-full h-full object-contain" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="w-full h-full bg-primary-soft flex items-center justify-center" style="display:none"><span class="material-symbols-outlined text-primary" style="font-size:24px">school</span></div>
                 </div>
                 <div class="min-w-0">
                     <h1>SIPAKAR</h1>

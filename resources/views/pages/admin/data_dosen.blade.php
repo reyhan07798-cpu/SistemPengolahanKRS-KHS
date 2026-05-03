@@ -31,6 +31,7 @@
     @endif
 
     {{-- Stats Cards --}}
+
     <div class="nb-bento" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
         <div class="nb-stat nb-stat--accent nb-stat--ribbon">
             <div class="flex items-center gap-3">
@@ -53,7 +54,27 @@
         </div>
     </div>
 
+    {{-- Filter Card - Di bawah Stats --}}
+    <div class="nb-card mb-6">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="material-symbols-outlined text-primary">search</span>
+            <h3 class="nb-h3">Filter Dosen</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+            <div>
+                <label class="nb-label">Program Studi</label>
+                <select id="filterProdi">
+                    <option value="">Semua Prodi</option>
+                    @foreach($prodis as $prodi)
+                        <option value="{{ $prodi }}">{{ $prodi }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </div>
+
     {{-- Table Card --}}
+
     <div class="nb-card-flat">
         <div class="nb-section-header">
             <div>
@@ -127,8 +148,8 @@
                             <label class="nb-label">Program Studi    <span class="text-danger">*</span></label>
                             <select name="fakultas" required>
                                 <option value="">Pilih Prodi</option>
-                                @foreach($fakultasList as $fakultas)
-                                    <option value="{{ $fakultas }}" {{ old('fakultas') == $fakultas ? 'selected' : '' }}>{{ $fakultas }}</option>
+@foreach($prodis as $prodi)
+                                    <option value="{{ $prodi }}" {{ old('fakultas') == $prodi ? 'selected' : '' }}>{{ $prodi }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -160,11 +181,12 @@
 
 @push('scripts')
 <script>
-    const rawData = @json($dosen);
+const rawData = @json($dosen);
     const tableBody = document.getElementById('tableBody');
     const emptyState = document.getElementById('emptyState');
     const countWaliSpan = document.getElementById('countWali');
     const countMKSpan = document.getElementById('countMK');
+    const filterProdiSelect = document.getElementById('filterProdi');
 
     function openModal() {
         document.getElementById('modalOverlay').classList.remove('hidden');
@@ -232,6 +254,14 @@
         countWaliSpan.textContent = waliCount;
         countMKSpan.textContent = mkCount;
     }
+
+function filterTable() {
+        const prodi = document.getElementById('filterProdi').value;
+        const filtered = rawData.filter(dsn => !prodi || dsn.fakultas === prodi || dsn.prodi === prodi);
+        renderTable(filtered);
+    }
+
+    document.getElementById('filterProdi').addEventListener('change', filterTable);
 
     document.addEventListener('DOMContentLoaded', () => {
         renderTable(rawData);

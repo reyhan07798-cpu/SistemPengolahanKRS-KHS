@@ -103,11 +103,7 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::put('/profil/password', [ProfilDosenWaliController::class, 'updatePassword'])->name('profil.password');
     });
 
-    // =============================================
-    // ALIAS ROUTES — nama yang dipakai layout dosen.blade.php
-    // dosen.wali.* → pages.dosen_wali.*
-    // dosen.mk.*   → pages.dosen_matkul.*
-    // =============================================
+
     Route::prefix('dosen/wali')->name('dosen.wali.')->group(function () {
         Route::get('/beranda',        [DosenWaliController::class,      'index'])->name('beranda');
         Route::get('/krs-verifikasi', [KrsVerifikasiController::class,  'index'])->name('krs-verifikasi');
