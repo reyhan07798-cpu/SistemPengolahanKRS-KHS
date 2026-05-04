@@ -81,8 +81,7 @@
                 @endphp
                 <div class="nb-list-row">
                     <div class="flex items-center gap-4 min-w-0">
-                        <div class="nb-avatar-sm" style="cursor: default;">
-                            <span class="font-extrabold text-xs" style="font-family: var(--font-heading);">{{ $initials }}</span>
+                    <div class="nb-avatar-sm" style="cursor: default; background-color: #DBEAFE; color: #1E40AF;">                            <span class="font-extrabold text-xs" style="font-family: var(--font-heading);">{{ $initials }}</span>
                         </div>
                         <div class="min-w-0">
                             <h4 class="font-bold text-ink text-sm">{{ $mhs['nama'] }}</h4>

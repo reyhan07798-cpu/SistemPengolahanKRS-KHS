@@ -4,24 +4,18 @@
 @section('page_title', 'Beranda')
 
 @section('content')
-<x-hero-header-dosen 
-    eyebrow="Dosen Wali"
-    description="Pantau status KRS dan progres akademik mahasiswa bimbingan Anda."
-    :buttons="[
-        ['label' => 'Verifikasi KRS', 'route' => route('dosen.wali.krs-verifikasi'), 'icon' => 'fact_check', 'variant' => 'nb-btn-secondary'],
-        ['label' => 'Lihat KHS', 'route' => route('dosen.wali.khs'), 'icon' => 'assessment']
-    ]" 
-/>
+    <x-hero-header-dosen eyebrow="Dosen Wali" description="Pantau status KRS dan progres akademik mahasiswa bimbingan Anda."
+        :buttons="[
+            ['label' => 'Verifikasi KRS', 'route' => route('dosen.wali.krs-verifikasi'), 'icon' => 'fact_check', 'variant' => 'nb-btn-secondary'],
+            ['label' => 'Lihat KHS', 'route' => route('dosen.wali.khs'), 'icon' => 'assessment']
+        ]" />
 
-<x-stat-bento 
-    :stats="$stats"
-    :config="[
-        'mahasiswa_bimbingan' => ['color' => 'nb-stat--info', 'icon' => 'groups', 'label' => 'Mahasiswa Bimbingan'],
-        'krs_menunggu' => ['color' => 'nb-stat--warning', 'icon' => 'schedule', 'label' => 'KRS Menunggu'],
-        'krs_disetujui' => ['color' => 'nb-stat--accent', 'icon' => 'check_circle', 'label' => 'KRS Disetujui'],
-        'krs_ditolak' => ['color' => 'nb-stat--danger', 'icon' => 'cancel', 'label' => 'KRS Ditolak']
-    ]"
-/>
+    <x-stat-bento :stats="$stats" :config="[
+            'mahasiswa_bimbingan' => ['color' => 'nb-stat--info', 'icon' => 'groups', 'label' => 'Mahasiswa Bimbingan'],
+            'krs_menunggu' => ['color' => 'nb-stat--warning', 'icon' => 'schedule', 'label' => 'KRS Menunggu'],
+            'krs_disetujui' => ['color' => 'nb-stat--accent', 'icon' => 'check_circle', 'label' => 'KRS Disetujui'],
+            'krs_ditolak' => ['color' => 'nb-stat--danger', 'icon' => 'cancel', 'label' => 'KRS Ditolak']
+        ]" />
 
     {{-- Daftar Mahasiswa Bimbingan --}}
     <div class="nb-card mb-8">
@@ -39,7 +33,7 @@
         <div class="space-y-3">
             @foreach($mahasiswa as $m)
                 @php
-                    $statusBadge = match($m['status_krs'] ?? '') {
+                    $statusBadge = match ($m['status_krs'] ?? '') {
                         'Disetujui' => 'nb-badge-success',
                         'Menunggu' => 'nb-badge-warning',
                         'Ditolak' => 'nb-badge-danger',
@@ -49,8 +43,9 @@
                 @endphp
                 <div class="nb-list-row">
                     <div class="flex items-center gap-4 min-w-0">
-                        <div class="nb-avatar-sm" style="cursor: default;">
-                            <span class="font-extrabold text-xs" style="font-family: var(--font-heading);">{{ $initials }}</span>
+                        <div class="nb-avatar-sm" style="cursor: default; background-color: #DBEAFE; color: #1E40AF;">
+                            <span class="font-extrabold text-xs"
+                                style="font-family: var(--font-heading);">{{ $initials }}</span>
                         </div>
                         <div class="min-w-0">
                             <h4 class="font-bold text-ink text-sm">{{ $m['nama'] }}</h4>
@@ -60,7 +55,8 @@
                     <div class="text-right flex items-center gap-4">
                         <div>
                             <p class="nb-label" style="margin-bottom:2px;">IPK</p>
-                            <p class="font-extrabold text-primary text-lg" style="font-family: var(--font-heading);">{{ number_format($m['ipk'], 2) }}</p>
+                            <p class="font-extrabold text-primary text-lg" style="font-family: var(--font-heading);">
+                                {{ number_format($m['ipk'], 2) }}</p>
                         </div>
                         <span class="nb-badge {{ $statusBadge }}">{{ $m['status_krs'] }}</span>
                     </div>
@@ -81,11 +77,13 @@
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b-2 border-[rgba(31,41,55,0.15)]">
                     <span class="text-sm text-muted font-medium">Total KRS Disetujui</span>
-                    <span class="font-extrabold text-primary text-lg" style="font-family: var(--font-heading);">{{ $stats['krs_disetujui'] }}</span>
+                    <span class="font-extrabold text-primary text-lg"
+                        style="font-family: var(--font-heading);">{{ $stats['krs_disetujui'] }}</span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-sm text-muted font-medium">Total KRS Menunggu</span>
-                    <span class="font-extrabold text-primary text-lg" style="font-family: var(--font-heading);">{{ $stats['krs_menunggu'] }}</span>
+                    <span class="font-extrabold text-primary text-lg"
+                        style="font-family: var(--font-heading);">{{ $stats['krs_menunggu'] }}</span>
                 </div>
             </div>
         </div>
@@ -95,10 +93,12 @@
             <h4 class="nb-h3 mt-1 mb-4">Distribusi Kelas</h4>
             <div class="flex justify-between items-center mb-3">
                 <span class="text-sm text-muted font-medium">Kelas A</span>
-                <span class="font-extrabold text-primary text-lg" style="font-family: var(--font-heading);">{{ $stats['mahasiswa_bimbingan'] }}</span>
+                <span class="font-extrabold text-primary text-lg"
+                    style="font-family: var(--font-heading);">{{ $stats['mahasiswa_bimbingan'] }}</span>
             </div>
             <div class="w-full bg-surface-alt border-2 border-ink rounded-full h-4 overflow-hidden">
-                <div class="bg-accent h-full transition-all" style="width: 100%; border-right: 2px solid var(--color-ink);"></div>
+                <div class="bg-accent h-full transition-all" style="width: 100%; border-right: 2px solid var(--color-ink);">
+                </div>
             </div>
         </div>
     </div>
