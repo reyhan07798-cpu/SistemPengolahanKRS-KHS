@@ -71,7 +71,7 @@
         <div class="sh-drawer-footer">
             <a href="{{ route('login') }}" class="sh-btn sh-btn-primary sh-btn-block">
                 <i class="bi bi-box-arrow-in-right"></i>
-                Login
+                Masuk
             </a>
         </div>
     </aside>
