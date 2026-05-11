@@ -136,7 +136,7 @@
                         </div>
 
                         <div>
-                            <label class="nb-label">Tipe Dosen <span class="text-danger">*</span></label>
+                            <label class="nb-label">peran Dosen <span class="text-danger">*</span></label>
                             <select name="tipe_dosen" required>
                                 <option value="">Pilih peran dosen</option>
                                 <option value="Dosen Wali" {{ old('tipe_dosen') == 'Dosen Wali' ? 'selected' : '' }}>Dosen Wali & Matakuliah</option>
