@@ -138,8 +138,8 @@
                         <div>
                             <label class="nb-label">Tipe Dosen <span class="text-danger">*</span></label>
                             <select name="tipe_dosen" required>
-                                <option value="">Pilih tipe dosen</option>
-                                <option value="Dosen Wali" {{ old('tipe_dosen') == 'Dosen Wali' ? 'selected' : '' }}>Dosen Wali</option>
+                                <option value="">Pilih peran dosen</option>
+                                <option value="Dosen Wali" {{ old('tipe_dosen') == 'Dosen Wali' ? 'selected' : '' }}>Dosen Wali & Matakuliah</option>
                                 <option value="Dosen Mata Kuliah" {{ old('tipe_dosen') == 'Dosen Mata Kuliah' ? 'selected' : '' }}>Dosen Mata Kuliah</option>
                             </select>
                         </div>

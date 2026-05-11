@@ -159,6 +159,7 @@
                     </button>
                 </div>
             </div>
+            <p id="krsHelpText" class="text-xs text-muted mt-3">Pilih minimal 1 mata kuliah untuk mengaktifkan tombol Ajukan KRS.</p>
         </div>
     </form>
 
@@ -204,13 +205,23 @@
         };
 
         document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('displaySemesterAktif').textContent = 'Genap';
+            const semesterDefault = document.getElementById('filterSemester').value;
+            const tahunDefault = document.getElementById('filterTahun').value;
+            document.getElementById('displaySemesterAktif').textContent = semesterDefault;
+            document.getElementById('inputSemester').value = semesterDefault;
+            document.getElementById('inputTahun').value = tahunDefault;
+            document.getElementById('labelSemesterWajib').textContent = semesterDefault;
+
+            document.getElementById('filterSemester').addEventListener('change', function () {
+                document.getElementById('displaySemesterAktif').textContent = this.value;
+            });
         });
 
         function loadPaketSemester() {
             const semester = document.getElementById('filterSemester').value;
             const tahun    = document.getElementById('filterTahun').value;
 
+            document.getElementById('displaySemesterAktif').textContent = semester;
             document.getElementById('inputSemester').value = semester;
             document.getElementById('inputTahun').value    = tahun;
             document.getElementById('labelSemesterWajib').textContent = semester;
@@ -268,10 +279,10 @@
             document.getElementById('totalSks').textContent = selectedSks;
             document.getElementById('sisaSks').textContent  = MAX_SKS - selectedSks;
 
-            const warning     = document.getElementById('warningSks');
-            const warningInner= warning.querySelector('.nb-alert');
-            const warningText = document.getElementById('warningText');
-            const btnSubmit   = document.getElementById('btnSubmit');
+            const warning      = document.getElementById('warningSks');
+            const warningInner = warning.querySelector('.nb-alert');
+            const warningText  = document.getElementById('warningText');
+            const btnSubmit    = document.getElementById('btnSubmit');
 
             if (selectedSks > MAX_SKS) {
                 warning.classList.remove('hidden');
@@ -291,6 +302,21 @@
             document.querySelectorAll('.chk-mk:not(:checked)').forEach(chk => {
                 chk.disabled = (selectedSks + (parseInt(chk.dataset.sks) || 0)) > MAX_SKS;
             });
+
+            updateHelpText();
+        }
+
+        function updateHelpText() {
+            const helpText = document.getElementById('krsHelpText');
+            if (!helpText) return;
+
+            if (selectedSks === 0) {
+                helpText.textContent = 'Pilih minimal 1 mata kuliah untuk mengaktifkan tombol Ajukan KRS.';
+            } else if (selectedSks > MAX_SKS) {
+                helpText.textContent = `Total SKS ${selectedSks} melebihi batas ${MAX_SKS}. Kurangi pilihan mata kuliah.`;
+            } else {
+                helpText.textContent = 'Jumlah SKS valid. Tekan Ajukan KRS untuk mengirim pilihan Anda.';
+            }
         }
 
         function resetForm() {
@@ -303,6 +329,7 @@
             document.getElementById('sisaSks').textContent  = MAX_SKS;
             document.getElementById('warningSks').classList.add('hidden');
             document.getElementById('btnSubmit').disabled = true;
+            updateHelpText();
         }
 
         document.getElementById('formKrs').addEventListener('submit', function (e) {
