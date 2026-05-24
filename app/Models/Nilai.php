@@ -11,20 +11,26 @@ class Nilai extends Model
     protected $fillable = [
         'mahasiswa_id',
         'mata_kuliah_id',
+        'semester_id',
+        'tahun_ajaran',
+        'semester',
         'nilai',
         'bobot',
         'sks',
-        'semester',
-        'tahun_ajaran',
     ];
 
     public function mahasiswa()
     {
-        return $this->belongsTo(User::class, 'mahasiswa_id');
+        return $this->belongsTo(Mahasiswa::class, 'mahasiswa_id');
     }
 
     public function mataKuliah()
     {
-        return $this->belongsTo(MataKuliah::class);
+        return $this->belongsTo(MataKuliah::class, 'mata_kuliah_id');
+    }
+
+    public function semesterData()
+    {
+        return $this->belongsTo(Semester::class, 'semester_id');
     }
 }

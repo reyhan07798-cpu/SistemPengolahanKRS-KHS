@@ -7,10 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class KrsMahasiswa extends Model
 {
+    protected $table = 'krs_mahasiswa';
+
     protected $fillable = [
         'mahasiswa_id',
         'mata_kuliah_id',
+        'semester_ke',
+        'tahun_ajaran',
         'status',
+        'catatan',
+        'tanggal_disetujui',
+        'disetujui_oleh',
     ];
 
     public function mahasiswa(): BelongsTo

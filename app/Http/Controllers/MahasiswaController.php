@@ -2,44 +2,195 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\KrsMahasiswa;
-use App\Models\MataKuliah;
-use App\Models\Nilai;
-use App\Models\Semester; // ← Pastikan model ini sudah ada
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class MahasiswaController extends Controller
 {
+    /**
+     * Helper: ambil user dari session simple auth.
+     */
+    private function currentUserSession(): ?array
+    {
+        return session('user');
+    }
+
+    /**
+     * Helper: ambil data mahasiswa yang sedang login.
+     */
+    private function currentMahasiswa()
+    {
+        $userSession = $this->currentUserSession();
+
+        if (!$userSession) {
+            return null;
+        }
+
+        $userId = $userSession['id'] ?? null;
+        $nim = $userSession['nim'] ?? null;
+        $email = $userSession['email'] ?? null;
+
+        return DB::table('mahasiswa')
+            ->leftJoin('users', 'mahasiswa.user_id', '=', 'users.id')
+            ->select(
+                'mahasiswa.id as mahasiswa_id',
+                'mahasiswa.user_id',
+                'mahasiswa.nim',
+                'mahasiswa.nama',
+                'mahasiswa.email',
+                'mahasiswa.no_hp',
+                'mahasiswa.alamat',
+                'mahasiswa.angkatan',
+                'mahasiswa.kelas',
+                'users.id as user_id',
+                'users.name as user_name',
+                'users.username',
+                'users.email as user_email',
+                'users.role'
+            )
+            ->when($userId, function ($query) use ($userId) {
+                $query->where('mahasiswa.user_id', $userId);
+            })
+            ->when(!$userId && $nim, function ($query) use ($nim) {
+                $query->where('mahasiswa.nim', $nim);
+            })
+            ->when(!$userId && !$nim && $email, function ($query) use ($email) {
+                $query->where('mahasiswa.email', $email);
+            })
+            ->first();
+    }
+
+    /**
+     * Helper: ambil semester aktif.
+     */
+    private function semesterAktif()
+    {
+        return DB::table('semesters')
+            ->where('is_active', 1)
+            ->first();
+    }
+
     /**
      * Halaman Beranda Mahasiswa
      */
     public function index()
     {
+        $mahasiswa = $this->currentMahasiswa();
+        $semesterAktif = $this->semesterAktif();
+
+        if (!$mahasiswa) {
+            return redirect()->route('login');
+        }
+
+        $mahasiswaId = $mahasiswa->mahasiswa_id;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Statistik Akademik dari tabel nilai
+        |--------------------------------------------------------------------------
+        */
+        $nilaiRecords = DB::table('nilai')
+            ->join('mata_kuliah', 'nilai.mata_kuliah_id', '=', 'mata_kuliah.id')
+            ->where('nilai.mahasiswa_id', $mahasiswaId)
+            ->select(
+                'nilai.id',
+                'nilai.mahasiswa_id',
+                'nilai.mata_kuliah_id',
+                'nilai.tahun_ajaran',
+                'nilai.semester',
+                'nilai.nilai',
+                'nilai.bobot',
+                'nilai.sks',
+                'mata_kuliah.kode_mk',
+                'mata_kuliah.nama as nama_mk'
+            )
+            ->orderBy('nilai.created_at', 'desc')
+            ->get();
+
+        $totalSks = $nilaiRecords->sum('sks');
+
+        $totalBobot = $nilaiRecords->sum(function ($item) {
+            return ((int) $item->sks) * ((float) $item->bobot);
+        });
+
+        $ipk = $totalSks > 0 ? round($totalBobot / $totalSks, 2) : 0;
+
+        $mataKuliahLulus = $nilaiRecords
+            ->filter(function ($item) {
+                return (float) $item->bobot >= 2.00;
+            })
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Nilai Terbaru
+        |--------------------------------------------------------------------------
+        */
+        $nilaiTerbaru = $nilaiRecords
+            ->take(5)
+            ->map(function ($item) {
+                return [
+                    'matkul' => $item->nama_mk,
+                    'sks' => $item->sks,
+                    'nilai' => $item->nilai,
+                    'bobot' => $item->bobot,
+                ];
+            })
+            ->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | KRS Aktif dari krs_mahasiswa dan krs_detail
+        |--------------------------------------------------------------------------
+        */
+        $krsAktif = [];
+
+        if ($semesterAktif) {
+            $krsHeader = DB::table('krs_mahasiswa')
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->where('semester_id', $semesterAktif->id)
+                ->latest('created_at')
+                ->first();
+
+            if ($krsHeader) {
+                $krsAktif = DB::table('krs_detail')
+                    ->join('mata_kuliah', 'krs_detail.mata_kuliah_id', '=', 'mata_kuliah.id')
+                    ->where('krs_detail.krs_mahasiswa_id', $krsHeader->id)
+                    ->select(
+                        'mata_kuliah.kode_mk',
+                        'mata_kuliah.nama',
+                        'mata_kuliah.sks'
+                    )
+                    ->get()
+                    ->map(function ($item) use ($krsHeader) {
+                        return [
+                            'kode' => $item->kode_mk,
+                            'matkul' => $item->nama,
+                            'sks' => $item->sks,
+                            'status' => ucfirst($krsHeader->status),
+                        ];
+                    })
+                    ->toArray();
+            }
+        }
+
         $data = [
-            'nama' => 'Reyhan',
-            'nim' => '3312501022',
+            'nama' => $mahasiswa->nama ?? $mahasiswa->user_name ?? '-',
+            'nim' => $mahasiswa->nim ?? '-',
             'prodi' => 'Teknik Informatika',
-            'angkatan' => 2025,
-            'email' => 'reyhan@gmail.com',
-            'semester_aktif' => 2,
-            'total_sks' => 15,
-            'ipk' => 3.64,
-            'mata_kuliah_lulus' => 7,
-            'nilai_terbaru' => [
-                ['matkul' => 'Basis Data', 'sks' => 3, 'nilai' => 'A', 'bobot' => 3.94],
-                ['matkul' => 'Pemrograman Web', 'sks' => 3, 'nilai' => 'B', 'bobot' => 3.24],
-                ['matkul' => 'Jaringan Komputer', 'sks' => 3, 'nilai' => 'A-', 'bobot' => 3.64],
-                ['matkul' => 'Proyek Pembuatan Prototipe', 'sks' => 3, 'nilai' => 'B+', 'bobot' => 3.44],
-                ['matkul' => 'Pemrograman Berorientasi Objek', 'sks' => 3, 'nilai' => 'A', 'bobot' => 3.94],
-            ],
-            'krs_aktif' => [
-                ['kode' => 'IF201', 'matkul' => 'Basis Data', 'sks' => 3, 'status' => 'Disetujui'],
-                ['kode' => 'IF202', 'matkul' => 'Pemrograman Web', 'sks' => 3, 'status' => 'Disetujui'],
-                ['kode' => 'IF203', 'matkul' => 'Jaringan Komputer', 'sks' => 3, 'status' => 'Ditolak'],
-                ['kode' => 'IF204', 'matkul' => 'Proyek Pembuatan Prototipe', 'sks' => 3, 'status' => 'Disetujui'],
-                ['kode' => 'IF205', 'matkul' => 'Pemrograman Berorientasi Objek', 'sks' => 3, 'status' => 'Ditolak'],
-            ]
+            'angkatan' => $mahasiswa->angkatan ?? '-',
+            'email' => $mahasiswa->email ?? $mahasiswa->user_email ?? '-',
+
+            'semester_aktif' => $semesterAktif ? $semesterAktif->semester : '-',
+
+            'total_sks' => $totalSks,
+            'ipk' => $ipk,
+            'mata_kuliah_lulus' => $mataKuliahLulus,
+
+            'nilai_terbaru' => $nilaiTerbaru,
+            'krs_aktif' => $krsAktif,
         ];
 
         return view('pages.mahasiswa.beranda', compact('data'));
@@ -50,13 +201,30 @@ class MahasiswaController extends Controller
      */
     public function profil()
     {
+        $mahasiswa = $this->currentMahasiswa();
+
+        if (!$mahasiswa) {
+            return redirect()->route('login')
+                ->with('error', 'Data mahasiswa tidak ditemukan. Silakan login ulang.');
+        }
+
+        $semesterAktif = $this->semesterAktif();
+
         $data = [
-            'nama' => 'Reyhan',
-            'nim' => '3312501022',
-            'email' => 'reyhan@gmail.com', 
-            'no_hp' => '08123456789',
-            'alamat' => 'Kota Batam',
-            'program_studi' => 'Teknik Informatika'
+            'mahasiswa_id' => $mahasiswa->mahasiswa_id,
+            'user_id' => $mahasiswa->user_id,
+            'nama' => $mahasiswa->nama ?? $mahasiswa->user_name ?? '-',
+            'nim' => $mahasiswa->nim ?? '-',
+            'email' => $mahasiswa->email ?? $mahasiswa->user_email ?? '-',
+            'no_hp' => $mahasiswa->no_hp ?? '',
+            'alamat' => $mahasiswa->alamat ?? '',
+            'angkatan' => $mahasiswa->angkatan ?? '-',
+            'kelas' => $mahasiswa->kelas ?? '-',
+            'program_studi' => 'Teknik Informatika',
+            'semester_aktif' => $semesterAktif
+                ? 'Semester ' . $semesterAktif->semester
+                : '-',
+            'tahun_ajaran' => $semesterAktif->tahun_ajaran ?? '-',
         ];
 
         return view('pages.mahasiswa.profil', compact('data'));
@@ -67,32 +235,112 @@ class MahasiswaController extends Controller
      */
     public function updateProfil(Request $request)
     {
+        $userSession = $this->currentUserSession();
+
+        if (!$userSession) {
+            return redirect()->route('login');
+        }
+
+        $userId = $userSession['id'] ?? null;
+
+        $mahasiswa = DB::table('mahasiswa')
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$mahasiswa) {
+            return back()->with('error', 'Data mahasiswa tidak ditemukan.');
+        }
+
         $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'nim' => 'required|string|max:20|unique:mahasiswas,nim,' . Auth::id(),
-            'email' => 'required|email|max:255|unique:users,email,' . Auth::id(),
-            'no_hp' => 'nullable|string|max:15',
-            'alamat' => 'nullable|string|max:500',
-            'program_studi' => 'required|string|max:100',
+            'nama' => ['required', 'string', 'max:100'],
+            'email' => [
+                'required',
+                'email',
+                'max:100',
+                Rule::unique('users', 'email')->ignore($userId),
+            ],
+            'no_hp' => ['nullable', 'string', 'max:20'],
+            'alamat' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $user = Auth::user();
-        $user->update([
-            'name' => $validated['nama'],
-            'email' => $validated['email'],
-        ]);
-
-        if ($user->mahasiswa) {
-            $user->mahasiswa->update([
-                'nim' => $validated['nim'],
+        DB::table('mahasiswa')
+            ->where('id', $mahasiswa->id)
+            ->update([
+                'nama' => $validated['nama'],
+                'email' => $validated['email'],
                 'no_hp' => $validated['no_hp'] ?? null,
                 'alamat' => $validated['alamat'] ?? null,
-                'program_studi' => $validated['program_studi'],
+                'updated_at' => now(),
+            ]);
+
+        DB::table('users')
+            ->where('id', $userId)
+            ->update([
+                'name' => $validated['nama'],
+                'email' => $validated['email'],
+                'updated_at' => now(),
+            ]);
+
+        $updatedUser = DB::table('users')->where('id', $userId)->first();
+
+        session([
+            'user' => [
+                'id' => $updatedUser->id,
+                'name' => $updatedUser->name,
+                'username' => $updatedUser->username,
+                'nim' => $updatedUser->nim,
+                'nik' => $updatedUser->nik,
+                'email' => $updatedUser->email,
+                'role' => $updatedUser->role,
+            ],
+            'user_name' => $updatedUser->name,
+        ]);
+
+        return redirect()
+            ->route('pages.mahasiswa.profil')
+            ->with('success', 'Profil berhasil diperbarui!');
+    }
+
+    /**
+     * Update Password Mahasiswa
+     */
+    public function updatePassword(Request $request)
+    {
+        $userSession = $this->currentUserSession();
+
+        if (!$userSession) {
+            return redirect()->route('login');
+        }
+
+        $userId = $userSession['id'] ?? null;
+
+        $validated = $request->validate([
+            'password_lama' => ['required'],
+            'password_baru' => ['required', 'min:6', 'confirmed'],
+        ]);
+
+        $user = DB::table('users')->where('id', $userId)->first();
+
+        if (!$user) {
+            return back()->with('error', 'Akun user tidak ditemukan.');
+        }
+
+        if (!Hash::check($validated['password_lama'], $user->password)) {
+            return back()->withErrors([
+                'password_lama' => 'Kata sandi lama tidak sesuai.',
             ]);
         }
 
-        return redirect()->route('pages.mahasiswa.profil')
-            ->with('success', '✅ Profil berhasil diperbarui!');
+        DB::table('users')
+            ->where('id', $userId)
+            ->update([
+                'password' => Hash::make($validated['password_baru']),
+                'updated_at' => now(),
+            ]);
+
+        return redirect()
+            ->route('pages.mahasiswa.profil')
+            ->with('success', 'Kata sandi berhasil diperbarui!');
     }
 
     /**
@@ -100,19 +348,39 @@ class MahasiswaController extends Controller
      */
     public function ambilKrs()
     {
-        // Get active semester (fallback ke dummy jika model belum siap)
-        $semesterAktif = class_exists(Semester::class) 
-            ? Semester::where('is_active', true)->first() 
-            : null;
-        
+        $mahasiswa = $this->currentMahasiswa();
+        $semesterAktif = $this->semesterAktif();
+
+        if (!$mahasiswa) {
+            return redirect()->route('login');
+        }
+
+        $statusKrs = 'Belum Mengajukan';
+
+        if ($semesterAktif) {
+            $krsAktif = DB::table('krs_mahasiswa')
+                ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+                ->where('semester_id', $semesterAktif->id)
+                ->exists();
+
+            if ($krsAktif) {
+                $statusKrs = 'Sudah Mengajukan';
+            }
+        }
+
         $data = [
-            'nama' => 'Reyhan',
-            'email' => 'reyhan@gmail.com', 
-            'semester_aktif' => 2,
+            'nama' => $mahasiswa->nama ?? $mahasiswa->user_name ?? '-',
+            'email' => $mahasiswa->email ?? $mahasiswa->user_email ?? '-',
+            'semester_aktif' => $semesterAktif?->semester ?? '-',
+            'semester_label' => $semesterAktif
+                ? 'Semester ' . $semesterAktif->semester . ' ' . $semesterAktif->tahun_ajaran
+                : '-',
             'total_sks' => 0,
-            'status_krs' => 'Belum Diajukan',
+            'status_krs' => $statusKrs,
             'max_sks' => 24,
             'tahun_ajaran_aktif' => $semesterAktif?->tahun_ajaran ?? '2025/2026',
+            'is_semester_active' => $semesterAktif ? true : false,
+            'semester_aktif_data' => $semesterAktif,
         ];
 
         return view('pages.mahasiswa.ambil-krs', compact('data'));
@@ -120,68 +388,83 @@ class MahasiswaController extends Controller
 
     /**
      * API: Load Paket Semester berdasarkan filter
-     * Digunakan oleh JavaScript di halaman ambil-krs
      */
     public function getPaketSemester(Request $request)
     {
-        $semester = $request->input('semester', 2);
-        $tahunAjaran = $request->input('tahun_ajaran', '2025/2026');
-        
-        // ========================================
-        // DATA DUMMY PAKET SEMESTER (untuk frontend testing)
-        // Nanti bisa diganti query ke database: MataKuliah::where(...)
-        // ========================================
-        $paketWajib = [
-            1 => [
-                ['id' => 1, 'kode' => 'IF101', 'matkul' => 'Algoritma & Pemrograman', 'dosen' => 'Dr. A', 'sks' => 4, 'prasyarat' => null],
-                ['id' => 2, 'kode' => 'IF102', 'matkul' => 'Matematika Diskrit', 'dosen' => 'Dr. B', 'sks' => 3, 'prasyarat' => null],
-                ['id' => 3, 'kode' => 'IF103', 'matkul' => 'Bahasa Indonesia', 'dosen' => 'Dr. C', 'sks' => 2, 'prasyarat' => null],
-            ],
-            2 => [
-                ['id' => 4, 'kode' => 'IF201', 'matkul' => 'Basis Data', 'dosen' => 'Dr. Budi Santoso, M.T', 'sks' => 4, 'prasyarat' => 'IF101'],
-                ['id' => 5, 'kode' => 'IF202', 'matkul' => 'Pemrograman Web', 'dosen' => 'Dr. Budi Santoso, M.T', 'sks' => 4, 'prasyarat' => 'IF101'],
-                ['id' => 6, 'kode' => 'IF203', 'matkul' => 'Jaringan Komputer', 'dosen' => 'Dr. Budi Santoso, M.T', 'sks' => 4, 'prasyarat' => 'IF102'],
-                ['id' => 7, 'kode' => 'IF204', 'matkul' => 'Proyek Pembuatan Prototipe', 'dosen' => 'Dr. Budi Santoso, M.T', 'sks' => 4, 'prasyarat' => null],
-            ],
-            3 => [
-                ['id' => 8, 'kode' => 'IF301', 'matkul' => 'Pemrograman Berorientasi Objek', 'dosen' => 'Dr. D', 'sks' => 4, 'prasyarat' => 'IF202'],
-                ['id' => 9, 'kode' => 'IF302', 'matkul' => 'Rekayasa Perangkat Lunak', 'dosen' => 'Dr. E', 'sks' => 4, 'prasyarat' => 'IF201'],
-            ],
-        ];
-        
-        // Data dummy nilai yang sudah lulus (untuk filter MK mengulang)
-        $nilaiLulus = [
-            'IF101' => ['nilai' => 'A', 'bobot' => 4.0],
-            'IF102' => ['nilai' => 'B', 'bobot' => 3.0],
-            'IF103' => ['nilai' => 'C', 'bobot' => 2.0], // Bisa diulang jika nilai < C
-            'IF201' => ['nilai' => 'D', 'bobot' => 1.0], // Contoh MK yang bisa diulang
-        ];
-        
-        // Filter MK wajib untuk semester yang dipilih
-        $mkWajib = $paketWajib[$semester] ?? [];
-        
-        // Filter MK yang bisa diulang (yang sudah diambil tapi nilai < C)
-        $mkMengulang = [];
-        foreach ($nilaiLulus as $kode => $data) {
-            if ($data['bobot'] < 2.0) { // Nilai D atau E bisa diulang
-                foreach ($paketWajib as $sem => $mks) {
-                    foreach ($mks as $mk) {
-                        if ($mk['kode'] === $kode) {
-                            $mkMengulang[] = [
-                                ...$mk,
-                                'isMengulang' => true,
-                                'nilaiLama' => $data['nilai'],
-                            ];
-                            break;
-                        }
-                    }
-                }
-            }
+        $semesterRequest = $request->input('semester');
+        $tahunAjaran = $request->input('tahun_ajaran');
+
+        $semesterAktif = $this->semesterAktif();
+
+        if (!$semesterAktif) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Belum ada semester aktif. Hubungi administrator.',
+            ], 400);
         }
-        
+
+        $labelSemesterAktif = 'Semester ' . $semesterAktif->semester . ' ' . $semesterAktif->tahun_ajaran;
+
+        if ($tahunAjaran !== $semesterAktif->tahun_ajaran || $semesterRequest !== $labelSemesterAktif) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Hanya semester aktif (' . $labelSemesterAktif . ') yang dapat diambil.',
+                'semester_aktif' => $labelSemesterAktif,
+                'tahun_aktif' => $semesterAktif->tahun_ajaran,
+            ], 400);
+        }
+
+        $paket = DB::table('paket_mata_kuliah')
+            ->join('mata_kuliah', 'paket_mata_kuliah.mata_kuliah_id', '=', 'mata_kuliah.id')
+            ->leftJoin('dosen', 'mata_kuliah.dosen_id', '=', 'dosen.id')
+            ->where('paket_mata_kuliah.semester_id', $semesterAktif->id)
+            ->select(
+                'mata_kuliah.id',
+                'mata_kuliah.kode_mk as kode',
+                'mata_kuliah.nama as matkul',
+                'mata_kuliah.sks',
+                'dosen.nama as dosen',
+                'paket_mata_kuliah.jenis',
+                'paket_mata_kuliah.prasyarat',
+                'paket_mata_kuliah.nilai_lama'
+            )
+            ->get();
+
+        $mkWajib = $paket
+            ->where('jenis', 'wajib')
+            ->values()
+            ->map(function ($mk) {
+                return [
+                    'id' => $mk->id,
+                    'kode' => $mk->kode,
+                    'matkul' => $mk->matkul,
+                    'dosen' => $mk->dosen ?? '-',
+                    'sks' => $mk->sks,
+                    'prasyarat' => $mk->prasyarat ?? '-',
+                ];
+            })
+            ->toArray();
+
+        $mkMengulang = $paket
+            ->where('jenis', 'mengulang')
+            ->values()
+            ->map(function ($mk) {
+                return [
+                    'id' => $mk->id,
+                    'kode' => $mk->kode,
+                    'matkul' => $mk->matkul,
+                    'dosen' => $mk->dosen ?? '-',
+                    'sks' => $mk->sks,
+                    'isMengulang' => true,
+                    'nilaiLama' => $mk->nilai_lama ?? '-',
+                ];
+            })
+            ->toArray();
+
         return response()->json([
-            'semester' => $semester,
-            'tahun_ajaran' => $tahunAjaran,
+            'error' => false,
+            'semester' => $labelSemesterAktif,
+            'tahun_ajaran' => $semesterAktif->tahun_ajaran,
             'paket_semester' => [
                 'wajib' => $mkWajib,
                 'mengulang' => $mkMengulang,
@@ -196,32 +479,158 @@ class MahasiswaController extends Controller
     public function storeKrs(Request $request)
     {
         $request->validate([
-            'mata_kuliah_ids' => 'required|array',
-            'mata_kuliah_ids.*' => 'numeric|exists:mata_kuliah,id',
-            'semester' => 'required|integer',
-            'tahun_ajaran' => 'required|string',
+            'mata_kuliah_ids' => ['required', 'array'],
+            'mata_kuliah_ids.*' => ['numeric', 'exists:mata_kuliah,id'],
+            'semester' => ['required', 'string'],
+            'tahun_ajaran' => ['required', 'string'],
         ]);
 
-        $mahasiswaId = Auth::id();
+        try {
+            $mahasiswa = $this->currentMahasiswa();
+            $semesterAktif = $this->semesterAktif();
 
-        // Hapus KRS lama mahasiswa ini (opsional, tergantung business rule)
-        KrsMahasiswa::where('mahasiswa_id', $mahasiswaId)
-            ->where('status', 'menunggu')
-            ->delete();
+            if (!$mahasiswa) {
+                return redirect()->route('login');
+            }
 
-        // Simpan KRS baru
-        foreach ($request->mata_kuliah_ids as $mataKuliahId) {
-            KrsMahasiswa::create([
-                'mahasiswa_id' => $mahasiswaId,
-                'mata_kuliah_id' => $mataKuliahId,
-                'semester_id' => $request->semester, // jika ada relasi semester
-                'tahun_ajaran' => $request->tahun_ajaran,
+            if (!$semesterAktif) {
+                return back()->with('error', 'Belum ada semester aktif.');
+            }
+
+            $mataKuliahIds = $request->input('mata_kuliah_ids');
+            $tahunAjaran = $request->input('tahun_ajaran');
+
+            if ($tahunAjaran !== $semesterAktif->tahun_ajaran) {
+                return back()->with('error', 'Hanya semester aktif yang dapat diajukan.');
+            }
+
+            $totalSks = DB::table('mata_kuliah')
+                ->whereIn('id', $mataKuliahIds)
+                ->sum('sks');
+
+            if ($totalSks > 24) {
+                return back()->with('error', 'Total SKS tidak boleh melebihi 24 SKS. SKS yang dipilih: ' . $totalSks);
+            }
+
+            $existingKrs = DB::table('krs_mahasiswa')
+                ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+                ->where('semester_id', $semesterAktif->id)
+                ->first();
+
+            if ($existingKrs) {
+                return back()->with('warning', 'Anda sudah mengajukan KRS di semester ini.');
+            }
+
+            DB::beginTransaction();
+
+            $krsId = DB::table('krs_mahasiswa')->insertGetId([
+                'mahasiswa_id' => $mahasiswa->mahasiswa_id,
+                'semester_id' => $semesterAktif->id,
+                'tahun_ajaran' => $semesterAktif->tahun_ajaran,
+                'semester' => $semesterAktif->semester,
                 'status' => 'menunggu',
+                'total_sks' => $totalSks,
+                'catatan' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
+
+            foreach ($mataKuliahIds as $mataKuliahId) {
+                DB::table('krs_detail')->insert([
+                    'krs_mahasiswa_id' => $krsId,
+                    'mata_kuliah_id' => $mataKuliahId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('pages.mahasiswa.ambil-krs')
+                ->with('success', 'KRS berhasil diajukan! Total SKS: ' . $totalSks . ' SKS. Menunggu persetujuan dosen wali.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Lihat KRS Mahasiswa yang sudah diambil
+     */
+    public function viewKrs()
+    {
+        $mahasiswa = $this->currentMahasiswa();
+
+        if (!$mahasiswa) {
+            return redirect()->route('login');
         }
 
-        return redirect()->route('pages.mahasiswa.ambil-krs')
-            ->with('success', '✅ KRS berhasil diajukan dan menunggu persetujuan dosen wali.');
+        $krsRecords = DB::table('krs_mahasiswa')
+            ->join('semesters', 'krs_mahasiswa.semester_id', '=', 'semesters.id')
+            ->where('krs_mahasiswa.mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->select(
+                'krs_mahasiswa.*',
+                'semesters.semester as semester_nama'
+            )
+            ->orderBy('krs_mahasiswa.tahun_ajaran', 'desc')
+            ->orderBy('krs_mahasiswa.created_at', 'desc')
+            ->get()
+            ->map(function ($krs) {
+                $details = DB::table('krs_detail')
+                    ->join('mata_kuliah', 'krs_detail.mata_kuliah_id', '=', 'mata_kuliah.id')
+                    ->where('krs_detail.krs_mahasiswa_id', $krs->id)
+                    ->select(
+                        'mata_kuliah.kode_mk',
+                        'mata_kuliah.nama',
+                        'mata_kuliah.sks'
+                    )
+                    ->get();
+
+                $krs->details = $details;
+
+                return $krs;
+            })
+            ->groupBy(function ($item) {
+                return $item->tahun_ajaran . ' - Semester ' . $item->semester_nama;
+            });
+
+        $statistik = [];
+
+        foreach ($krsRecords as $periode => $krsGroup) {
+            $totalSks = 0;
+            $totalMk = 0;
+            $disetujui = 0;
+            $ditolak = 0;
+            $menunggu = 0;
+
+            foreach ($krsGroup as $krs) {
+                $totalSks += $krs->total_sks;
+                $totalMk += count($krs->details);
+
+                if ($krs->status === 'disetujui') {
+                    $disetujui++;
+                } elseif ($krs->status === 'ditolak') {
+                    $ditolak++;
+                } else {
+                    $menunggu++;
+                }
+            }
+
+            $statistik[$periode] = [
+                'total_sks' => $totalSks,
+                'disetujui' => $disetujui,
+                'ditolak' => $ditolak,
+                'menunggu' => $menunggu,
+                'total_mk' => $totalMk,
+            ];
+        }
+
+        return view('pages.mahasiswa.lihat-krs', [
+            'krsRecords' => $krsRecords,
+            'statistik' => $statistik,
+        ]);
     }
 
     /**
@@ -229,42 +638,20 @@ class MahasiswaController extends Controller
      */
     public function lihatKhs(Request $request)
     {
-        $mahasiswaId = Auth::id();
+        $mahasiswa = $this->currentMahasiswa();
 
-        $nilaiQuery = Nilai::where('mahasiswa_id', $mahasiswaId)
-            ->with('mataKuliah')
-            ->orderBy('semester', 'asc')
-            ->orderBy('tahun_ajaran', 'desc');
-
-        if ($request->filled('tahun_ajaran')) {
-            $nilaiQuery->where('tahun_ajaran', $request->tahun_ajaran);
+        if (!$mahasiswa) {
+            return redirect()->route('login');
         }
 
-        if ($request->filled('semester')) {
-            $nilaiQuery->where('semester', $request->semester);
-        }
-
-        $nilaiRecords = $nilaiQuery->get();
-
-        $ipk = $nilaiRecords->isEmpty() ? 0 : round($nilaiRecords->avg('bobot'), 2);
-        $totalSks = $nilaiRecords->sum('sks');
-        $mataKuliahCount = $nilaiRecords->count();
-
-        $nilai = $nilaiRecords->map(function ($item) {
-            return [
-                'kode_mk' => $item->mataKuliah->kode_mk ?? 'IF' . str_pad($item->mata_kuliah_id, 3, '0', STR_PAD_LEFT),
-                'nama_mk' => $item->mataKuliah->nama ?? 'Mata Kuliah',
-                'sks' => $item->sks,
-                'nilai' => $item->nilai,
-                'bobot' => $item->bobot,
-                'tahun_ajaran' => $item->tahun_ajaran,
-                'semester' => $item->semester,
-            ];
-        })->toArray();
+        $nilai = [];
+        $ipk = 0;
+        $totalSks = 0;
+        $mataKuliahCount = 0;
 
         $data = [
-            'nama' => 'Reyhan',
-            'email' => 'reyhan@gmail.com', 
+            'nama' => $mahasiswa->nama ?? $mahasiswa->user_name ?? '-',
+            'email' => $mahasiswa->email ?? $mahasiswa->user_email ?? '-',
         ];
 
         return view('pages.mahasiswa.lihat-khs', compact('nilai', 'ipk', 'totalSks', 'mataKuliahCount', 'data'));

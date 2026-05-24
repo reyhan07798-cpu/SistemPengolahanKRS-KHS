@@ -18,29 +18,30 @@ class SimpleLoginController extends Controller
     {
         $credentials = $request->validate([
             'identifier' => ['required', 'string'],
-            'password'   => ['required'],
+            'password' => ['required'],
         ]);
 
-        $user = SimpleAuthService::authenticate($credentials['identifier'], $credentials['password']);
+        $user = SimpleAuthService::authenticate(
+            $credentials['identifier'],
+            $credentials['password']
+        );
 
         if (!$user) {
             throw ValidationException::withMessages([
-                'identifier' => 'NIM, NIK, atau password salah.',
+                'identifier' => 'NIM, NIK, username, email, atau password salah.',
             ]);
         }
 
-        // Simpan data user ke session
+        $role = $user['role'] ?? 'mahasiswa';
+
         $request->session()->put('user', $user);
 
-        // Set session keys yang dipakai layout dosen.blade.php
-        $role = $user['role'];
-
-        $request->session()->put('user_name',    $user['name']);
-        $request->session()->put('user_type',    $role);
+        $request->session()->put('user_name', $user['name'] ?? '-');
+        $request->session()->put('user_type', $role);
         $request->session()->put('role_display', $this->getRoleDisplay($role));
 
         $request->session()->put('is_dosen_wali', in_array($role, ['dosen_wali', 'dosen']));
-        $request->session()->put('is_dosen_mk',   in_array($role, ['dosen_matkul', 'dosen']));
+        $request->session()->put('is_dosen_mk', in_array($role, ['dosen_mk', 'dosen_matkul', 'dosen']));
 
         $request->session()->regenerate();
 
@@ -50,24 +51,24 @@ class SimpleLoginController extends Controller
     private function getRoleDisplay($role): string
     {
         return match($role) {
-            'mahasiswa'    => 'Mahasiswa',
-            'admin'        => 'Administrator',
-            'dosen_wali'   => 'Dosen Wali',
-            'dosen_matkul' => 'Dosen Mata Kuliah',
-            'dosen'        => 'Dosen (Wali & Mata Kuliah)',
-            default        => 'Pengguna',
+            'mahasiswa' => 'Mahasiswa',
+            'admin' => 'Administrator',
+            'dosen_wali' => 'Dosen Wali',
+            'dosen_mk', 'dosen_matkul' => 'Dosen Mata Kuliah',
+            'dosen' => 'Dosen',
+            default => 'Pengguna',
         };
     }
 
     private function redirectByRole($role)
     {
         return match($role) {
-            'mahasiswa'    => redirect()->route('pages.mahasiswa.beranda'),
-            'admin'        => redirect()->route('pages.admin.dashboard'),
-            'dosen_wali'   => redirect()->route('dosen.wali.beranda'),
-            'dosen_matkul' => redirect()->route('dosen.mk.beranda'),
-            'dosen'        => redirect()->route('dosen.wali.beranda'),
-            default        => redirect('/login'),
+            'mahasiswa' => redirect()->route('pages.mahasiswa.beranda'),
+            'admin' => redirect()->route('pages.admin.dashboard'),
+            'dosen_wali' => redirect()->route('dosen.wali.beranda'),
+            'dosen_mk', 'dosen_matkul' => redirect()->route('dosen.mk.beranda'),
+            'dosen' => redirect()->route('dosen.wali.beranda'),
+            default => redirect('/login'),
         };
     }
 
@@ -76,6 +77,7 @@ class SimpleLoginController extends Controller
         $request->session()->flush();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/login');
     }
 }

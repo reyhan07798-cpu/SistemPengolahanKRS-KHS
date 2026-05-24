@@ -7,20 +7,43 @@
         body {
             font-family: "Times New Roman", serif;
             font-size: 12px;
+            color: #000;
         }
+
         .center {
             text-align: center;
         }
+
+        .right {
+            text-align: right;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
         }
+
         th, td {
             border: 1px solid black;
             padding: 5px;
+            vertical-align: top;
         }
+
         .no-border td {
             border: none;
+            padding: 3px;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mt-40 {
+            margin-top: 40px;
         }
     </style>
 </head>
@@ -33,16 +56,22 @@
 
     <table class="no-border">
         <tr>
-            <td>Nama Mahasiswa</td><td>: {{ $mahasiswa->nama }}</td>
-            <td>Semester</td><td>: {{ $semester_ke }}</td>
+            <td style="width: 18%;">Nama Mahasiswa</td>
+            <td style="width: 32%;">: {{ $mahasiswa->nama ?? '-' }}</td>
+            <td style="width: 18%;">Semester</td>
+            <td style="width: 32%;">: {{ $semester_ke ?? '-' }}</td>
         </tr>
         <tr>
-            <td>NIM</td><td>: {{ $mahasiswa->nim }}</td>
-            <td>Kelas</td><td>: {{ $kelas }}</td>
+            <td>NIM</td>
+            <td>: {{ $mahasiswa->nim ?? '-' }}</td>
+            <td>Kelas</td>
+            <td>: {{ $kelas ?? '-' }}</td>
         </tr>
         <tr>
-            <td>Program Studi</td><td>: {{ $prodi }}</td>
-            <td>Pembimbing Akademik</td><td>: {{ $pa }}</td>
+            <td>Program Studi</td>
+            <td>: {{ $prodi ?? '-' }}</td>
+            <td>Pembimbing Akademik</td>
+            <td>: {{ $pa ?? '-' }}</td>
         </tr>
     </table>
 
@@ -51,77 +80,78 @@
     <table>
         <thead>
             <tr>
-                <th>No</th>
-                <th>Kode</th>
+                <th style="width: 5%;">No</th>
+                <th style="width: 13%;">Kode</th>
                 <th>Mata Kuliah</th>
-                <th>SKS</th>
-                <th>Nilai</th>
-                <th>Angka</th>
-                <th>K x N</th>
+                <th style="width: 8%;">SKS</th>
+                <th style="width: 10%;">Nilai</th>
+                <th style="width: 10%;">Angka</th>
+                <th style="width: 10%;">K x N</th>
             </tr>
         </thead>
+
         <tbody>
-            @php 
-                $total_sks = 0;
-                $total_kn = 0;
-            @endphp
+            @forelse($khs as $i => $item)
+                @php
+                    $kn = $item->sks * $item->angka;
+                @endphp
 
-            @foreach($khs as $i => $item)
-            @php
-                $kn = $item->sks * $item->angka;
-                $total_sks += $item->sks;
-                $total_kn += $kn;
-            @endphp
-            <tr>
-                <td>{{ $i+1 }}</td>
-                <td>{{ $item->kode }}</td>
-                <td>{{ $item->mata_kuliah }}</td>
-                <td>{{ $item->sks }}</td>
-                <td>{{ $item->nilai }}</td>
-                <td>{{ $item->angka }}</td>
-                <td>{{ $kn }}</td>
-            </tr>
-            @endforeach
+                <tr>
+                    <td class="center">{{ $i + 1 }}</td>
+                    <td>{{ $item->kode }}</td>
+                    <td>{{ $item->mata_kuliah }}</td>
+                    <td class="center">{{ $item->sks }}</td>
+                    <td class="center">{{ $item->nilai }}</td>
+                    <td class="center">{{ number_format($item->angka, 2) }}</td>
+                    <td class="center">{{ number_format($kn, 2) }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="7" class="center">Belum ada data nilai.</td>
+                </tr>
+            @endforelse
 
             <tr>
-                <td colspan="3" class="center"><b>Jumlah</b></td>
-                <td>{{ $total_sks }}</td>
+                <td colspan="3" class="center bold">Jumlah</td>
+                <td class="center bold">{{ $total_sks }}</td>
                 <td></td>
                 <td></td>
-                <td>{{ $total_kn }}</td>
+                <td class="center bold">{{ number_format($total_kn, 2) }}</td>
             </tr>
         </tbody>
     </table>
 
-    <br><br>
-
-    @php
-        $ips = $total_kn / ($total_sks ?: 1);
-    @endphp
+    <br>
 
     <table class="no-border">
         <tr>
-            <td>Indeks Prestasi Semester</td><td>: {{ number_format($ips, 2) }}</td>
+            <td style="width: 30%;">Indeks Prestasi Semester</td>
+            <td>: {{ number_format($ips, 2) }}</td>
         </tr>
         <tr>
-            <td>Indeks Prestasi Kumulatif</td><td>: {{ number_format($ips, 2) }}</td>
+            <td>Indeks Prestasi Kumulatif</td>
+            <td>: {{ number_format($ipk, 2) }}</td>
         </tr>
         <tr>
-            <td>SKS yang telah diambil</td><td>: {{ $total_sks }}</td>
+            <td>SKS yang telah diambil</td>
+            <td>: {{ $total_sks }}</td>
         </tr>
         <tr>
-            <td>SKS maksimum</td><td>: 24</td>
+            <td>SKS maksimum</td>
+            <td>: 24</td>
         </tr>
     </table>
 
     <br><br>
 
-    <div style="text-align: right;">
+    <div class="right">
         <p>Batam, {{ date('d F Y') }}</p>
         <p>Mengetahui,</p>
         <p>Ketua Program Studi</p>
+
         <br><br><br>
-        <p><b>{{ $kaprodi }}</b></p>
+
+        <p class="bold">{{ $kaprodi }}</p>
         <p>NIP. {{ $nip }}</p>
     </div>
 
