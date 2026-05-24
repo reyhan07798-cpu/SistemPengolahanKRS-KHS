@@ -8,11 +8,11 @@
         <div>
             <span class="nb-eyebrow">Nilai</span>
             <h1 class="mt-2">Nilai Mahasiswa</h1>
-            <p>Pantau hasil studi mahasiswa pada mata kuliah yang Anda ampu.</p>
+            <p>Pantau dan rekap nilai rinci mahasiswa pada mata kuliah yang Anda ampu.</p>
         </div>
     </div>
 
-    {{-- Statistik Cards --}}
+    {{-- Statistik --}}
     <div class="nb-bento" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
         <div class="nb-stat nb-stat--info nb-stat--ribbon">
             <div class="flex items-center gap-4">
@@ -45,49 +45,55 @@
                 <div>
                     <label class="nb-label">Tahun Ajaran</label>
                     <select name="tahun_ajaran">
+                        <option value="">Semua</option>
                         @foreach($tahunAjaranList as $ta)
-                            <option value="{{ $ta }}" {{ ($filterTahunAjaran ?? '') == $ta ? 'selected' : '' }}>{{ $ta }}</option>
+                            <option value="{{ $ta }}" {{ $filterTahunAjaran == $ta ? 'selected' : '' }}>{{ $ta }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
                     <label class="nb-label">Semester</label>
                     <select name="semester">
+                        <option value="">Semua</option>
                         @foreach($semesterList as $sem)
-                            <option value="{{ $sem }}" {{ ($filterSemester ?? '') == $sem ? 'selected' : '' }}>{{ $sem }}</option>
+                            <option value="{{ $sem }}" {{ $filterSemester == $sem ? 'selected' : '' }}>{{ $sem }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
                     <label class="nb-label">Mata Kuliah</label>
-                    <select name="mata_kuliah">
-                        <option value="semua" {{ ($filterMK ?? 'semua') == 'semua' ? 'selected' : '' }}>Semua Mata Kuliah</option>
+                    <select name="mata_kuliah_id">
+                        <option value="">Semua Mata Kuliah</option>
                         @foreach($daftarMK as $mk)
-                            <option value="{{ $mk }}" {{ ($filterMK ?? '') == $mk ? 'selected' : '' }}>{{ $mk }}</option>
+                            <option value="{{ $mk->id }}" {{ $filterMK == $mk->id ? 'selected' : '' }}>
+                                {{ $mk->kode_mk }} - {{ $mk->nama }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <button type="submit" class="nb-btn nb-btn-primary w-full">
-                        <span class="material-symbols-outlined" style="font-size:18px;">search</span> Terapkan
-                    </button>
+                    <label class="nb-label">Kelas</label>
+                    <select name="kelas">
+                        <option value="">Semua Kelas</option>
+                        @foreach($kelasList as $kls)
+                            <option value="{{ $kls }}" {{ $filterKelas == $kls ? 'selected' : '' }}>Kelas {{ $kls }}</option>
+                        @endforeach
+                    </select>
                 </div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="nb-btn nb-btn-primary">
+                    <span class="material-symbols-outlined" style="font-size:18px;">search</span> Terapkan
+                </button>
             </div>
         </form>
     </div>
 
-    @if(($filterMK ?? 'semua') != 'semua')
-        <div class="nb-alert nb-alert-info mb-6 flex items-center gap-2">
-            <span class="material-symbols-outlined">filter_alt</span>
-            <span>Menampilkan data untuk: <strong>{{ $filterMK }}</strong></span>
-        </div>
-    @endif
-
-    {{-- Tabel Nilai --}}
+    {{-- Tabel Nilai Rinci --}}
     <div class="nb-card-flat">
         <div class="nb-section-header">
             <div>
-                <span class="nb-eyebrow" style="color:var(--color-accent-soft);">Hasil Studi</span>
+                <span class="nb-eyebrow" style="color:var(--color-accent-soft);">Rekap Nilai Rinci</span>
                 <h2 class="mt-1">Daftar Nilai Mahasiswa</h2>
             </div>
             <span class="nb-badge nb-badge-primary">{{ count($mahasiswa) }} data</span>
@@ -97,58 +103,59 @@
                 <thead>
                     <tr>
                         <th>No</th>
-                        <th>NIM</th>
-                        <th>Nama Mahasiswa</th>
-                        <th class="text-center">Kelas</th>
+                        <th>NIM / Nama</th>
                         <th>Mata Kuliah</th>
-                        <th class="text-center">Nilai (0–100)</th>
+                        <th class="text-center">Tugas</th>
+                        <th class="text-center">Praktikum</th>
+                        <th class="text-center">UTS</th>
+                        <th class="text-center">UAS</th>
+                        <th class="text-center">Kehadiran</th>
+                        <th class="text-center">Nilai Akhir</th>
                         <th class="text-center">Grade</th>
-                        <th class="text-center">Angka (0–4)</th>
+                        <th class="text-center">Mutu</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($mahasiswa as $mhs)
                         @php
-                            // Konversi nilai 0-100 ke mutu 0-4
-                            $nilaiAngka = $mhs['nilai'];
-                            $grade      = $mhs['grade'];
-                            $mutu = match(true) {
-                                $nilaiAngka >= 85 => 4.00,
-                                $nilaiAngka >= 80 => 3.75,
-                                $nilaiAngka >= 75 => 3.50,
-                                $nilaiAngka >= 70 => 3.00,
-                                $nilaiAngka >= 65 => 2.75,
-                                $nilaiAngka >= 60 => 2.50,
-                                $nilaiAngka >= 55 => 2.00,
-                                $nilaiAngka >= 40 => 1.00,
-                                default           => 0.00,
-                            };
+                            $nilaiAkhir = (float)($mhs['nilai_akhir'] ?? 0);
+                            $grade      = $mhs['grade'] ?? '—';
+                            $mutu       = (float)($mhs['mutu'] ?? 0);
                             $gradeBadge = match($grade) {
-                                'A'     => 'nb-badge-success',
-                                'B'     => 'nb-badge-primary',
-                                'C'     => 'nb-badge-warning',
-                                'D'     => 'nb-badge-warning',
-                                default => 'nb-badge-danger',
+                                'A','A-'       => 'nb-badge-success',
+                                'B+','B','B-'  => 'nb-badge-primary',
+                                'C+','C'       => 'nb-badge-warning',
+                                'D'            => 'nb-badge-warning',
+                                default        => 'nb-badge-danger',
                             };
                             $mutuClass = $mutu >= 3.5 ? 'text-accent' : ($mutu >= 2.5 ? 'text-primary' : 'text-muted');
                         @endphp
                         <tr>
                             <td class="font-bold text-muted">{{ $mhs['no'] }}</td>
-                            <td class="font-bold text-primary text-sm" style="font-family:var(--font-heading);">{{ $mhs['nim'] }}</td>
-                            <td class="font-medium text-ink">{{ $mhs['nama'] }}</td>
-                            <td class="text-center"><span class="nb-badge nb-badge-stable">{{ $mhs['kelas'] }}</span></td>
-                            <td><span class="nb-badge nb-badge-primary">{{ $mhs['mata_kuliah'] }}</span></td>
-                            <td class="text-center font-extrabold text-primary text-lg" style="font-family:var(--font-heading);">{{ number_format($nilaiAngka, 1) }}</td>
+                            <td>
+                                <div class="font-bold text-ink text-sm">{{ $mhs['nama'] }}</div>
+                            </td>
+                            <td><span class="nb-badge nb-badge-stable text-xs">{{ $mhs['kode_mk'] }} - {{ $mhs['nama_mk'] }}</span></td>
+                            <td class="text-center text-sm">{{ $mhs['nilai_tugas'] !== null ? number_format($mhs['nilai_tugas'],1) : '—' }}</td>
+                            <td class="text-center text-sm">{{ $mhs['nilai_praktikum'] !== null ? number_format($mhs['nilai_praktikum'],1) : '—' }}</td>
+                            <td class="text-center text-sm">{{ $mhs['nilai_uts'] !== null ? number_format($mhs['nilai_uts'],1) : '—' }}</td>
+                            <td class="text-center text-sm">{{ $mhs['nilai_uas'] !== null ? number_format($mhs['nilai_uas'],1) : '—' }}</td>
+                            <td class="text-center text-sm">{{ $mhs['nilai_kehadiran'] !== null ? number_format($mhs['nilai_kehadiran'],1) : '—' }}</td>
+                            <td class="text-center font-extrabold text-primary text-lg" style="font-family:var(--font-heading);">
+                                {{ $nilaiAkhir > 0 ? number_format($nilaiAkhir, 1) : '—' }}
+                            </td>
                             <td class="text-center"><span class="nb-badge {{ $gradeBadge }}">{{ $grade }}</span></td>
                             <td class="text-center">
-                                <span class="font-extrabold text-lg {{ $mutuClass }}" style="font-family:var(--font-heading);">{{ number_format($mutu, 2) }}</span>
+                                <span class="font-extrabold text-lg {{ $mutuClass }}" style="font-family:var(--font-heading);">
+                                    {{ $mutu > 0 ? number_format($mutu, 2) : '—' }}
+                                </span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-12">
+                            <td colspan="11" class="text-center py-12">
                                 <span class="material-symbols-outlined text-muted" style="font-size:48px;">search_off</span>
-                                <p class="mt-2 text-muted font-medium">Tidak ada data nilai untuk filter ini.</p>
+                                <p class="mt-2 text-muted font-medium">Belum ada data nilai. Gunakan filter di atas atau input nilai terlebih dahulu.</p>
                             </td>
                         </tr>
                     @endforelse

@@ -4,12 +4,11 @@
 @section('page_title', 'Input Nilai')
 
 @section('content')
-    {{-- Page Header --}}
     <div class="nb-page-header">
         <div>
             <span class="nb-eyebrow">Penilaian</span>
             <h1 class="mt-2">Input Nilai</h1>
-            <p>Input nilai akhir mahasiswa untuk mata kuliah yang Anda ampu.</p>
+            <p>Input nilai mahasiswa langsung di tabel — klik sel untuk mengisi.</p>
         </div>
     </div>
 
@@ -20,18 +19,18 @@
         </div>
     @endif
 
-
-    {{-- Filter Tahun Ajaran & Semester --}}
+    {{-- ═══════════════════════ FILTER ═══════════════════════ --}}
     <div class="nb-card mb-6">
         <div class="flex items-center gap-3 mb-4">
             <span class="material-symbols-outlined text-primary">filter_list</span>
-            <h3 class="nb-h3">Periode Penilaian</h3>
+            <h3 class="nb-h3">Filter & Pilih Mata Kuliah</h3>
         </div>
-        <form method="GET" action="{{ route('pages.dosen_matkul.input-nilai') }}">
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 items-end">
+        <form method="GET" action="{{ route('pages.dosen_matkul.input-nilai') }}" id="filterForm">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
                 <div>
                     <label class="nb-label">Tahun Ajaran</label>
                     <select name="tahun_ajaran">
+                        <option value="">Semua</option>
                         @foreach($tahunAjaranList as $ta)
                             <option value="{{ $ta }}" {{ $filterTahunAjaran == $ta ? 'selected' : '' }}>{{ $ta }}</option>
                         @endforeach
@@ -40,360 +39,318 @@
                 <div>
                     <label class="nb-label">Semester</label>
                     <select name="semester">
+                        <option value="">Semua</option>
                         @foreach($semesterList as $sem)
                             <option value="{{ $sem }}" {{ $filterSemester == $sem ? 'selected' : '' }}>{{ $sem }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <button type="submit" class="nb-btn nb-btn-primary w-full">
-                        <span class="material-symbols-outlined" style="font-size:18px;">search</span> Terapkan
-                    </button>
+                    <label class="nb-label">Mata Kuliah</label>
+                    <select name="mata_kuliah_id" id="selectMK">
+                        <option value="">-- Pilih Mata Kuliah --</option>
+                        @foreach($mataKuliahList as $mk)
+                            <option value="{{ $mk['id'] }}" {{ $filterMK == $mk['id'] ? 'selected' : '' }}>
+                                {{ $mk['kode'] }} - {{ $mk['nama'] }} ({{ $mk['kelas'] }})
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
+                <div>
+                    <label class="nb-label">Kelas</label>
+                    <select name="kelas">
+                        <option value="">Semua Kelas</option>
+                        @foreach($kelasList as $kls)
+                            <option value="{{ $kls }}" {{ $filterKelas == $kls ? 'selected' : '' }}>Kelas {{ $kls }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="nb-btn nb-btn-primary">
+                    <span class="material-symbols-outlined" style="font-size:18px;">search</span> Tampilkan
+                </button>
             </div>
         </form>
     </div>
 
-    {{-- Info Bobot Penilaian --}}
-    <div class="nb-card mb-6">
-        <div class="flex items-center gap-3 mb-3">
-            <span class="material-symbols-outlined text-primary">info</span>
-            <h3 class="nb-h3" style="font-size:1.125rem;">Bobot Penilaian</h3>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <span class="nb-badge nb-badge-stable">Tugas <strong class="ml-1">20%</strong></span>
-            <span class="nb-badge nb-badge-stable">Praktikum <strong class="ml-1">15%</strong></span>
-            <span class="nb-badge nb-badge-primary">UTS <strong class="ml-1">30%</strong></span>
-            <span class="nb-badge nb-badge-primary">UAS <strong class="ml-1">30%</strong></span>
-            <span class="nb-badge nb-badge-success">Kehadiran <strong class="ml-1">5%</strong></span>
-        </div>
-    </div>
-
-    {{-- Pilih Mata Kuliah --}}
-    <div class="nb-card mb-6">
+    @if($mkAktif)
+    {{-- ═════════════════ BOBOT PENILAIAN (VARIABEL) ═════════════════ --}}
+    <div class="nb-card mb-6" id="bobotCard">
         <div class="flex items-center gap-3 mb-4">
-            <span class="material-symbols-outlined text-primary">menu_book</span>
-            <h3 class="nb-h3">Pilih Mata Kuliah</h3>
+            <span class="material-symbols-outlined text-primary">tune</span>
+            <h3 class="nb-h3">Bobot Penilaian <span class="nb-badge nb-badge-stable ml-2" style="font-size:12px;">Variabel — bisa diubah</span></h3>
         </div>
-        <div class="max-w-md">
-            <label class="nb-label">Mata Kuliah yang Diampu</label>
-            <select id="pilihMK">
-                <option value="">-- Pilih Mata Kuliah --</option>
-                @foreach($mataKuliahList as $mk)
-                    <option value="{{ $mk['kode'] }}"
-                            data-nama="{{ $mk['nama'] }}"
-                            data-sks="{{ $mk['sks'] }}"
-                            data-semester="{{ $mk['semester'] }}">
-                        {{ $mk['kode'] }} - {{ $mk['nama'] }} ({{ $mk['jumlah_mahasiswa'] }} mahasiswa)
-                    </option>
-                @endforeach
-            </select>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="bobotForm">
+            @php
+                $bobotDefault = $bobotAktif ?? ['tugas'=>20,'praktikum'=>15,'uts'=>30,'uas'=>30,'kehadiran'=>5];
+            @endphp
+            @foreach([
+                ['key'=>'tugas',     'label'=>'Tugas',     'color'=>'nb-badge-stable'],
+                ['key'=>'praktikum', 'label'=>'Praktikum', 'color'=>'nb-badge-stable'],
+                ['key'=>'uts',       'label'=>'UTS',       'color'=>'nb-badge-primary'],
+                ['key'=>'uas',       'label'=>'UAS',       'color'=>'nb-badge-primary'],
+                ['key'=>'kehadiran', 'label'=>'Kehadiran', 'color'=>'nb-badge-success'],
+            ] as $b)
+            <div>
+                <label class="nb-label">{{ $b['label'] }} (%)</label>
+                <input type="number" id="bobot_{{ $b['key'] }}" name="bobot_{{ $b['key'] }}"
+                       value="{{ $bobotDefault[$b['key']] }}" min="0" max="100" step="1"
+                       class="text-center bobot-input"
+                       onchange="updateBobotTotal(); recalculateAll();">
+            </div>
+            @endforeach
+        </div>
+        <div class="mt-3 flex items-center gap-3">
+            <span class="nb-label" style="margin-bottom:0;">Total:</span>
+            <span id="bobotTotal" class="font-extrabold text-lg text-primary" style="font-family:var(--font-heading);">100%</span>
+            <span id="bobotWarning" class="text-xs text-red-500 hidden">⚠ Total harus 100%</span>
         </div>
     </div>
 
-    {{-- Tabel Mahasiswa --}}
-    <div id="tabelContainer" class="hidden nb-card-flat">
+    {{-- ════════════════════ TABEL INPUT NILAI ════════════════════ --}}
+    @if(count($mahasiswaList) > 0)
+    <div class="nb-card-flat">
         <div class="nb-section-header">
             <div>
-                <span class="nb-eyebrow" style="color: var(--color-accent-soft);" id="tabelInfo">-</span>
-                <h2 class="mt-1" id="tabelJudul">Daftar Mahasiswa</h2>
+                <span class="nb-eyebrow" style="color:var(--color-accent-soft);">
+                    {{ $mkAktif->kode_mk }} · {{ $mkAktif->kelas ?? 'A' }}
+                </span>
+                <h2 class="mt-1">{{ $mkAktif->nama }}</h2>
             </div>
-            <span class="nb-badge nb-badge-primary" id="tabelCount">0 Mahasiswa</span>
+            <div class="flex items-center gap-3">
+                <span class="nb-badge nb-badge-primary">{{ count($mahasiswaList) }} Mahasiswa</span>
+                <button type="button" onclick="simpanSemua()" class="nb-btn nb-btn-primary nb-btn-sm" id="btnSimpanSemua">
+                    <span class="material-symbols-outlined" style="font-size:16px;">save</span> Simpan Semua
+                </button>
+            </div>
         </div>
+
         <div class="overflow-x-auto">
-            <table class="nb-table">
+            <table class="nb-table" id="tabelNilai">
                 <thead>
                     <tr>
-                        <th>No</th>
-                        <th>NIM</th>
-                        <th>Nama Mahasiswa</th>
-                        <th class="text-center">Kelas</th>
-                        <th class="text-center">Nilai (0–100)</th>
+                        <th style="width:40px;">No</th>
+                        <th>Mahasiswa</th>
+                        <th class="text-center" style="min-width:90px;">
+                            Tugas<br><small class="text-muted font-normal" id="hdr_tugas">(20%)</small>
+                        </th>
+                        <th class="text-center" style="min-width:90px;">
+                            Praktikum<br><small class="text-muted font-normal" id="hdr_praktikum">(15%)</small>
+                        </th>
+                        <th class="text-center" style="min-width:90px;">
+                            UTS<br><small class="text-muted font-normal" id="hdr_uts">(30%)</small>
+                        </th>
+                        <th class="text-center" style="min-width:90px;">
+                            UAS<br><small class="text-muted font-normal" id="hdr_uas">(30%)</small>
+                        </th>
+                        <th class="text-center" style="min-width:90px;">
+                            Kehadiran<br><small class="text-muted font-normal" id="hdr_kehadiran">(5%)</small>
+                        </th>
+                        <th class="text-center" style="min-width:90px;">Nilai Akhir</th>
                         <th class="text-center">Grade</th>
-                        <th class="text-center">Angka (0–4)</th>
                         <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="daftarMahasiswa"></tbody>
+                <tbody>
+                @foreach($mahasiswaList as $idx => $mhs)
+                    <tr id="row_{{ $mhs['id'] }}">
+                        <td class="text-muted font-bold">{{ $idx + 1 }}</td>
+                        <td>
+                            <div class="font-bold text-ink text-sm">{{ $mhs['nama'] }}</div>
+                        </td>
+                        {{-- Kolom nilai komponen — langsung editable --}}
+                        @foreach(['tugas','praktikum','uts','uas','kehadiran'] as $komp)
+                        <td class="text-center p-1">
+                            <input type="number"
+                                   id="{{ $komp }}_{{ $mhs['id'] }}"
+                                   data-mhs="{{ $mhs['id'] }}"
+                                   data-komp="{{ $komp }}"
+                                   value="{{ $mhs['nilai_'.$komp] ?? '' }}"
+                                   min="0" max="100" step="0.1"
+                                   placeholder="—"
+                                   class="nilai-input text-center"
+                                   style="width:75px;padding:6px 4px;border:1.5px solid var(--nb-border);border-radius:6px;font-size:13px;background:var(--nb-surface);"
+                                   onchange="hitungBaris({{ $mhs['id'] }})"
+                                   oninput="hitungBaris({{ $mhs['id'] }})">
+                        </td>
+                        @endforeach
+                        <td class="text-center">
+                            <span id="akhir_{{ $mhs['id'] }}" class="font-extrabold text-primary" style="font-family:var(--font-heading);">
+                                {{ $mhs['nilai_akhir'] !== null ? number_format($mhs['nilai_akhir'],1) : '—' }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span id="grade_{{ $mhs['id'] }}" class="nb-badge {{ $mhs['grade'] ? 'nb-badge-success' : 'nb-badge-stable' }}">
+                                {{ $mhs['grade'] ?? '—' }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <button type="button"
+                                    onclick="simpanSatu({{ $mhs['id'] }})"
+                                    id="btn_{{ $mhs['id'] }}"
+                                    class="nb-btn nb-btn-primary nb-btn-sm">
+                                <span class="material-symbols-outlined" style="font-size:14px;">save</span>
+                            </button>
+                            <span id="status_{{ $mhs['id'] }}" class="text-xs ml-1" style="display:none;color:green;">✓</span>
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
             </table>
         </div>
     </div>
+    @else
+    <div class="nb-card text-center py-12">
+        <span class="material-symbols-outlined text-muted" style="font-size:64px;">group_off</span>
+        <h3 class="nb-h3 mt-4">Belum Ada Mahasiswa</h3>
+        <p class="text-muted mt-2">Belum ada mahasiswa yang mengambil mata kuliah ini atau KRS belum disetujui.</p>
+    </div>
+    @endif
 
-    {{-- Empty State --}}
-    <div id="emptyState" class="nb-card text-center py-12">
+    @else
+    <div class="nb-card text-center py-12">
         <span class="material-symbols-outlined text-muted" style="font-size:64px;">edit_note</span>
         <h3 class="nb-h3 mt-4">Pilih Mata Kuliah</h3>
-        <p class="text-muted mt-2">Silakan pilih mata kuliah untuk mulai menginput nilai.</p>
+        <p class="text-muted mt-2">Pilih mata kuliah di filter atas untuk mulai input nilai.</p>
     </div>
-
-    {{-- MODAL INPUT NILAI --}}
-    <div id="nilaiModal" class="nb-modal-overlay hidden" role="dialog" aria-modal="true">
-        <div class="nb-modal" onclick="event.stopPropagation()">
-            <div class="nb-modal-header">
-                <div>
-                    <h3>Input Nilai Mahasiswa</h3>
-                    <p class="text-xs mt-1" style="color: var(--color-accent-soft);" id="modalMKInfo">-</p>
-                </div>
-                <button type="button" onclick="closeModal()" class="nb-modal-close" aria-label="Tutup">
-                    <span class="material-symbols-outlined" style="font-size:18px;">close</span>
-                </button>
-            </div>
-
-            <div class="nb-modal-body">
-                {{-- Info Mahasiswa --}}
-                <div class="nb-info-card flex items-center gap-4 mb-5">
-                    <div class="nb-avatar-sm" style="cursor:default;" id="modalAvatar">A</div>
-                    <div class="min-w-0">
-                        <p class="font-bold text-ink" id="modalNama">Nama Mahasiswa</p>
-                        <p class="text-xs text-muted mt-1" id="modalNIM">NIM - Kelas</p>
-                    </div>
-                </div>
-
-                {{-- Form Input Komponen --}}
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="nb-label">Tugas (20%)</label>
-                        <input type="number" id="inTugas" min="0" max="100" class="text-center" placeholder="0">
-                    </div>
-                    <div>
-                        <label class="nb-label">Praktikum (15%)</label>
-                        <input type="number" id="inPraktikum" min="0" max="100" class="text-center" placeholder="0">
-                    </div>
-                    <div>
-                        <label class="nb-label">UTS (30%)</label>
-                        <input type="number" id="inUTS" min="0" max="100" class="text-center" placeholder="0">
-                    </div>
-                    <div>
-                        <label class="nb-label">UAS (30%)</label>
-                        <input type="number" id="inUAS" min="0" max="100" class="text-center" placeholder="0">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="nb-label">Kehadiran (5%)</label>
-                        <input type="number" id="inHadir" min="0" max="100" class="text-center" placeholder="0">
-                    </div>
-                </div>
-
-                {{-- Hasil Perhitungan --}}
-                <div class="nb-info-card mt-5" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center;">
-                    <div>
-                        <p class="nb-label" style="margin-bottom:4px;">Nilai Akhir & Grade</p>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="font-extrabold text-2xl text-primary" style="font-family:var(--font-heading);" id="modalTotal">—</span>
-                            <span class="nb-badge nb-badge-stable" id="modalGrade">—</span>
-                        </div>
-                    </div>
-                    <div style="border-left:2px solid var(--nb-border);padding-left:16px;">
-                        <p class="nb-label" style="margin-bottom:4px;">Angka (0–4)</p>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="font-extrabold text-2xl text-accent" style="font-family:var(--font-heading);" id="modalMutu">—</span>
-                            <span class="text-xs text-muted">Indeks Prestasi</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="nb-modal-footer">
-                <button type="button" onclick="closeModal()" class="nb-btn nb-btn-secondary nb-btn-sm">Batal</button>
-                <button type="button" onclick="simpanNilai()" class="nb-btn nb-btn-primary nb-btn-sm">
-                    <span class="material-symbols-outlined" style="font-size:16px;">save</span>
-                    Simpan Nilai
-                </button>
-            </div>
-        </div>
-    </div>
+    @endif
 @endsection
 
 @push('scripts')
 <script>
-    let dataNilai = {
-        'IF101': [
-            { nim: '3312501022', nama: 'Reyhan', kelas: 'A', nilai: null, grade: null },
-            { nim: '3312501007', nama: 'Nabila Fatin', kelas: 'A', nilai: null, grade: null },
-            { nim: '3312501017', nama: 'Irenessa Rosidin', kelas: 'A', nilai: null, grade: null }
-        ],
-        'IF102': [
-            { nim: '3312501010', nama: 'Della Reska', kelas: 'B', nilai: null, grade: null },
-            { nim: '3312501023', nama: 'Samuel Deidra', kelas: 'B', nilai: 78.5, grade: 'B' }
-        ]
+const MK_ID  = {{ $filterMK ?: 'null' }};
+const CSRF   = '{{ csrf_token() }}';
+const URL    = '{{ route("pages.dosen_matkul.simpan-nilai") }}';
+
+function getBobotValues() {
+    return {
+        tugas:     parseFloat(document.getElementById('bobot_tugas')?.value)     || 20,
+        praktikum: parseFloat(document.getElementById('bobot_praktikum')?.value) || 15,
+        uts:       parseFloat(document.getElementById('bobot_uts')?.value)        || 30,
+        uas:       parseFloat(document.getElementById('bobot_uas')?.value)        || 30,
+        kehadiran: parseFloat(document.getElementById('bobot_kehadiran')?.value)  || 5,
     };
+}
 
-    const BOBOT = { tugas: 0.20, praktikum: 0.15, uts: 0.30, uas: 0.30, hadir: 0.05 };
-    let currentMK = null;
-    let currentIdx = null;
+function updateBobotTotal() {
+    const b = getBobotValues();
+    const total = b.tugas + b.praktikum + b.uts + b.uas + b.kehadiran;
+    const el = document.getElementById('bobotTotal');
+    const warn = document.getElementById('bobotWarning');
+    if (el) el.textContent = total + '%';
+    if (warn) warn.classList.toggle('hidden', Math.abs(total - 100) < 0.01);
+    // Update header labels
+    ['tugas','praktikum','uts','uas','kehadiran'].forEach(k => {
+        const hdr = document.getElementById('hdr_' + k);
+        if (hdr) hdr.textContent = '(' + b[k] + '%)';
+    });
+}
 
-    document.getElementById('pilihMK').addEventListener('change', function () {
-        currentMK = this.value;
-        if (currentMK) {
-            const opt = this.options[this.selectedIndex];
-            document.getElementById('tabelJudul').textContent = `Daftar Mahasiswa - ${opt.dataset.nama}`;
-            document.getElementById('tabelInfo').textContent = `SKS ${opt.dataset.sks} · Semester ${opt.dataset.semester}`;
-            document.getElementById('tabelCount').textContent = `${dataNilai[currentMK].length} Mahasiswa`;
+function gradeFromNilai(n) {
+    if (n >= 85) return {grade:'A',  badge:'nb-badge-success'};
+    if (n >= 80) return {grade:'A-', badge:'nb-badge-success'};
+    if (n >= 75) return {grade:'B+', badge:'nb-badge-primary'};
+    if (n >= 70) return {grade:'B',  badge:'nb-badge-primary'};
+    if (n >= 65) return {grade:'B-', badge:'nb-badge-primary'};
+    if (n >= 60) return {grade:'C+', badge:'nb-badge-warning'};
+    if (n >= 55) return {grade:'C',  badge:'nb-badge-warning'};
+    if (n >= 40) return {grade:'D',  badge:'nb-badge-warning'};
+    return {grade:'E', badge:'nb-badge-danger'};
+}
 
-            document.getElementById('tabelContainer').classList.remove('hidden');
-            document.getElementById('emptyState').classList.add('hidden');
-            renderTable();
-        } else {
-            document.getElementById('tabelContainer').classList.add('hidden');
-            document.getElementById('emptyState').classList.remove('hidden');
-        }
+function hitungBaris(mhsId) {
+    const b = getBobotValues();
+    const get = (k) => parseFloat(document.getElementById(k + '_' + mhsId)?.value) || 0;
+    const akhir = (get('tugas') * b.tugas + get('praktikum') * b.praktikum +
+                   get('uts')   * b.uts   + get('uas')       * b.uas +
+                   get('kehadiran') * b.kehadiran) / 100;
+
+    const akhirEl = document.getElementById('akhir_' + mhsId);
+    const gradeEl = document.getElementById('grade_' + mhsId);
+    if (akhirEl) akhirEl.textContent = akhir > 0 ? akhir.toFixed(1) : '—';
+    if (gradeEl && akhir > 0) {
+        const g = gradeFromNilai(akhir);
+        gradeEl.textContent = g.grade;
+        gradeEl.className = 'nb-badge ' + g.badge;
+    }
+}
+
+function recalculateAll() {
+    document.querySelectorAll('[id^="akhir_"]').forEach(el => {
+        const mhsId = el.id.replace('akhir_', '');
+        hitungBaris(mhsId);
+    });
+    updateBobotTotal();
+}
+
+async function simpanSatu(mhsId) {
+    const b = getBobotValues();
+    const total = b.tugas + b.praktikum + b.uts + b.uas + b.kehadiran;
+    if (Math.abs(total - 100) > 0.01) {
+        alert('Total bobot harus 100%. Sekarang: ' + total + '%');
+        return;
+    }
+
+    const btn = document.getElementById('btn_' + mhsId);
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">hourglass_empty</span>';
+
+    const body = new FormData();
+    body.append('_token', CSRF);
+    body.append('mata_kuliah_id', MK_ID);
+    body.append('mahasiswa_id', mhsId);
+    body.append('bobot_tugas', b.tugas);
+    body.append('bobot_praktikum', b.praktikum);
+    body.append('bobot_uts', b.uts);
+    body.append('bobot_uas', b.uas);
+    body.append('bobot_kehadiran', b.kehadiran);
+
+    ['tugas','praktikum','uts','uas','kehadiran'].forEach(k => {
+        const v = document.getElementById(k + '_' + mhsId)?.value;
+        body.append('nilai_' + k + '[' + mhsId + ']', v || 0);
     });
 
-    function renderTable() {
-        const tbody = document.getElementById('daftarMahasiswa');
-        tbody.innerHTML = '';
-
-        dataNilai[currentMK].forEach((mhs, idx) => {
-            function nilaiToMutu(n) {
-                if (n === null) return null;
-                if (n >= 85) return 4.00;
-                if (n >= 80) return 3.75;
-                if (n >= 75) return 3.50;
-                if (n >= 70) return 3.00;
-                if (n >= 65) return 2.75;
-                if (n >= 60) return 2.50;
-                if (n >= 55) return 2.00;
-                if (n >= 40) return 1.00;
-                return 0.00;
+    try {
+        const res = await fetch(URL, { method: 'POST', body });
+        const data = await res.json();
+        if (data.success) {
+            const statusEl = document.getElementById('status_' + mhsId);
+            if (statusEl) { statusEl.style.display = 'inline'; setTimeout(() => statusEl.style.display='none', 2000); }
+            // Update display
+            const akhirEl = document.getElementById('akhir_' + mhsId);
+            const gradeEl = document.getElementById('grade_' + mhsId);
+            if (akhirEl) akhirEl.textContent = parseFloat(data.nilai_akhir).toFixed(1);
+            if (gradeEl) {
+                const g = gradeFromNilai(data.nilai_akhir);
+                gradeEl.textContent = data.grade;
+                gradeEl.className = 'nb-badge ' + g.badge;
             }
-            const nilaiDisplay = mhs.nilai !== null
-                ? `<span class="font-extrabold text-primary" style="font-family:var(--font-heading);">${mhs.nilai}</span>`
-                : `<span class="nb-badge nb-badge-stable">—</span>`;
-            const gradeDisplay = mhs.grade !== null
-                ? `<span class="nb-badge ${mhs.grade==='A'?'nb-badge-success':mhs.grade==='B'?'nb-badge-primary':'nb-badge-warning'}">${mhs.grade}</span>`
-                : `<span class="nb-badge nb-badge-stable">—</span>`;
-            const mutu = nilaiToMutu(parseFloat(mhs.nilai));
-            const mutuDisplay = mutu !== null
-                ? `<span class="font-extrabold ${mutu>=3.5?'text-accent':mutu>=2.5?'text-primary':'text-muted'}" style="font-family:var(--font-heading);">${mutu.toFixed(2)}</span>`
-                : `<span class="nb-badge nb-badge-stable">—</span>`;
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="font-bold text-muted">${idx + 1}</td>
-                <td class="font-bold text-primary text-sm" style="font-family: var(--font-heading);">${mhs.nim}</td>
-                <td class="font-medium text-ink">${mhs.nama}</td>
-                <td class="text-center"><span class="nb-badge nb-badge-stable">${mhs.kelas}</span></td>
-                <td class="text-center">${nilaiDisplay}</td>
-                <td class="text-center">${gradeDisplay}</td>
-                <td class="text-center">${mutuDisplay}</td>
-                <td class="text-center">
-                    <button type="button" onclick="openModal(${idx})" class="nb-btn nb-btn-primary nb-btn-sm">
-                        <span class="material-symbols-outlined" style="font-size:14px;">${mhs.nilai !== null ? 'edit' : 'add'}</span>
-                        ${mhs.nilai !== null ? 'Edit' : 'Input'}
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-    }
-
-    window.openModal = function (idx) {
-        currentIdx = idx;
-        const mhs = dataNilai[currentMK][idx];
-        const mkNama = document.getElementById('pilihMK').options[document.getElementById('pilihMK').selectedIndex].dataset.nama;
-
-        document.getElementById('modalMKInfo').textContent = `${mkNama} (${currentMK})`;
-        document.getElementById('modalNama').textContent = mhs.nama;
-        document.getElementById('modalNIM').textContent = `${mhs.nim} · Kelas ${mhs.kelas}`;
-        document.getElementById('modalAvatar').textContent = mhs.nama.charAt(0);
-
-        ['inTugas','inPraktikum','inUTS','inUAS','inHadir'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('modalTotal').textContent = '-';
-        const gradeEl = document.getElementById('modalGrade');
-        gradeEl.textContent = '-';
-        gradeEl.className = 'nb-badge nb-badge-stable';
-
-        document.getElementById('nilaiModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        setupModalListeners();
-    };
-
-    window.closeModal = function () {
-        document.getElementById('nilaiModal').classList.add('hidden');
-        document.body.style.overflow = 'auto';
-        removeModalListeners();
-    };
-
-    function calculateModal() {
-        const t = parseFloat(document.getElementById('inTugas').value) || 0;
-        const p = parseFloat(document.getElementById('inPraktikum').value) || 0;
-        const u = parseFloat(document.getElementById('inUTS').value) || 0;
-        const a = parseFloat(document.getElementById('inUAS').value) || 0;
-        const h = parseFloat(document.getElementById('inHadir').value) || 0;
-
-        const total = (t * BOBOT.tugas) + (p * BOBOT.praktikum) + (u * BOBOT.uts) + (a * BOBOT.uas) + (h * BOBOT.hadir);
-
-        let grade = 'E', badge = 'nb-badge-danger';
-        if (total >= 85) { grade = 'A'; badge = 'nb-badge-success'; }
-        else if (total >= 70) { grade = 'B'; badge = 'nb-badge-primary'; }
-        else if (total >= 55) { grade = 'C'; badge = 'nb-badge-warning'; }
-        else if (total >= 40) { grade = 'D'; badge = 'nb-badge-warning'; }
-
-        document.getElementById('modalTotal').textContent = total > 0 ? total.toFixed(1) : '—';
-        const gradeEl = document.getElementById('modalGrade');
-        gradeEl.textContent = total > 0 ? grade : '—';
-        gradeEl.className = `nb-badge ${total > 0 ? badge : 'nb-badge-stable'}`;
-
-        // Hitung mutu 0-4
-        let mutu = 0;
-        if (total >= 85) mutu = 4.00;
-        else if (total >= 80) mutu = 3.75;
-        else if (total >= 75) mutu = 3.50;
-        else if (total >= 70) mutu = 3.00;
-        else if (total >= 65) mutu = 2.75;
-        else if (total >= 60) mutu = 2.50;
-        else if (total >= 55) mutu = 2.00;
-        else if (total >= 40) mutu = 1.00;
-        const mutuEl = document.getElementById('modalMutu');
-        if (mutuEl) {
-            mutuEl.textContent = total > 0 ? mutu.toFixed(2) : '—';
-            mutuEl.className = `font-extrabold text-2xl ${mutu >= 3.5 ? 'text-accent' : mutu >= 2.5 ? 'text-primary' : 'text-muted'}`;
-            mutuEl.style.fontFamily = 'var(--font-heading)';
+        } else {
+            alert(data.message);
         }
+    } catch(e) {
+        alert('Gagal menyimpan. Coba lagi.');
     }
 
-    function setupModalListeners() {
-        ['inTugas', 'inPraktikum', 'inUTS', 'inUAS', 'inHadir'].forEach(id => {
-            document.getElementById(id).addEventListener('input', calculateModal);
-        });
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">save</span>';
+}
+
+async function simpanSemua() {
+    const rows = document.querySelectorAll('[id^="row_"]');
+    const btn = document.getElementById('btnSimpanSemua');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+    for (const row of rows) {
+        const mhsId = row.id.replace('row_', '');
+        await simpanSatu(mhsId);
     }
-    function removeModalListeners() {
-        ['inTugas', 'inPraktikum', 'inUTS', 'inUAS', 'inHadir'].forEach(id => {
-            document.getElementById(id).removeEventListener('input', calculateModal);
-        });
-    }
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">save</span> Simpan Semua';
+}
 
-    window.simpanNilai = function () {
-        const t = parseFloat(document.getElementById('inTugas').value) || 0;
-        const p = parseFloat(document.getElementById('inPraktikum').value) || 0;
-        const u = parseFloat(document.getElementById('inUTS').value) || 0;
-        const a = parseFloat(document.getElementById('inUAS').value) || 0;
-        const h = parseFloat(document.getElementById('inHadir').value) || 0;
-
-        if (t + p + u + a + h === 0) {
-            alert('Harap isi minimal satu komponen nilai!');
-            return;
-        }
-
-        const total = (t * BOBOT.tugas) + (p * BOBOT.praktikum) + (u * BOBOT.uts) + (a * BOBOT.uas) + (h * BOBOT.hadir);
-        let grade = 'E';
-        if (total >= 85) grade = 'A';
-        else if (total >= 70) grade = 'B';
-        else if (total >= 55) grade = 'C';
-        else if (total >= 40) grade = 'D';
-
-        dataNilai[currentMK][currentIdx].nilai = total.toFixed(1);
-        dataNilai[currentMK][currentIdx].grade = grade;
-
-        closeModal();
-        renderTable();
-
-        setTimeout(() => {
-            alert(`✅ Nilai untuk ${dataNilai[currentMK][currentIdx].nama} berhasil disimpan!\nNilai Akhir: ${total.toFixed(1)} | Grade: ${grade}`);
-        }, 300);
-    };
-
-    document.getElementById('nilaiModal').addEventListener('click', function (e) {
-        if (e.target === this) closeModal();
-    });
+// Init
+updateBobotTotal();
 </script>
 @endpush
