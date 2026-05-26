@@ -112,23 +112,37 @@ Route::middleware('check.simple.auth')->group(function () {
     });
 
     // ROUTE LAMA DOSEN WALI
-    Route::prefix('dosen/wali')->name('dosen.wali.')->group(function () {
-        Route::get('/beranda', [DosenWaliController::class, 'index'])->name('beranda');
-        Route::get('/krs-verifikasi', [KrsVerifikasiController::class, 'index'])->name('krs-verifikasi');
-        Route::patch('/krs/{nim}/approve', [KrsVerifikasiController::class, 'approve'])->name('krs.approve');
-        Route::delete('/krs/{nim}/reject', [KrsVerifikasiController::class, 'reject'])->name('krs.reject');
-        Route::get('/khs', [DosenWaliController::class, 'khs'])->name('khs');
+    // ═══════════════════════════════════════════════════════
+    //  DOSEN WALI
+    // ═══════════════════════════════════════════════════════
+    Route::prefix('dosen/wali')->middleware('check.role:dosen_wali')->name('dosen.wali.')->group(function () {
+        Route::get('/beranda',                   [DosenWaliController::class,     'index'])->name('beranda');
+        Route::get('/khs',                       [DosenWaliController::class,     'khs'])->name('khs');
+        Route::get('/krs-verifikasi',            [KrsVerifikasiController::class, 'index'])->name('krs-verifikasi');
+        Route::get('/krs/{krsId}/detail',        [KrsVerifikasiController::class, 'detail'])->name('krs.detail');
+        Route::patch('/krs/{krsId}/approve',     [KrsVerifikasiController::class, 'approve'])->name('krs.approve');
+        Route::post('/krs/{krsId}/reject',       [KrsVerifikasiController::class, 'reject'])->name('krs.reject');
+        Route::get('/profil',                    [ProfilDosenWaliController::class,'index'])->name('profil');
+        Route::put('/profil',                    [ProfilDosenWaliController::class,'update'])->name('profil.update');
+        Route::put('/profil/password',           [ProfilDosenWaliController::class,'updatePassword'])->name('profil.password');
     });
 
-    // ROUTE LAMA DOSEN MK
-    Route::prefix('dosen/mk')->name('dosen.mk.')->group(function () {
-        Route::get('/beranda', [DosenMKController::class, 'index'])->name('beranda');
-        Route::get('/input-nilai', [DosenMKController::class, 'inputNilai'])->name('input-nilai');
-        Route::post('/simpan-nilai', [DosenMKController::class, 'simpanNilai'])->name('simpan-nilai');
-        Route::get('/lihat-nilai', [DosenMKController::class, 'lihatNilai'])->name('lihat-nilai');
+    // ═══════════════════════════════════════════════════════
+    //  DOSEN MATA KULIAH
+    // ═══════════════════════════════════════════════════════
+    Route::prefix('dosen/mk')->middleware('check.role:dosen_mk')->name('dosen.mk.')->group(function () {
+        Route::get('/beranda',         [DosenMKController::class, 'index'])->name('beranda');
+        Route::get('/input-nilai',     [DosenMKController::class, 'inputNilai'])->name('input-nilai');
+        Route::post('/simpan-nilai',   [DosenMKController::class, 'simpanNilai'])->name('simpan-nilai');
+        Route::get('/lihat-nilai',     [DosenMKController::class, 'lihatNilai'])->name('lihat-nilai');
+        Route::get('/kelas-by-mk',     [DosenMKController::class, 'getKelasByMK'])->name('kelas-by-mk');
+        Route::get('/profil',          [DosenMKController::class, 'profil'])->name('profil');
+        Route::put('/profil',          [DosenMKController::class, 'update'])->name('profil.update');
+        Route::put('/profil/password', [DosenMKController::class, 'updatePassword'])->name('profil.password');
     });
 
-    Route::get('/dosen/profil', [ProfilDosenWaliController::class, 'index'])->name('dosen.profil');
-    Route::put('/dosen/profil', [ProfilDosenWaliController::class, 'update'])->name('dosen.profil.update');
-    Route::put('/dosen/profil/password', [ProfilDosenWaliController::class, 'updatePassword'])->name('dosen.profil.password');
+    // Shared profil route (fallback)
+    Route::get('/dosen/profil',          [ProfilDosenWaliController::class,'index'])->name('dosen.profil');
+    Route::put('/dosen/profil',          [ProfilDosenWaliController::class,'update'])->name('dosen.profil.update');
+    Route::put('/dosen/profil/password', [ProfilDosenWaliController::class,'updatePassword'])->name('dosen.profil.password');
 });

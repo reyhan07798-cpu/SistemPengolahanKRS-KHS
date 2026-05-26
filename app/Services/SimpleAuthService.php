@@ -2,106 +2,84 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\DB;
+
 class SimpleAuthService
 {
-    private static $users = [
+    /**
+     * Login pakai: NIM (mahasiswa), NIK (dosen), username, atau email.
+     * Password = plaintext sama identifier (legacy) atau bcrypt.
+     */
+    public static function authenticate(string $identifier, string $password): ?array
+    {
+        $user = DB::table('users')
+            ->where(function ($q) use ($identifier) {
+                $q->where('nim',      $identifier)
+                  ->orWhere('nik',      $identifier)
+                  ->orWhere('username', $identifier)
+                  ->orWhere('email',    $identifier);
+            })
+            ->first();
+
+        if (!$user) return null;
+
+        $valid = ($password === $user->password)
+              || (\Illuminate\Support\Facades\Hash::check($password, $user->password));
+
+        if (!$valid) return null;
+
+        $role = $user->role;
+
+        $sessionData = [
+            'id'    => $user->id,
+            'name'  => $user->name,
+            'email' => $user->email,
+            'role'  => $role,
+            'nim'   => $user->nim  ?? null,
+            'nik'   => $user->nik  ?? null,
+        ];
+
         // Mahasiswa
-        '3312501022' => [
-            'type' => 'nim',
-            'password' => '3312501022',
-            'name' => 'Mahasiswa Satu',
-            'role' => 'mahasiswa',
-            'email' => 'mahasiswa1@student.com'
-        ],
-        '3312501017' => [
-            'type' => 'nim',
-            'password' => '3312501017',
-            'name' => 'Mahasiswa Dua',
-            'role' => 'mahasiswa',
-            'email' => 'mahasiswa2@student.com'
-        ],
-        '3312501007' => [
-            'type' => 'nim',
-            'password' => '3312501007',
-            'name' => 'Mahasiswa Tiga',
-            'role' => 'mahasiswa',
-            'email' => 'mahasiswa3@student.com'
-        ],
-        // Admin 
-        'admin123' => [
-            'type' => 'admin',
-            'password' => 'admin123',
-            'name' => 'Admin Pengelola',
-            'role' => 'admin',
-            'email' => 'admin@poltek.com'
-        ],
-        // Dosen (gabungan: bisa jadi Wali sekaligus Dosen Matkul)
-        '11111111' => [
-            'type' => 'nik',
-            'password' => '11111111',
-            'name' => 'Dr. Dosen, M.kom',
-            'role' => 'dosen',
-            'email' => 'dosen@poltek.com'
-        ],
-        // Legacy — Dosen Wali (untuk kompatibilitas data lama)
-        '12345678' => [
-            'type' => 'nik',
-            'password' => '12345678',
-            'name' => 'Dosen Wali',
-            'role' => 'dosen_wali',
-            'email' => 'dosen.wali@poltek.com'
-        ],
-        // Legacy — Dosen Matkul (untuk kompatibilitas data lama)
-        '87654321' => [
-            'type' => 'nik',
-            'password' => '87654321',
-            'name' => 'Dosen Matkul',
-            'role' => 'dosen_matkul',
-            'email' => 'dosen.matkul@poltek.com'
-        ],
-    ];
-
-    public static function authenticate($identifier, $password)
-    {
-        $user = self::$users[$identifier] ?? null;
-
-        if (!$user) {
-            return null;
+        if ($role === 'mahasiswa') {
+            $mhs = DB::table('mahasiswa')->where('user_id', $user->id)->first();
+            if (!$mhs && $user->nim) {
+                $mhs = DB::table('mahasiswa')->where('nim', $user->nim)->first();
+            }
+            if ($mhs) {
+                $sessionData['mahasiswa_id'] = $mhs->id;
+                $sessionData['nim']          = $mhs->nim;
+                $sessionData['kelas']        = $mhs->kelas;
+                $sessionData['angkatan']     = $mhs->angkatan;
+            }
         }
 
-        if ($user['password'] !== $password) {
-            return null;
+        // ── Dosen: cek berdasarkan role ATAU jika ada data di tabel dosen ──
+        // Fix: sebelumnya hanya cek jika role = dosen_wali/dosen_mk/dosen,
+        // sehingga user dengan role kosong ('') tidak ter-handle.
+        $isDosen = in_array($role, ['dosen_wali', 'dosen_mk', 'dosen'])
+                || ($role !== 'mahasiswa' && $role !== 'admin' && $user->nik);
+
+        if ($isDosen) {
+            $dosen = DB::table('dosen')->where('user_id', $user->id)->first();
+            if (!$dosen && $user->nik) {
+                $dosen = DB::table('dosen')->where('nik', $user->nik)->first();
+            }
+            if ($dosen) {
+                $sessionData['dosen_id']   = $dosen->id;
+                $sessionData['nik']        = $dosen->nik;
+                $sessionData['nip']        = $dosen->nip;
+                $sessionData['name']       = $dosen->nama;
+                $sessionData['tipe_dosen'] = $dosen->tipe_dosen;
+
+                $sessionData['role'] = match($dosen->tipe_dosen) {
+                    'keduanya'   => 'dosen',
+                    'dosen_wali' => 'dosen_wali',
+                    'dosen_mk'   => 'dosen_mk',
+                    default      => ($role ?: 'dosen_mk'),
+                };
+            }
         }
 
-        if ($user['type'] === 'nim') {
-            return [
-                'nim' => $identifier,
-                'nik' => null,
-                'email' => $user['email'],
-                'name' => $user['name'],
-                'role' => $user['role'],
-            ];
-        } elseif ($user['type'] === 'nik') {
-            return [
-                'nim' => null,
-                'nik' => $identifier,
-                'email' => $user['email'],
-                'name' => $user['name'],
-                'role' => $user['role'],
-            ];
-        } else {
-            return [
-                'nim' => null,
-                'nik' => null,
-                'email' => $user['email'],
-                'name' => $user['name'],
-                'role' => $user['role'],
-            ];
-        }
-    }
-
-    public static function getUsers()
-    {
-        return self::$users;
+        return $sessionData;
     }
 }

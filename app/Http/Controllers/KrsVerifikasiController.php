@@ -3,55 +3,188 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class KrsVerifikasiController extends Controller
 {
-    private function getTahunAjaranList() { return ['2025/2026', '2024/2025', '2023/2024']; }
-    private function getSemesterList()    { return ['Ganjil', 'Genap']; }
+    private function dosenId(): int
+    {
+        return (int)(session('user.dosen_id') ?? 0);
+    }
 
+    private function semesterAktif()
+    {
+        return DB::table('semesters')->where('is_active', 1)->first();
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  INDEX — daftar KRS mahasiswa bimbingan
+    // ═══════════════════════════════════════════════════════
     public function index(Request $request)
     {
-        $filterStatus      = $request->input('status', 'semua');
-        $filterKelas       = $request->input('kelas', 'semua');
-        $filterTahunAjaran = $request->input('tahun_ajaran', '2025/2026');
-        $filterSemester    = $request->input('semester', 'Genap');
+        $dosenId  = $this->dosenId();
+        $semAktif = $this->semesterAktif();
+        $allSem   = DB::table('semesters')->orderByDesc('id')->get();
 
-        $allKrs = [
-            ['nama' => 'Irenessa Rosidin', 'nim' => '3312501017', 'kelas' => 'A', 'mk_count' => 3, 'total_sks' => 9,  'status' => 'Disetujui', 'tanggal' => '15/8/2026', 'tahun_ajaran' => '2025/2026', 'semester' => 'Genap'],
-            ['nama' => 'Nabila Fatin',     'nim' => '3312501007', 'kelas' => 'A', 'mk_count' => 5, 'total_sks' => 15, 'status' => 'Disetujui', 'tanggal' => '15/8/2026', 'tahun_ajaran' => '2025/2026', 'semester' => 'Genap'],
-            ['nama' => 'Reyhan',           'nim' => '3312501022', 'kelas' => 'A', 'mk_count' => 4, 'total_sks' => 12, 'status' => 'Menunggu',  'tanggal' => '16/8/2026', 'tahun_ajaran' => '2025/2026', 'semester' => 'Genap'],
-            ['nama' => 'Della Reska',      'nim' => '3312501010', 'kelas' => 'B', 'mk_count' => 3, 'total_sks' => 9,  'status' => 'Menunggu',  'tanggal' => '16/8/2026', 'tahun_ajaran' => '2025/2026', 'semester' => 'Genap'],
-            ['nama' => 'Samuel Deidra',    'nim' => '3312501023', 'kelas' => 'A', 'mk_count' => 5, 'total_sks' => 15, 'status' => 'Ditolak',   'tanggal' => '17/8/2026', 'tahun_ajaran' => '2024/2025', 'semester' => 'Ganjil'],
-        ];
+        // Default ke semester aktif
+        $filterSemesterId = $request->input('semester_id', $semAktif->id ?? '');
+        $filterStatus     = $request->input('status', 'semua');
+        $filterKelas      = $request->input('kelas', 'semua');
 
-        $daftarKrs = $allKrs;
-        if ($filterStatus !== 'semua')
-            $daftarKrs = array_filter($daftarKrs, fn($k) => $k['status'] === $filterStatus);
-        if ($filterKelas !== 'semua')
-            $daftarKrs = array_filter($daftarKrs, fn($k) => $k['kelas'] === $filterKelas);
-        if ($filterTahunAjaran !== 'semua')
-            $daftarKrs = array_filter($daftarKrs, fn($k) => $k['tahun_ajaran'] === $filterTahunAjaran);
-        if ($filterSemester !== 'semua')
-            $daftarKrs = array_filter($daftarKrs, fn($k) => $k['semester'] === $filterSemester);
+        // Cek apakah semester terpilih aktif
+        $semTerpilih = $allSem->firstWhere('id', $filterSemesterId);
+        $isReadOnly  = $semTerpilih ? !$semTerpilih->is_active : false;
 
-        $daftarKrs = array_values($daftarKrs);
+        // Kelas unik dari mahasiswa bimbingan
+        $kelasList = DB::table('mahasiswa')
+            ->where('dosen_wali_id', $dosenId)
+            ->whereNotNull('kelas')->distinct()->pluck('kelas')
+            ->sort()->values()->toArray();
+
+        // Query KRS mahasiswa bimbingan
+        $query = DB::table('krs_mahasiswa')
+            ->join('mahasiswa', 'krs_mahasiswa.mahasiswa_id', '=', 'mahasiswa.id')
+            ->join('semesters', 'krs_mahasiswa.semester_id', '=', 'semesters.id')
+            ->where('mahasiswa.dosen_wali_id', $dosenId)
+            ->select(
+                'krs_mahasiswa.id as krs_id',
+                'krs_mahasiswa.mahasiswa_id',
+                'krs_mahasiswa.status',
+                'krs_mahasiswa.total_sks',
+                'krs_mahasiswa.catatan',
+                'krs_mahasiswa.updated_at as tanggal',
+                'mahasiswa.nim',
+                'mahasiswa.nama',
+                'mahasiswa.kelas',
+                'semesters.tahun_ajaran',
+                'semesters.semester',
+                'semesters.id as semester_id',
+                'semesters.is_active'
+            );
+
+        if ($filterSemesterId) $query->where('krs_mahasiswa.semester_id', $filterSemesterId);
+        if ($filterStatus !== 'semua') $query->where('krs_mahasiswa.status', $filterStatus);
+        if ($filterKelas  !== 'semua') $query->where('mahasiswa.kelas', $filterKelas);
+
+        $daftarKrs = $query->orderBy('mahasiswa.nama')->get()->map(function ($krs) {
+            // Hitung jumlah MK
+            $mkCount = DB::table('krs_detail')
+                ->where('krs_mahasiswa_id', $krs->krs_id)->count();
+
+            return [
+                'krs_id'       => $krs->krs_id,
+                'mahasiswa_id' => $krs->mahasiswa_id,
+                'nim'          => $krs->nim,
+                'nama'         => $krs->nama,
+                'kelas'        => $krs->kelas ?? '-',
+                'mk_count'     => $mkCount,
+                'total_sks'    => $krs->total_sks,
+                'status'       => ucfirst($krs->status),
+                'catatan'      => $krs->catatan,
+                'tanggal'      => $krs->tanggal
+                    ? \Carbon\Carbon::parse($krs->tanggal)->format('d/m/Y')
+                    : '-',
+                'tahun_ajaran' => $krs->tahun_ajaran,
+                'semester'     => $krs->semester,
+                'is_active'    => (bool)$krs->is_active,
+            ];
+        })->toArray();
+
+        // Stats
+        $allKrsDosenSem = DB::table('krs_mahasiswa')
+            ->join('mahasiswa','krs_mahasiswa.mahasiswa_id','=','mahasiswa.id')
+            ->where('mahasiswa.dosen_wali_id', $dosenId)
+            ->when($filterSemesterId, fn($q) => $q->where('krs_mahasiswa.semester_id', $filterSemesterId))
+            ->get();
 
         $stats = [
-            'menunggu'  => count(array_filter($allKrs, fn($k) => $k['status'] === 'Menunggu')),
-            'disetujui' => count(array_filter($allKrs, fn($k) => $k['status'] === 'Disetujui')),
-            'ditolak'   => count(array_filter($allKrs, fn($k) => $k['status'] === 'Ditolak')),
+            'menunggu'  => $allKrsDosenSem->where('status','menunggu')->count(),
+            'disetujui' => $allKrsDosenSem->where('status','disetujui')->count(),
+            'ditolak'   => $allKrsDosenSem->where('status','ditolak')->count(),
         ];
 
-        $tahunAjaranList = $this->getTahunAjaranList();
-        $semesterList    = $this->getSemesterList();
-
         return view('pages.dosen_wali.krs-verifikasi', compact(
-            'stats', 'daftarKrs',
-            'filterStatus', 'filterKelas', 'filterTahunAjaran', 'filterSemester',
-            'tahunAjaranList', 'semesterList'
+            'stats','daftarKrs','allSem',
+            'filterSemesterId','filterStatus','filterKelas',
+            'kelasList','isReadOnly','semAktif'
         ));
     }
 
-    public function approve($nim) { return redirect()->back()->with('success', 'KRS berhasil disetujui'); }
-    public function reject($nim)  { return redirect()->back()->with('error',   'KRS berhasil ditolak'); }
+    // ═══════════════════════════════════════════════════════
+    //  DETAIL KRS — daftar MK yang diambil mahasiswa
+    // ═══════════════════════════════════════════════════════
+    public function detail($krsId)
+    {
+        $krs = DB::table('krs_mahasiswa')
+            ->join('mahasiswa','krs_mahasiswa.mahasiswa_id','=','mahasiswa.id')
+            ->join('semesters','krs_mahasiswa.semester_id','=','semesters.id')
+            ->where('krs_mahasiswa.id', $krsId)
+            ->select('krs_mahasiswa.*','mahasiswa.nim','mahasiswa.nama','mahasiswa.kelas',
+                     'semesters.tahun_ajaran','semesters.semester','semesters.is_active')
+            ->first();
+
+        if (!$krs) abort(404);
+
+        $detailMK = DB::table('krs_detail')
+            ->join('mata_kuliah','krs_detail.mata_kuliah_id','=','mata_kuliah.id')
+            ->leftJoin('dosen','mata_kuliah.dosen_id','=','dosen.id')
+            ->where('krs_detail.krs_mahasiswa_id', $krsId)
+            ->select('mata_kuliah.kode_mk','mata_kuliah.nama','mata_kuliah.sks',
+                     'mata_kuliah.kelas as kelas_mk','dosen.nama as nama_dosen')
+            ->get();
+
+        $isReadOnly = !(bool)$krs->is_active;
+
+        return view('pages.dosen_wali.krs-detail', compact('krs','detailMK','isReadOnly'));
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  APPROVE KRS
+    // ═══════════════════════════════════════════════════════
+    public function approve($krsId)
+    {
+        $krs = DB::table('krs_mahasiswa')
+            ->join('semesters','krs_mahasiswa.semester_id','=','semesters.id')
+            ->where('krs_mahasiswa.id', $krsId)
+            ->select('krs_mahasiswa.*','semesters.is_active')
+            ->first();
+
+        if (!$krs) return redirect()->back()->with('error', 'KRS tidak ditemukan.');
+        if (!$krs->is_active) return redirect()->back()->with('error', 'Tidak bisa memverifikasi KRS di semester yang tidak aktif.');
+
+        DB::table('krs_mahasiswa')->where('id', $krsId)->update([
+            'status'     => 'disetujui',
+            'catatan'    => null,
+            'updated_at' => now(),
+        ]);
+
+        $nama = DB::table('mahasiswa')->where('id', $krs->mahasiswa_id)->value('nama') ?? '';
+        return redirect()->back()->with('success', "KRS $nama berhasil disetujui.");
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  REJECT KRS
+    // ═══════════════════════════════════════════════════════
+    public function reject(Request $request, $krsId)
+    {
+        $request->validate(['catatan' => 'required|string|max:500']);
+
+        $krs = DB::table('krs_mahasiswa')
+            ->join('semesters','krs_mahasiswa.semester_id','=','semesters.id')
+            ->where('krs_mahasiswa.id', $krsId)
+            ->select('krs_mahasiswa.*','semesters.is_active')
+            ->first();
+
+        if (!$krs) return redirect()->back()->with('error', 'KRS tidak ditemukan.');
+        if (!$krs->is_active) return redirect()->back()->with('error', 'Tidak bisa menolak KRS di semester yang tidak aktif.');
+
+        DB::table('krs_mahasiswa')->where('id', $krsId)->update([
+            'status'     => 'ditolak',
+            'catatan'    => $request->catatan,
+            'updated_at' => now(),
+        ]);
+
+        $nama = DB::table('mahasiswa')->where('id', $krs->mahasiswa_id)->value('nama') ?? '';
+        return redirect()->back()->with('error', "KRS $nama ditolak.");
+    }
 }

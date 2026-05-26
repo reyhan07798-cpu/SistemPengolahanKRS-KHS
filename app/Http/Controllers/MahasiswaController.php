@@ -356,17 +356,26 @@ class MahasiswaController extends Controller
         }
 
         $statusKrs = 'Belum Mengajukan';
+        $isReadOnlyKrs = false;
 
         if ($semesterAktif) {
             $krsAktif = DB::table('krs_mahasiswa')
                 ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
                 ->where('semester_id', $semesterAktif->id)
-                ->exists();
+                ->first();
 
             if ($krsAktif) {
-                $statusKrs = 'Sudah Mengajukan';
+                $statusKrs = ucfirst($krsAktif->status);
+                
+                // Jika status menunggu atau disetujui, KRS tidak bisa diedit/diajukan ulang
+                if (in_array($krsAktif->status, ['menunggu', 'disetujui'])) {
+                    $isReadOnlyKrs = true;
+                }
             }
         }
+
+        // Ambil semua semester untuk dropdown filter (termasuk yang tidak aktif)
+        $allSemesters = DB::table('semesters')->orderByDesc('id')->get();
 
         $data = [
             'nama' => $mahasiswa->nama ?? $mahasiswa->user_name ?? '-',
@@ -380,7 +389,8 @@ class MahasiswaController extends Controller
             'max_sks' => 24,
             'tahun_ajaran_aktif' => $semesterAktif?->tahun_ajaran ?? '2025/2026',
             'is_semester_active' => $semesterAktif ? true : false,
-            'semester_aktif_data' => $semesterAktif,
+            'is_read_only_krs' => $isReadOnlyKrs, // Kirim ke view
+            'all_semesters' => $allSemesters,     // Kirim ke view
         ];
 
         return view('pages.mahasiswa.ambil-krs', compact('data'));
@@ -394,77 +404,104 @@ class MahasiswaController extends Controller
         $semesterRequest = $request->input('semester');
         $tahunAjaran = $request->input('tahun_ajaran');
 
-        $semesterAktif = $this->semesterAktif();
+        // Cari semester berdasarkan filter (bisa aktif maupun tidak)
+        $semesterQuery = DB::table('semesters');
+        if ($tahunAjaran) {
+            $semesterQuery->where('tahun_ajaran', $tahunAjaran);
+        }
+        if (strpos($semesterRequest, 'Genap') !== false) {
+            $semesterQuery->where('semester', 'Genap');
+        } elseif (strpos($semesterRequest, 'Ganjil') !== false) {
+            $semesterQuery->where('semester', 'Ganjil');
+        }
+        
+        $semester = $semesterQuery->first();
 
-        if (!$semesterAktif) {
+        if (!$semester) {
             return response()->json([
                 'error' => true,
-                'message' => 'Belum ada semester aktif. Hubungi administrator.',
-            ], 400);
+                'message' => 'Semester tidak ditemukan.',
+            ], 404);
         }
 
-        $labelSemesterAktif = 'Semester ' . $semesterAktif->semester . ' ' . $semesterAktif->tahun_ajaran;
+        // Cek apakah semester ini read-only
+        $isReadOnly = !(bool)$semester->is_active;
 
-        if ($tahunAjaran !== $semesterAktif->tahun_ajaran || $semesterRequest !== $labelSemesterAktif) {
-            return response()->json([
-                'error' => true,
-                'message' => 'Hanya semester aktif (' . $labelSemesterAktif . ') yang dapat diambil.',
-                'semester_aktif' => $labelSemesterAktif,
-                'tahun_aktif' => $semesterAktif->tahun_ajaran,
-            ], 400);
+        $mahasiswa = $this->currentMahasiswa();
+        if (!$mahasiswa) {
+            return response()->json(['error' => true, 'message' => 'Data mahasiswa tidak ditemukan.'], 403);
         }
 
-        $paket = DB::table('paket_mata_kuliah')
-            ->join('mata_kuliah', 'paket_mata_kuliah.mata_kuliah_id', '=', 'mata_kuliah.id')
+        // Jika semester aktif, cek apakah mahasiswa sudah mengajukan KRS
+        if (!$isReadOnly) {
+            $existingKrs = DB::table('krs_mahasiswa')
+                ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+                ->where('semester_id', $semester->id)
+                ->whereIn('status', ['menunggu', 'disetujui'])
+                ->first();
+                
+            if ($existingKrs) {
+                $isReadOnly = true; // Sudah mengajukan, jadi read only
+            }
+        }
+
+        // 1. Cek mata kuliah yang pernah dapat D/E (Mengulang)
+        $mengulangIds = DB::table('nilai')
+            ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->whereIn('nilai', ['D', 'E'])
+            ->pluck('mata_kuliah_id')
+            ->toArray();
+
+        // 2. Ambil Semua Mata Kuliah yang ditawarkan di Semester Terpilih
+        $allMk = DB::table('mata_kuliah')
             ->leftJoin('dosen', 'mata_kuliah.dosen_id', '=', 'dosen.id')
-            ->where('paket_mata_kuliah.semester_id', $semesterAktif->id)
+            ->where('mata_kuliah.semester_id', $semester->id)
             ->select(
                 'mata_kuliah.id',
                 'mata_kuliah.kode_mk as kode',
                 'mata_kuliah.nama as matkul',
                 'mata_kuliah.sks',
-                'dosen.nama as dosen',
-                'paket_mata_kuliah.jenis',
-                'paket_mata_kuliah.prasyarat',
-                'paket_mata_kuliah.nilai_lama'
+                'dosen.nama as dosen'
             )
             ->get();
 
-        $mkWajib = $paket
-            ->where('jenis', 'wajib')
-            ->values()
-            ->map(function ($mk) {
-                return [
-                    'id' => $mk->id,
-                    'kode' => $mk->kode,
-                    'matkul' => $mk->matkul,
-                    'dosen' => $mk->dosen ?? '-',
-                    'sks' => $mk->sks,
-                    'prasyarat' => $mk->prasyarat ?? '-',
-                ];
-            })
-            ->toArray();
+        $mkWajib = [];
+        $mkMengulang = [];
 
-        $mkMengulang = $paket
-            ->where('jenis', 'mengulang')
-            ->values()
-            ->map(function ($mk) {
-                return [
+        foreach ($allMk as $mk) {
+            if (in_array($mk->id, $mengulangIds)) {
+                $nilaiLama = DB::table('nilai')
+                    ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+                    ->where('mata_kuliah_id', $mk->id)
+                    ->orderByDesc('created_at')
+                    ->value('nilai');
+
+                $mkMengulang[] = [
                     'id' => $mk->id,
                     'kode' => $mk->kode,
                     'matkul' => $mk->matkul,
                     'dosen' => $mk->dosen ?? '-',
                     'sks' => $mk->sks,
                     'isMengulang' => true,
-                    'nilaiLama' => $mk->nilai_lama ?? '-',
+                    'nilaiLama' => $nilaiLama ?? '-',
                 ];
-            })
-            ->toArray();
+            } else {
+                $mkWajib[] = [
+                    'id' => $mk->id,
+                    'kode' => $mk->kode,
+                    'matkul' => $mk->matkul,
+                    'dosen' => $mk->dosen ?? '-',
+                    'sks' => $mk->sks,
+                    'prasyarat' => '-',
+                ];
+            }
+        }
 
         return response()->json([
             'error' => false,
-            'semester' => $labelSemesterAktif,
-            'tahun_ajaran' => $semesterAktif->tahun_ajaran,
+            'semester' => 'Semester ' . $semester->semester . ' ' . $semester->tahun_ajaran,
+            'tahun_ajaran' => $semester->tahun_ajaran,
+            'is_read_only' => $isReadOnly, // Kirim status ke frontend
             'paket_semester' => [
                 'wajib' => $mkWajib,
                 'mengulang' => $mkMengulang,
@@ -512,13 +549,21 @@ class MahasiswaController extends Controller
                 return back()->with('error', 'Total SKS tidak boleh melebihi 24 SKS. SKS yang dipilih: ' . $totalSks);
             }
 
+            // Cek Double Submission & Ditolak
             $existingKrs = DB::table('krs_mahasiswa')
                 ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
                 ->where('semester_id', $semesterAktif->id)
                 ->first();
 
             if ($existingKrs) {
-                return back()->with('warning', 'Anda sudah mengajukan KRS di semester ini.');
+                // Jika ditolak, hapus KRS lama agar bisa mengajukan ulang
+                if ($existingKrs->status === 'ditolak') {
+                    DB::table('krs_detail')->where('krs_mahasiswa_id', $existingKrs->id)->delete();
+                    DB::table('krs_mahasiswa')->where('id', $existingKrs->id)->delete();
+                } else {
+                    // Jika menunggu/disetujui, tolak pengajuan
+                    return back()->with('warning', 'Anda sudah mengajukan KRS di semester ini. Status: ' . ucfirst($existingKrs->status));
+                }
             }
 
             DB::beginTransaction();

@@ -32,16 +32,14 @@
         </div>
     @endif
 
-    {{-- Info Semester Aktif --}}
-    @if(!$data['is_semester_active'])
-        <div class="nb-alert nb-alert-warning mb-6 flex items-center gap-2">
-            <span class="material-symbols-outlined" style="font-size:24px;">info</span>
-            <div>
-                <strong>Belum ada semester aktif</strong>
-                <p class="text-sm mt-1">Hubungi administrator untuk mengaktifkan semester.</p>
-            </div>
+    {{-- READ ONLY WARNING --}}
+    <div id="readOnlyWarning" class="hidden nb-alert nb-alert-warning mb-6 flex items-center gap-2">
+        <span class="material-symbols-outlined">lock</span>
+        <div>
+            <strong>Mode Read Only</strong>
+            <p class="text-sm mt-1">Anda tidak dapat mengajukan KRS untuk semester ini (semester lama / sudah mengajukan).</p>
         </div>
-    @endif
+    </div>
 
     {{-- Stat Cards --}}
     <div class="nb-bento mb-6" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
@@ -52,13 +50,8 @@
                 </div>
                 <p class="nb-stat-label">Semester Aktif</p>
             </div>
-
             <div class="nb-stat-value" id="displaySemesterAktif">
-                @if($data['is_semester_active'])
-                    {{ $data['semester_label'] }}
-                @else
-                    -
-                @endif
+                {{ $data['semester_label'] ?? '-' }}
             </div>
         </div>
 
@@ -69,24 +62,20 @@
                 </div>
                 <p class="nb-stat-label">Sisa SKS</p>
             </div>
-
             <div class="nb-stat-value" id="sisaSks">24</div>
         </div>
 
         <div class="nb-stat nb-stat--warning nb-stat--ribbon">
             <div class="flex items-center gap-3">
                 <div class="nb-stat-icon">
-                    @if($data['status_krs'] === 'Sudah Mengajukan')
-                        <span class="material-symbols-outlined filled" style="color: var(--color-success);">
-                            check_circle
-                        </span>
+                    @if($data['status_krs'] === 'Disetujui' || $data['status_krs'] === 'Menunggu')
+                        <span class="material-symbols-outlined filled" style="color: var(--color-success);">check_circle</span>
                     @else
                         <span class="material-symbols-outlined filled">pending</span>
                     @endif
                 </div>
                 <p class="nb-stat-label">Status KRS</p>
             </div>
-
             <div class="nb-stat-value" style="font-size:1.5rem;" id="statusKrs">
                 {{ $data['status_krs'] }}
             </div>
@@ -100,47 +89,31 @@
             <h3 class="nb-h3">Filter Paket Semester</h3>
         </div>
 
-        @if(!$data['is_semester_active'])
-            <div class="nb-alert nb-alert-info mb-4 flex items-center gap-2">
-                <span class="material-symbols-outlined">info</span>
-                <span>Filter ini tidak tersedia karena belum ada semester aktif.</span>
-            </div>
-        @endif
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <label class="nb-label">Tahun Ajaran</label>
-                <select id="filterTahun" @if(!$data['is_semester_active']) disabled @endif>
-                    @if($data['is_semester_active'])
-                        <option value="{{ $data['tahun_ajaran_aktif'] }}" selected>
-                            {{ $data['tahun_ajaran_aktif'] }} (Aktif)
+                <select id="filterTahun">
+                    @foreach($data['all_semesters'] as $sem)
+                        <option value="{{ $sem->tahun_ajaran }}" {{ $sem->is_active ? 'selected' : '' }}>
+                            {{ $sem->tahun_ajaran }} {{ $sem->is_active ? '(Aktif)' : '' }}
                         </option>
-                    @else
-                        <option value="">-- Tidak ada semester aktif --</option>
-                    @endif
+                    @endforeach
                 </select>
             </div>
 
             <div>
                 <label class="nb-label">Semester</label>
-                <select id="filterSemester" @if(!$data['is_semester_active']) disabled @endif>
-                    @if($data['is_semester_active'])
-                        <option value="{{ $data['semester_label'] }}" selected>
-                            {{ $data['semester_label'] }} (Aktif)
+                <select id="filterSemester">
+                    @foreach($data['all_semesters'] as $sem)
+                        <option value="Semester {{ $sem->semester }} {{ $sem->tahun_ajaran }}" {{ $sem->is_active ? 'selected' : '' }}>
+                            Semester {{ $sem->semester }} {{ $sem->is_active ? '(Aktif)' : '' }}
                         </option>
-                    @else
-                        <option value="">-- Tidak ada semester aktif --</option>
-                    @endif
+                    @endforeach
                 </select>
             </div>
 
             <div class="flex items-end">
-                <button
-                    type="button"
-                    onclick="loadPaketSemester()"
-                    class="nb-btn nb-btn-primary w-full"
-                    @if(!$data['is_semester_active']) disabled @endif
-                >
+                <button type="button" onclick="loadPaketSemester()" class="nb-btn nb-btn-primary w-full">
                     <span class="material-symbols-outlined" style="font-size:18px;">search</span>
                     Tampilkan Paket
                 </button>
@@ -159,7 +132,6 @@
     {{-- Form KRS --}}
     <form method="POST" action="{{ route('pages.mahasiswa.store-krs') }}" id="formKrs">
         @csrf
-
         <input type="hidden" name="semester" id="inputSemester" value="{{ $data['semester_label'] ?? '' }}">
         <input type="hidden" name="tahun_ajaran" id="inputTahun" value="{{ $data['tahun_ajaran_aktif'] ?? '' }}">
 
@@ -172,10 +144,8 @@
                     </span>
                     <h2 class="mt-1">Mata Kuliah Wajib</h2>
                 </div>
-
                 <span class="nb-badge nb-badge-success">Wajib Diambil</span>
             </div>
-
             <div class="overflow-x-auto">
                 <table class="nb-table">
                     <thead>
@@ -200,10 +170,8 @@
                     <span class="nb-eyebrow" style="color:rgba(31,41,55,0.7);">Mengulang</span>
                     <h2 class="mt-1" style="color:var(--color-ink);">Mata Kuliah Mengulang</h2>
                 </div>
-
                 <span class="nb-badge nb-badge-stable">Nilai D / E</span>
             </div>
-
             <div class="overflow-x-auto">
                 <table class="nb-table">
                     <thead>
@@ -222,7 +190,7 @@
         </div>
 
         {{-- Summary SKS --}}
-        <div class="nb-card mb-6">
+        <div id="summarySection" class="nb-card mb-6">
             <div class="flex flex-wrap justify-between items-center gap-4">
                 <div>
                     <p class="nb-label">Total SKS Terpilih</p>
@@ -231,20 +199,17 @@
                         Maksimal: 24 SKS
                     </p>
                 </div>
-
                 <div class="flex gap-3 flex-wrap">
                     <button type="button" onclick="resetForm()" class="nb-btn nb-btn-secondary">
                         <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
                         Reset
                     </button>
-
                     <button type="submit" id="btnSubmit" class="nb-btn nb-btn-primary" disabled>
                         <span class="material-symbols-outlined" style="font-size:18px;">send</span>
                         Ajukan KRS
                     </button>
                 </div>
             </div>
-
             <p id="krsHelpText" class="text-xs text-muted mt-3">
                 Pilih minimal 1 mata kuliah untuk mengaktifkan tombol Ajukan KRS.
             </p>
@@ -255,9 +220,7 @@
     <div id="emptyState" class="nb-card text-center py-12">
         <span class="material-symbols-outlined text-muted" style="font-size:64px;">assignment</span>
         <h3 class="nb-h3 mt-4">Klik "Tampilkan Paket"</h3>
-        <p class="text-muted mt-2">
-            Pilih semester dan tahun ajaran, lalu klik tombol untuk melihat mata kuliah.
-        </p>
+        <p class="text-muted mt-2">Pilih semester dan tahun ajaran, lalu klik tombol untuk melihat mata kuliah.</p>
     </div>
 @endsection
 
@@ -266,70 +229,11 @@
     const MAX_SKS = 24;
     let selectedSks = 0;
     let paketData = {};
-
-    const semesterAktifData = {
-        label: @json($data['semester_label'] ?? ''),
-        ke: @json($data['semester_aktif'] ?? ''),
-        tahun: @json($data['tahun_ajaran_aktif'] ?? ''),
-        isActive: @json($data['is_semester_active'] ?? false)
-    };
+    let isReadOnlyMode = false;
 
     document.addEventListener('DOMContentLoaded', function () {
-        const filterSemester = document.getElementById('filterSemester');
-        const filterTahun = document.getElementById('filterTahun');
-        const displaySemesterAktif = document.getElementById('displaySemesterAktif');
-        const inputSemester = document.getElementById('inputSemester');
-        const inputTahun = document.getElementById('inputTahun');
-        const labelSemesterWajib = document.getElementById('labelSemesterWajib');
-        const formKrs = document.getElementById('formKrs');
-
-        if (semesterAktifData.isActive) {
-            if (filterSemester) filterSemester.value = semesterAktifData.label;
-            if (filterTahun) filterTahun.value = semesterAktifData.tahun;
-            if (displaySemesterAktif) displaySemesterAktif.textContent = semesterAktifData.label;
-            if (inputSemester) inputSemester.value = semesterAktifData.label;
-            if (inputTahun) inputTahun.value = semesterAktifData.tahun;
-            if (labelSemesterWajib) labelSemesterWajib.textContent = semesterAktifData.label;
-        }
-
-        if (filterSemester) {
-            filterSemester.addEventListener('change', function () {
-                if (displaySemesterAktif) {
-                    displaySemesterAktif.textContent = this.value;
-                }
-
-                if (inputSemester) {
-                    inputSemester.value = this.value;
-                }
-
-                if (labelSemesterWajib) {
-                    labelSemesterWajib.textContent = this.value;
-                }
-            });
-        }
-
-        if (filterTahun) {
-            filterTahun.addEventListener('change', function () {
-                if (inputTahun) {
-                    inputTahun.value = this.value;
-                }
-            });
-        }
-
-        if (formKrs) {
-            formKrs.addEventListener('submit', function (e) {
-                if (selectedSks === 0) {
-                    e.preventDefault();
-                    alert('Harap pilih minimal satu mata kuliah!');
-                    return;
-                }
-
-                if (selectedSks > MAX_SKS) {
-                    e.preventDefault();
-                    alert(`Total SKS (${selectedSks}) melebihi batas maksimal ${MAX_SKS} SKS!`);
-                }
-            });
-        }
+        // Auto load semester aktif saat pertama buka
+        loadPaketSemester();
     });
 
     function loadPaketSemester() {
@@ -344,15 +248,7 @@
         const containerWajib = document.getElementById('containerWajib');
         const containerMengulang = document.getElementById('containerMengulang');
 
-        emptyState.innerHTML = `
-            <div class="flex items-center justify-center gap-3 py-12">
-                <div class="animate-spin">
-                    <span class="material-symbols-outlined">hourglass_top</span>
-                </div>
-                <span>Memuat paket semester...</span>
-            </div>
-        `;
-
+        emptyState.innerHTML = `<div class="flex items-center justify-center gap-3 py-12"><div class="animate-spin"><span class="material-symbols-outlined">hourglass_top</span></div><span>Memuat paket semester...</span></div>`;
         emptyState.classList.remove('hidden');
         containerWajib.classList.add('hidden');
         containerMengulang.classList.add('hidden');
@@ -361,17 +257,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    emptyState.innerHTML = `
-                        <div class="nb-alert nb-alert-danger flex items-center gap-2 mb-4">
-                            <span class="material-symbols-outlined">error</span>
-                            <div>
-                                <strong>Semester Tidak Aktif</strong>
-                                <p class="text-sm mt-1">${data.message}</p>
-                                ${data.semester_aktif ? `<p class="text-sm font-semibold mt-2">Semester Aktif: <strong>${data.semester_aktif} ${data.tahun_aktif}</strong></p>` : ''}
-                            </div>
-                        </div>
-                    `;
-
+                    emptyState.innerHTML = `<div class="nb-alert nb-alert-danger flex items-center gap-2 mb-4"><span class="material-symbols-outlined">error</span><div><strong>Gagal Memuat</strong><p class="text-sm mt-1">${data.message}</p></div></div>`;
                     paketData = {};
                     resetForm();
                     return;
@@ -379,37 +265,26 @@
 
                 emptyState.classList.add('hidden');
                 paketData = data.paket_semester || {};
+                isReadOnlyMode = data.is_read_only || false;
+                
+                // Toggle UI Read Only
+                document.getElementById('readOnlyWarning').classList.toggle('hidden', !isReadOnlyMode);
+                document.getElementById('summarySection').classList.toggle('hidden', isReadOnlyMode);
+                
                 renderTabel();
                 resetForm();
             })
             .catch(error => {
                 console.error('Error:', error);
-
-                emptyState.innerHTML = `
-                    <div class="nb-alert nb-alert-danger flex items-center gap-2">
-                        <span class="material-symbols-outlined">error</span>
-                        <div>
-                            <strong>Terjadi Kesalahan</strong>
-                            <p class="text-sm mt-1">Gagal memuat paket semester. Silakan coba lagi.</p>
-                        </div>
-                    </div>
-                `;
+                emptyState.innerHTML = `<div class="nb-alert nb-alert-danger flex items-center gap-2"><span class="material-symbols-outlined">error</span><div><strong>Terjadi Kesalahan</strong><p class="text-sm mt-1">Gagal memuat paket semester. Silakan coba lagi.</p></div></div>`;
             });
     }
 
     function renderTabel() {
         renderTabelSection('tabelWajib', paketData.wajib || [], false);
         renderTabelSection('tabelMengulang', paketData.mengulang || [], true);
-
-        document.getElementById('containerWajib').classList.toggle(
-            'hidden',
-            (paketData.wajib || []).length === 0
-        );
-
-        document.getElementById('containerMengulang').classList.toggle(
-            'hidden',
-            (paketData.mengulang || []).length === 0
-        );
+        document.getElementById('containerWajib').classList.toggle('hidden', (paketData.wajib || []).length === 0);
+        document.getElementById('containerMengulang').classList.toggle('hidden', (paketData.mengulang || []).length === 0);
     }
 
     function renderTabelSection(tbodyId, data, isMengulang) {
@@ -417,55 +292,26 @@
         tbody.innerHTML = '';
 
         if (data.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-8 text-muted font-medium">
-                        Tidak ada data
-                    </td>
-                </tr>
-            `;
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-muted font-medium">Tidak ada data</td></tr>`;
             return;
         }
 
         data.forEach(mk => {
             const row = document.createElement('tr');
-
-            const nilaiLama = mk.nilaiLama || mk.nilai_lama || '-';
+            const nilaiLama = mk.nilaiLama || '-';
             const prasyarat = mk.prasyarat || '-';
-
-            const lastCell = isMengulang
-                ? `<span class="nb-badge nb-badge-danger">${nilaiLama}</span>`
-                : `<span class="text-muted text-sm">${prasyarat}</span>`;
-
+            const lastCell = isMengulang ? `<span class="nb-badge nb-badge-danger">${nilaiLama}</span>` : `<span class="text-muted text-sm">${prasyarat}</span>`;
+            
             row.innerHTML = `
                 <td class="text-center">
-                    <input
-                        type="checkbox"
-                        name="mata_kuliah_ids[]"
-                        value="${mk.id}"
-                        data-sks="${mk.sks}"
-                        class="chk-mk w-5 h-5 cursor-pointer"
-                        ${isMengulang ? 'data-mengulang="true"' : ''}
-                        style="accent-color:var(--color-accent);"
-                    >
+                    <input type="checkbox" name="mata_kuliah_ids[]" value="${mk.id}" data-sks="${mk.sks}" class="chk-mk ${isMengulang ? 'chk-mengulang' : 'chk-wajib'} w-5 h-5 cursor-pointer" ${isMengulang ? 'data-mengulang="true"' : ''} style="accent-color:var(--color-accent);">
                 </td>
-                <td class="font-bold text-primary" style="font-family:var(--font-heading);">
-                    ${mk.kode || '-'}
-                </td>
-                <td class="font-medium text-ink">
-                    ${mk.matkul || mk.nama || '-'}
-                </td>
-                <td class="text-sm text-muted">
-                    ${mk.dosen || '-'}
-                </td>
-                <td class="text-center font-bold">
-                    ${mk.sks || 0}
-                </td>
-                <td class="text-center">
-                    ${lastCell}
-                </td>
+                <td class="font-bold text-primary" style="font-family:var(--font-heading);">${mk.kode || '-'}</td>
+                <td class="font-medium text-ink">${mk.matkul || '-'}</td>
+                <td class="text-sm text-muted">${mk.dosen || '-'}</td>
+                <td class="text-center font-bold">${mk.sks || 0}</td>
+                <td class="text-center">${lastCell}</td>
             `;
-
             tbody.appendChild(row);
         });
 
@@ -475,8 +321,22 @@
     }
 
     function hitungSks() {
-        selectedSks = 0;
+        // LOGIC MENGULANG: Cek apakah semua wajib sudah tercentang
+        let allWajibChecked = true;
+        document.querySelectorAll('.chk-wajib').forEach(chk => {
+            if (!chk.checked) allWajibChecked = false;
+        });
 
+        // Jika belum semua wajib tercentang, langsung uncheck semua mengulang & disable
+        document.querySelectorAll('.chk-mengulang').forEach(chk => {
+            if (!allWajibChecked) {
+                chk.checked = false;
+                chk.disabled = true;
+            }
+        });
+
+        // Hitung total SKS
+        selectedSks = 0;
         document.querySelectorAll('.chk-mk:checked').forEach(chk => {
             selectedSks += parseInt(chk.dataset.sks) || 0;
         });
@@ -506,41 +366,51 @@
             btnSubmit.disabled = selectedSks === 0;
         }
 
+        // Disable checkbox yang belum dicentang jika melebihi SKS
         document.querySelectorAll('.chk-mk:not(:checked)').forEach(chk => {
             const sksMk = parseInt(chk.dataset.sks) || 0;
-            chk.disabled = selectedSks + sksMk > MAX_SKS;
+            if (chk.classList.contains('chk-mengulang') && !allWajibChecked) {
+                chk.disabled = true; // Disable mengulang jika wajib belum lengkap
+            } else {
+                chk.disabled = (selectedSks + sksMk > MAX_SKS);
+            }
         });
 
-        updateHelpText();
+        updateHelpText(allWajibChecked);
     }
 
-    function updateHelpText() {
+    function updateHelpText(allWajibChecked = true) {
         const helpText = document.getElementById('krsHelpText');
-
         if (!helpText) return;
 
-        if (selectedSks === 0) {
+        if (!allWajibChecked && document.querySelectorAll('.chk-mengulang').length > 0) {
+            helpText.textContent = '⚠ Pilih semua Mata Kuliah Wajib terlebih dahulu sebelum memilih MK Mengulang.';
+            helpText.style.color = 'var(--color-warning)';
+        } else if (selectedSks === 0) {
             helpText.textContent = 'Pilih minimal 1 mata kuliah untuk mengaktifkan tombol Ajukan KRS.';
+            helpText.style.color = '';
         } else if (selectedSks > MAX_SKS) {
             helpText.textContent = `Total SKS ${selectedSks} melebihi batas ${MAX_SKS}. Kurangi pilihan mata kuliah.`;
+            helpText.style.color = 'var(--color-danger)';
         } else {
             helpText.textContent = 'Jumlah SKS valid. Tekan Ajukan KRS untuk mengirim pilihan Anda.';
+            helpText.style.color = '';
         }
     }
 
     function resetForm() {
-        document.querySelectorAll('.chk-mk').forEach(chk => {
-            chk.checked = false;
-            chk.disabled = false;
-        });
-
+        document.querySelectorAll('.chk-mk').forEach(chk => { chk.checked = false; chk.disabled = false; });
         selectedSks = 0;
-
         document.getElementById('totalSks').textContent = '0';
         document.getElementById('sisaSks').textContent = MAX_SKS;
         document.getElementById('warningSks').classList.add('hidden');
         document.getElementById('btnSubmit').disabled = true;
-
+        
+        // Jika read only, langsung disable semua lagi
+        if(isReadOnlyMode) {
+            document.querySelectorAll('.chk-mk').forEach(chk => chk.disabled = true);
+            document.getElementById('btnSubmit').disabled = true;
+        }
         updateHelpText();
     }
 </script>

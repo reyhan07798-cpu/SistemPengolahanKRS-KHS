@@ -3,45 +3,143 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
 
 class ProfilDosenWaliController extends Controller
 {
-    public function index()
+    // ── Helper: ambil data dosen dari session + tabel dosen ──────────
+    private function getDosenFromSession()
     {
-        $dosen = [
-            'nama' => 'Rusyda Nazhirah Yunus, S.S., M.Si',
-            'nip' => '198501012010012001',
-            'email' => 'wali@univ.ac.id',
-            'no_hp' => '08123456789',
-            'alamat' => 'Kota Batam',
-            'program_studi' => 'Teknik Informatika'
-        ];
+        $sess = session('user', []);
+        $dosenId = $sess['dosen_id'] ?? null;
 
-        $view = request()->routeIs('pages.dosen.*') ? 'pages.dosen.profil' : 'pages.dosen_wali.profil';
-        return view($view, compact('dosen'));
+        if ($dosenId) {
+            $dosen = DB::table('dosen')
+                ->leftJoin('users', 'dosen.user_id', '=', 'users.id')
+                ->where('dosen.id', $dosenId)
+                ->select('dosen.*', 'users.id as user_id', 'users.role')
+                ->first();
+            if ($dosen) return $dosen;
+        }
+
+        // fallback by nik
+        $nik = $sess['nik'] ?? null;
+        if ($nik) {
+            $dosen = DB::table('dosen')
+                ->leftJoin('users', 'dosen.user_id', '=', 'users.id')
+                ->where('dosen.nik', $nik)
+                ->select('dosen.*', 'users.id as user_id', 'users.role')
+                ->first();
+            if ($dosen) return $dosen;
+        }
+
+        return null;
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    //  SHOW PROFIL
+    // ─────────────────────────────────────────────────────────────────
+    public function index(Request $request)
+    {
+        $dbDosen = $this->getDosenFromSession();
+        $sess    = session('user', []);
+
+        $dosen = [
+            'nama'          => $dbDosen->nama   ?? $sess['name']  ?? 'Dosen',
+            'nip'           => $dbDosen->nip    ?? '-',
+            'nidn'          => $dbDosen->nik    ?? $sess['nik']   ?? '-',
+            'email'         => $dbDosen->email  ?? $sess['email'] ?? '-',
+            'no_hp'         => $dbDosen->no_hp  ?? '-',
+            'alamat'        => $dbDosen->alamat ?? '-',
+            'program_studi' => 'Teknik Informatika',
+            'tipe_dosen'    => $dbDosen->tipe_dosen ?? 'dosen_mk',
+        ];
+
+        // Tentukan view berdasarkan route
+        if ($request->routeIs('pages.dosen_matkul.*') || ($dbDosen && $dbDosen->tipe_dosen === 'dosen_mk')) {
+            return view('pages.dosen_matkul.profil', compact('dosen'));
+        }
+        return view('pages.dosen_wali.profil', compact('dosen'));
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  UPDATE PROFIL
+    // ─────────────────────────────────────────────────────────────────
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'email' => 'required|email',
-            'no_hp' => 'required|string',
-            'alamat' => 'required|string',
+            'nama'   => 'required|string|max:100',
+            'email'  => 'required|email|max:100',
+            'no_hp'  => 'nullable|string|max:20',
+            'alamat' => 'nullable|string|max:500',
         ]);
 
-        return redirect()->back()->with('success', 'Profil berhasil diperbarui');
+        $dbDosen = $this->getDosenFromSession();
+        if (!$dbDosen) return redirect()->back()->with('error', 'Data dosen tidak ditemukan.');
+
+        // Update tabel dosen
+        DB::table('dosen')->where('id', $dbDosen->id)->update([
+            'nama'       => $validated['nama'],
+            'email'      => $validated['email'],
+            'no_hp'      => $validated['no_hp'] ?? $dbDosen->no_hp,
+            'alamat'     => $validated['alamat'] ?? $dbDosen->alamat,
+            'updated_at' => now(),
+        ]);
+
+        // Update tabel users juga (email & name)
+        if ($dbDosen->user_id) {
+            DB::table('users')->where('id', $dbDosen->user_id)->update([
+                'name'       => $validated['nama'],
+                'email'      => $validated['email'],
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Update session agar nama tampil langsung
+        $user = session('user', []);
+        $user['name']  = $validated['nama'];
+        $user['email'] = $validated['email'];
+        session(['user' => $user, 'user_name' => $validated['nama']]);
+
+        return redirect()->back()->with('success', 'Profil berhasil diperbarui.');
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    //  UPDATE PASSWORD
+    // ─────────────────────────────────────────────────────────────────
     public function updatePassword(Request $request)
     {
-        $validated = $request->validate([
-            'password_lama' => 'required',
-            'password_baru' => ['required', Password::defaults(), 'confirmed'],
+        $request->validate([
+            'password_lama'              => 'required|string',
+            'password_baru'              => 'required|string|min:6',
+            'password_baru_confirmation' => 'required|same:password_baru',
+        ], [
+            'password_baru.min'               => 'Password baru minimal 6 karakter.',
+            'password_baru_confirmation.same' => 'Konfirmasi password tidak cocok.',
         ]);
 
-        return redirect()->back()->with('success', 'Password berhasil diubah');
+        $dbDosen = $this->getDosenFromSession();
+        if (!$dbDosen || !$dbDosen->user_id) {
+            return redirect()->back()->with('error', 'Data dosen tidak ditemukan.');
+        }
+
+        $userDb = DB::table('users')->where('id', $dbDosen->user_id)->first();
+        if (!$userDb) return redirect()->back()->with('error', 'Akun tidak ditemukan.');
+
+        // Cek password lama (support plaintext legacy & bcrypt)
+        $valid = ($request->password_lama === $userDb->password)
+              || Hash::check($request->password_lama, $userDb->password);
+
+        if (!$valid) {
+            return redirect()->back()->withErrors(['password_lama' => 'Password lama tidak sesuai.']);
+        }
+
+        DB::table('users')->where('id', $dbDosen->user_id)->update([
+            'password'   => Hash::make($request->password_baru),
+            'updated_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Password berhasil diubah.');
     }
 }

@@ -88,7 +88,7 @@
                         </div>
                         <div class="min-w-0">
                             <h4 class="font-bold text-ink text-sm">{{ $mhs['nama'] }}</h4>
-                            <p class="text-xs text-muted">{{ $mhs['prodi'] }}</p>
+                            <p class="text-xs text-muted">{{ $mhs['prodi'] ?? '-' }}</p>
                         </div>
                     </div>
                     <div class="text-right">
