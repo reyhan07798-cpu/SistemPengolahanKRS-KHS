@@ -15,6 +15,7 @@ class MataKuliah extends Model
         'nama',
         'sks',
         'semester_ke',
+        'prasyarat',
     ];
 
     public function dosen(): BelongsTo

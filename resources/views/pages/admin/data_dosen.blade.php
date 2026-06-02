@@ -4,6 +4,14 @@
 @section('page_title', 'Data Dosen')
 
 @section('content')
+    {{-- Hidden session message indicators --}}
+    @if(session('success'))
+        <div data-session-success="{{ session('success') }}" style="display:none;"></div>
+    @endif
+    @if(session('error'))
+        <div data-session-error="{{ session('error') }}" style="display:none;"></div>
+    @endif
+
     {{-- Page Header --}}
     <div class="nb-page-header">
         <div>
@@ -139,7 +147,7 @@
                             <label class="nb-label">Peran Dosen <span class="text-danger">*</span></label>
                             <select name="tipe_dosen" required>
                                 <option value="">Pilih peran dosen</option>
-                                <option value="Dosen Wali" {{ old('tipe_dosen') == 'Dosen Wali' ? 'selected' : '' }}>Dosen Wali & Matakuliah</option>
+                                <option value="keduanya" {{ old('tipe_dosen') == 'keduanya' ? 'selected' : '' }}>Dosen Wali & Matakuliah</option>
                                 <option value="Dosen Mata Kuliah" {{ old('tipe_dosen') == 'Dosen Mata Kuliah' ? 'selected' : '' }}>Dosen Mata Kuliah</option>
                             </select>
                         </div>
@@ -233,13 +241,13 @@ const rawData = @json($dosen);
                 </td>
                 <td class="hidden md:table-cell text-sm text-primary">${dsn.email}</td>
                 <td class="hidden sm:table-cell text-center"><span class="nb-badge ${badgeClass}">${dsn.tipe_dosen}</span></td>
-                <td class="hidden lg:table-cell text-muted">${dsn.fakultas}</td>
+                <td class="hidden lg:table-cell text-muted">${dsn.fakultas || dsn.prodi}</td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <a href="${editUrl}" class="nb-row-action edit" title="Edit">
+                        <a href="/admin/dosen/${dsn.id}/edit" class="nb-row-action edit" title="Edit">
                             <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
                         </a>
-                        <form action="${deleteUrl}" method="POST" data-nb-confirm="true" data-nb-confirm-title="Hapus Data Dosen?" data-nb-confirm-desc="Tindakan ini tidak dapat dibatalkan. Data dosen akan dihapus permanen." data-nb-confirm-button="Ya, Hapus" data-nb-confirm-icon="delete_forever" class="inline">
+                        <form action="/admin/dosen/${dsn.id}" method="POST" data-nb-confirm="true" data-nb-confirm-title="Hapus Data Dosen?" data-nb-confirm-desc="Tindakan ini tidak dapat dibatalkan. Data dosen akan dihapus permanen." data-nb-confirm-button="Ya, Hapus" data-nb-confirm-icon="delete_forever" class="inline">
                             @csrf @method('DELETE')
                             <button type="submit" class="nb-row-action danger" title="Hapus">
                                 <span class="material-symbols-outlined" style="font-size:16px;">delete</span>

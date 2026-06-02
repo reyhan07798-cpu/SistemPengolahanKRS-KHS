@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('krs_detail', function (Blueprint $table) {
+        Schema::create('tahun_ajarans', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('krs_mahasiswa_id')->constrained('krs_mahasiswa')->onDelete('cascade');
-            $table->foreignId('mata_kuliah_id')->constrained('mata_kuliahs')->onDelete('cascade');
+            $table->string('semester'); // Ganjil or Genap
+            $table->string('tahun_ajaran'); // e.g., "2023/2024"
+            $table->string('status')->default('aktif'); // aktif or tidak
             $table->timestamps();
         });
     }
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('krs_detail');
+        Schema::dropIfExists('tahun_ajarans');
     }
 };

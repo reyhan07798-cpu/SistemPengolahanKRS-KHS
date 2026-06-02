@@ -4,6 +4,14 @@
 @section('page_title', 'Data Mahasiswa')
 
 @section('content')
+    {{-- Hidden session message indicators --}}
+    @if(session('success'))
+        <div data-session-success="{{ session('success') }}" style="display:none;"></div>
+    @endif
+    @if(session('error'))
+        <div data-session-error="{{ session('error') }}" style="display:none;"></div>
+    @endif
+
     {{-- Page Header --}}
     <div class="nb-page-header">
         <div>
@@ -16,20 +24,6 @@
             Tambah Mahasiswa
         </button>
     </div>
-
-    @if(session('success'))
-        <div class="nb-alert nb-alert-success mb-6 flex items-center gap-2">
-            <span class="material-symbols-outlined">check_circle</span>
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="nb-alert nb-alert-danger mb-6 flex items-center gap-2">
-            <span class="material-symbols-outlined">error</span>
-            {{ session('error') }}
-        </div>
-    @endif
 
     {{-- Filter Card --}}
     <div class="nb-card mb-6">

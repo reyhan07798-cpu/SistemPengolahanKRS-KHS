@@ -11,17 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('mata_kuliah', function (Blueprint $table) {
+        Schema::create('mata_kuliahs', function (Blueprint $table) {
             $table->id();
-            $table->string('kode_mk');
+            $table->string('kode')->unique();
             $table->string('nama');
             $table->integer('sks');
+            $table->string('semester');
+            $table->string('dosen_pengampu');
             $table->timestamps();
-        });
-        Schema::table('mata_kuliah', function (Blueprint $table) {
-            $table->foreignId('semester_id')->nullable()->after('sks')->constrained('semesters')->onDelete('set null');
-            $table->string('tahun_ajaran')->nullable()->after('semester_id');
-            $table->integer('semester_ke')->nullable()->after('tahun_ajaran');
         });
     }
 

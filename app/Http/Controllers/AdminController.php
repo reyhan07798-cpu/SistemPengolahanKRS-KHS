@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Mahasiswa;
 use App\Models\Dosen;
+use App\Models\User;
 use App\Models\MataKuliah;
 use App\Models\TahunAjaran;
 use App\Models\PaketMataKuliah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Collection;
 
 class AdminController extends Controller
@@ -175,219 +179,384 @@ $prodis = collect([
         }
     }
 
-    // ==========================================
-    // 3. DOSEN CRUD
-    // ==========================================
+   // ==========================================
+// 3. DOSEN CRUD
+// ==========================================
 
-    public function indexDosen()
-    {
-$prodis = collect([
-    'Teknik Informatika',
-    'Sistem Informasi', 
-    'Teknologi Rekayasa Multimedia',
-    'Rekayasa Keamanan Siber',
-    'Rekayasa Perangkat Lunak',
-    'Teknologi Permainan',
-    'Animasi'
-]);
+public function indexDosen()
+{
+    $prodis = collect([
+        'Teknik Informatika',
+        'Sistem Informasi',
+        'Teknologi Rekayasa Multimedia',
+        'Rekayasa Keamanan Siber',
+        'Rekayasa Perangkat Lunak',
+        'Teknologi Permainan',
+        'Animasi',
+    ]);
 
-        if (Schema::hasTable('dosens')) {
-            $dosen = Dosen::orderBy('created_at', 'desc')->get();
-        } else {
-            $dosen = collect([
-                (object)['id' => 1, 'nik' => '198501012020011001', 'nama' => 'Dr. Budi Santoso, M.Kom', 'email' => 'budi.santoso@campus.ac.id', 'tipe_dosen' => 'Dosen Wali', 'fakultas' => 'Prodi Teknik Informatika', 'alamat' => 'Jl. Pendidikan No. 1'],
-                (object)['id' => 2, 'nik' => '198702152019022002', 'nama' => 'Prof. Dewi Lestari, M.Sc', 'email' => 'dewi.lestari@campus.ac.id', 'tipe_dosen' => 'Dosen Wali', 'fakultas' => 'Prodi Teknologi Rekayasa Multimedia', 'alamat' => 'Jl. Ilmu No. 5'],
-                (object)['id' => 3, 'nik' => '197803102018031003', 'nama' => 'Dr. Eko Prasetyo', 'email' => 'eko.prasetyo@campus.ac.id', 'tipe_dosen' => 'Dosen Mata Kuliah', 'fakultas' => 'Prodi Rekayasa Keamanan Siber', 'alamat' => 'Jl. Teknologi No. 10'],
-                (object)['id' => 4, 'nik' => '198512052021012004', 'nama' => 'Dr. Ani Wijaya', 'email' => 'ani.wijaya@campus.ac.id', 'tipe_dosen' => 'Dosen Mata Kuliah', 'fakultas' => 'Prodi Rekayasa Perangkat Lunak', 'alamat' => 'Jl. Bisnis No. 2'],
-                (object)['id' => 5, 'nik' => '199001202022011005', 'nama' => 'Ahmad Rizki, M.Kom', 'email' => 'ahmad.rizki@campus.ac.id', 'tipe_dosen' => 'Dosen Mata Kuliah', 'fakultas' => 'Prodi Teknologi Permainan', 'alamat' => 'Jl. Raya No. 7'],
+    $dosen = Schema::hasTable('dosen')
+        ? Dosen::orderBy('created_at', 'desc')->get()
+        : collect();
+
+    return view('pages.admin.data_dosen', compact('dosen', 'prodis'));
+}
+
+public function createDosen()
+{
+    $prodis = collect([
+        'Teknik Informatika',
+        'Sistem Informasi',
+        'Teknologi Rekayasa Multimedia',
+        'Rekayasa Keamanan Siber',
+        'Rekayasa Perangkat Lunak',
+        'Teknologi Permainan',
+        'Animasi',
+    ]);
+
+    return view('pages.admin.dosen_create', compact('prodis'));
+}
+
+public function storeDosen(Request $request)
+{
+    $validated = $request->validate([
+        'nik' => 'required|string|max:30|unique:dosen,nik',
+        'nip' => 'nullable|string|max:30|unique:dosen,nip',
+        'nama' => 'required|string|max:100',
+        'email' => 'required|email|max:100|unique:dosen,email|unique:users,email',
+        'tipe_dosen' => 'required|string',
+        'alamat' => 'nullable|string',
+        'no_hp' => 'nullable|string|max:20',
+        'password' => 'required|string|min:4',
+    ]);
+
+    try {
+        $user = User::create([
+            'name' => $validated['nama'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        if (Schema::hasColumn('users', 'nik')) {
+            $user->update(['nik' => $validated['nik']]);
+        }
+
+        if (Schema::hasColumn('users', 'role')) {
+            $role = 'dosen_mk';
+            $tipe = strtolower($validated['tipe_dosen']);
+
+            if (
+                str_contains($tipe, 'wali') &&
+                (str_contains($tipe, 'mata kuliah') || str_contains($tipe, 'mk') || str_contains($tipe, 'keduanya'))
+            ) {
+                $role = 'dosen';
+            } elseif (str_contains($tipe, 'wali')) {
+                $role = 'dosen_wali';
+            }
+
+            $user->update(['role' => $role]);
+        }
+
+        Dosen::create([
+            'user_id' => $user->id,
+            'nik' => $validated['nik'],
+            'nip' => $validated['nip'] ?? null,
+            'nama' => $validated['nama'],
+            'email' => $validated['email'],
+            'no_hp' => $validated['no_hp'] ?? null,
+            'alamat' => $validated['alamat'] ?? null,
+            'tipe_dosen' => $validated['tipe_dosen'],
+        ]);
+
+        return redirect()
+            ->route('pages.admin.dosen.index')
+            ->with('success', 'Data dosen berhasil ditambahkan! Akun login sudah siap digunakan.');
+    } catch (\Exception $e) {
+        return redirect()
+            ->back()
+            ->with('error', 'Gagal menyimpan data: ' . $e->getMessage())
+            ->withInput();
+    }
+}
+
+public function editDosen($id)
+{
+    $dosen = Dosen::findOrFail($id);
+
+    $prodis = collect([
+        'Teknik Informatika',
+        'Sistem Informasi',
+        'Teknologi Rekayasa Multimedia',
+        'Rekayasa Keamanan Siber',
+        'Rekayasa Perangkat Lunak',
+        'Teknologi Permainan',
+        'Animasi',
+    ]);
+
+    return view('pages.admin.dosen_edit', compact('dosen', 'prodis'));
+}
+
+public function updateDosen(Request $request, $id)
+{
+    $dosen = Dosen::findOrFail($id);
+
+    $validated = $request->validate([
+        'nik' => 'required|string|max:30|unique:dosen,nik,' . $id,
+        'nip' => 'nullable|string|max:30|unique:dosen,nip,' . $id,
+        'nama' => 'required|string|max:100',
+        'email' => [
+            'required',
+            'email',
+            'max:100',
+            Rule::unique('dosen', 'email')->ignore($id),
+            Rule::unique('users', 'email')->ignore($dosen->user_id),
+        ],
+        'tipe_dosen' => 'required|string',
+        'alamat' => 'nullable|string',
+        'no_hp' => 'nullable|string|max:20',
+        'password' => 'nullable|string|min:4',
+    ]);
+
+    try {
+        if ($dosen->user_id) {
+            $user = User::find($dosen->user_id);
+
+            if ($user) {
+                $updateUser = [
+                    'name' => $validated['nama'],
+                    'email' => $validated['email'],
+                ];
+
+                if ($request->filled('password')) {
+                    $updateUser['password'] = Hash::make($validated['password']);
+                }
+
+                if (Schema::hasColumn('users', 'nik')) {
+                    $updateUser['nik'] = $validated['nik'];
+                }
+
+                if (Schema::hasColumn('users', 'role')) {
+                    $role = 'dosen_mk';
+                    $tipe = strtolower($validated['tipe_dosen']);
+
+                    if (
+                        str_contains($tipe, 'wali') &&
+                        (str_contains($tipe, 'mata kuliah') || str_contains($tipe, 'mk') || str_contains($tipe, 'keduanya'))
+                    ) {
+                        $role = 'dosen';
+                    } elseif (str_contains($tipe, 'wali')) {
+                        $role = 'dosen_wali';
+                    }
+
+                    $updateUser['role'] = $role;
+                }
+
+                $user->update($updateUser);
+            }
+        }
+
+        $dosen->update([
+            'nik' => $validated['nik'],
+            'nip' => $validated['nip'] ?? null,
+            'nama' => $validated['nama'],
+            'email' => $validated['email'],
+            'no_hp' => $validated['no_hp'] ?? null,
+            'alamat' => $validated['alamat'] ?? null,
+            'tipe_dosen' => $validated['tipe_dosen'],
+        ]);
+
+        return redirect()
+            ->route('pages.admin.dosen.index')
+            ->with('success', 'Data dosen berhasil diupdate!');
+    } catch (\Exception $e) {
+        return redirect()
+            ->back()
+            ->with('error', 'Gagal update data: ' . $e->getMessage())
+            ->withInput();
+    }
+}
+
+public function destroyDosen($id)
+{
+    try {
+        $dosen = Dosen::findOrFail($id);
+
+        if ($dosen->user_id) {
+            User::find($dosen->user_id)?->delete();
+        }
+
+        $dosen->delete();
+
+        return redirect()
+            ->route('pages.admin.dosen.index')
+            ->with('success', 'Data dosen berhasil dihapus!');
+    } catch (\Exception $e) {
+        return redirect()
+            ->back()
+            ->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+    }
+}
+
+// ==========================================
+// 4. MATA KULIAH CRUD
+// ==========================================
+
+public function indexMatakuliah()
+{
+    $dosens = Schema::hasTable('dosen')
+        ? DB::table('dosen')->orderBy('nama', 'asc')->get()
+        : collect();
+
+    $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
+
+    $matakuliah = Schema::hasTable('mata_kuliah')
+        ? DB::table('mata_kuliah')
+            ->leftJoin('dosen', 'mata_kuliah.dosen_id', '=', 'dosen.id')
+            ->select(
+                'mata_kuliah.id',
+                'mata_kuliah.kode_mk',
+                'mata_kuliah.nama',
+                'mata_kuliah.sks',
+                'mata_kuliah.semester_ke',
+                'mata_kuliah.dosen_id',
+                'mata_kuliah.created_at',
+                'mata_kuliah.updated_at',
+                'dosen.nama as dosen_pengampu'
+            )
+            ->orderBy('mata_kuliah.created_at', 'desc')
+            ->get()
+        : collect();
+
+    return view('pages.admin.data_matakuliah', compact(
+        'matakuliah',
+        'dosens',
+        'semesters'
+    ));
+}
+
+public function createMatakuliah()
+{
+    $dosens = Schema::hasTable('dosen')
+        ? DB::table('dosen')->orderBy('nama', 'asc')->get()
+        : collect();
+
+    $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
+
+    return view('pages.admin.matakuliah_create', compact(
+        'dosens',
+        'semesters'
+    ));
+}
+
+public function storeMatakuliah(Request $request)
+{
+    $validated = $request->validate([
+        'kode_mk' => 'required|string|max:30|unique:mata_kuliah,kode_mk',
+        'nama' => 'required|string|max:100',
+        'sks' => 'required|integer|min:1|max:6',
+        'semester_ke' => 'required|integer|min:1|max:8',
+        'dosen_id' => 'nullable|exists:dosen,id',
+    ], [
+        'kode_mk.required' => 'Kode mata kuliah wajib diisi.',
+        'kode_mk.unique' => 'Kode mata kuliah sudah digunakan.',
+        'nama.required' => 'Nama mata kuliah wajib diisi.',
+        'sks.required' => 'SKS wajib diisi.',
+        'semester_ke.required' => 'Semester wajib dipilih.',
+    ]);
+
+    try {
+        DB::table('mata_kuliah')->insert([
+            'dosen_id' => $validated['dosen_id'] ?? null,
+            'kode_mk' => $validated['kode_mk'],
+            'nama' => $validated['nama'],
+            'sks' => $validated['sks'],
+            'semester_ke' => $validated['semester_ke'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('pages.admin.matakuliah.index')
+            ->with('success', 'Data mata kuliah berhasil ditambahkan!');
+    } catch (\Exception $e) {
+        return back()
+            ->with('error', 'Gagal menyimpan mata kuliah: ' . $e->getMessage())
+            ->withInput();
+    }
+}
+
+public function editMatakuliah($id)
+{
+    $matakuliah = DB::table('mata_kuliah')->where('id', $id)->first();
+
+    if (!$matakuliah) {
+        abort(404, 'Data mata kuliah tidak ditemukan.');
+    }
+
+    $dosens = Schema::hasTable('dosen')
+        ? DB::table('dosen')->orderBy('nama', 'asc')->get()
+        : collect();
+
+    $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
+
+    return view('pages.admin.matakuliah_edit', compact(
+        'matakuliah',
+        'dosens',
+        'semesters'
+    ));
+}
+
+public function updateMatakuliah(Request $request, $id)
+{
+    $validated = $request->validate([
+        'kode_mk' => 'required|string|max:30|unique:mata_kuliah,kode_mk,' . $id,
+        'nama' => 'required|string|max:100',
+        'sks' => 'required|integer|min:1|max:6',
+        'semester_ke' => 'required|integer|min:1|max:8',
+        'dosen_id' => 'nullable|exists:dosen,id',
+    ], [
+        'kode_mk.required' => 'Kode mata kuliah wajib diisi.',
+        'kode_mk.unique' => 'Kode mata kuliah sudah digunakan.',
+        'nama.required' => 'Nama mata kuliah wajib diisi.',
+        'sks.required' => 'SKS wajib diisi.',
+        'semester_ke.required' => 'Semester wajib dipilih.',
+    ]);
+
+    try {
+        DB::table('mata_kuliah')
+            ->where('id', $id)
+            ->update([
+                'dosen_id' => $validated['dosen_id'] ?? null,
+                'kode_mk' => $validated['kode_mk'],
+                'nama' => $validated['nama'],
+                'sks' => $validated['sks'],
+                'semester_ke' => $validated['semester_ke'],
+                'updated_at' => now(),
             ]);
-        }
 
-        return view('pages.admin.data_dosen', compact('dosen', 'prodis'));
+        return redirect()
+            ->route('pages.admin.matakuliah.index')
+            ->with('success', 'Data mata kuliah berhasil diperbarui!');
+    } catch (\Exception $e) {
+        return back()
+            ->with('error', 'Gagal memperbarui mata kuliah: ' . $e->getMessage())
+            ->withInput();
     }
+}
 
-    public function createDosen()
-    {
-        return view('pages.admin.dosen_create');
+public function destroyMatakuliah($id)
+{
+    try {
+        DB::table('mata_kuliah')->where('id', $id)->delete();
+
+        return redirect()
+            ->route('pages.admin.matakuliah.index')
+            ->with('success', 'Data mata kuliah berhasil dihapus!');
+    } catch (\Exception $e) {
+        return back()
+            ->with('error', 'Gagal menghapus mata kuliah: ' . $e->getMessage());
     }
-
-    public function storeDosen(Request $request)
-    {
-        $request->validate([
-            'nik' => 'required|string|max:20|unique:dosens,nik',
-            'nama' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:dosens,email',
-            'tipe_dosen' => 'required|string',
-            'fakultas' => 'required|string',
-            'alamat' => 'nullable|string',
-            'password' => 'required|string|min:4',
-        ]);
-
-        try {
-            if (Schema::hasTable('dosens')) {
-                Dosen::create($request->all());
-            }
-            return redirect()->route('admin.dosen.index')->with('success', 'Data dosen berhasil ditambahkan!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menyimpan data.')->withInput();
-        }
-    }
-
-    public function editDosen($id)
-    {
-        if (Schema::hasTable('dosens')) {
-            $dosen = Dosen::findOrFail($id);
-        } else {
-            $dosen = (object)['id' => $id, 'nik' => '198501012020011001', 'nama' => 'Dr. Budi Santoso, M.Kom', 'email' => 'budi.santoso@campus.ac.id', 'tipe_dosen' => 'Dosen Wali', 'prodi' => 'Prodi Teknik Informatika', 'alamat' => '-'];
-        }
-        return view('pages.admin.dosen_edit', compact('dosen'));
-    }
-
-    public function updateDosen(Request $request, $id)
-    {
-        $request->validate([
-            'nik' => 'required|string|max:20|unique:dosens,nik,' . $id,
-            'nama' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:dosens,email,' . $id,
-            'tipe_dosen' => 'required|string',
-            'fakultas' => 'required|string',
-        ]);
-
-        try {
-            if (Schema::hasTable('dosens')) {
-                $dosen = Dosen::findOrFail($id);
-                $dosen->update($request->all());
-            }
-            return redirect()->route('admin.dosen.index')->with('success', 'Data dosen berhasil diupdate!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal update data.');
-        }
-    }
-
-    public function destroyDosen($id)
-    {
-        try {
-            if (Schema::hasTable('dosens')) {
-                $dosen = Dosen::findOrFail($id);
-                $dosen->delete();
-            }
-            return redirect()->route('admin.dosen.index')->with('success', 'Data dosen berhasil dihapus!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menghapus data.');
-        }
-    }
-
-    // ==========================================
-    // 4. MATA KULIAH CRUD
-    // ==========================================
-
-    public function indexMatakuliah()
-    {
-        $dosens = collect([]);
-        $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
-        $days = collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']);
-
-        if (Schema::hasTable('dosens')) {
-            $dosens = Dosen::orderBy('nama', 'asc')->get();
-        } else {
-            $dosens = collect([
-                (object)['id' => 1, 'nama' => 'Dr. Budi Santoso, M.Kom'],
-                (object)['id' => 2, 'nama' => 'Prof. Dewi Lestari, M.Sc'],
-                (object)['id' => 3, 'nama' => 'Dr. Eko Prasetyo'],
-            ]);
-        }
-
-        if (Schema::hasTable('mata_kuliahs')) {
-            $matakuliah = MataKuliah::orderBy('created_at', 'desc')->get();
-        } else {
-            $matakuliah = collect([
-                (object)['id' => 1, 'kode' => 'IF101', 'nama' => 'Pemrograman Web', 'sks' => 3, 'semester' => '3', 'dosen_pengampu' => 'Dr. Budi Santoso', 'jadwal' => 'Senin, 08:00 - 10:00, Lab Komputer 1'],
-                (object)['id' => 2, 'kode' => 'IF102', 'nama' => 'Pemrograman Berorientasi Objek', 'sks' => 3, 'semester' => '3', 'dosen_pengampu' => 'Prof. Dewi Lestari', 'jadwal' => 'Selasa, 13:00 - 15:00, Lab Komputer 2'],
-            ]);
-        }
-
-        return view('pages.admin.data_matakuliah', compact('matakuliah', 'dosens', 'semesters', 'days'));
-    }
-
-    public function createMatakuliah()
-    {
-        return view('pages.admin.matakuliah_create');
-    }
-
-    public function storeMatakuliah(Request $request)
-    {
-        $request->validate([
-            'kode' => 'required|string|max:20|unique:mata_kuliahs,kode',
-            'nama' => 'required|string|max:255',
-            'sks' => 'required|integer',
-            'semester' => 'required|string',
-            'kapasitas' => 'nullable|integer',
-            'dosen_pengampu' => 'required|string|max:255',
-            'hari' => 'required|string|max:20',
-            'jam' => 'required|string|max:20',
-            'ruang' => 'required|string|max:50',
-        ]);
-
-        try {
-            $jadwalString = $request->hari . ', ' . $request->jam . ', ' . $request->ruang;
-            
-            $data = $request->all();
-            $data['jadwal'] = $jadwalString;
-
-            if (Schema::hasTable('mata_kuliahs')) {
-                MataKuliah::create($data);
-            }
-            return redirect()->route('admin.matakuliah.index')->with('success', 'Data mata kuliah berhasil ditambahkan!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menyimpan data.')->withInput();
-        }
-    }
-
-    public function editMatakuliah($id)
-    {
-        if (Schema::hasTable('mata_kuliahs')) {
-            $matakuliah = MataKuliah::findOrFail($id);
-        } else {
-            $matakuliah = (object)['id' => $id, 'kode' => 'IF101', 'nama' => 'Pemrograman Web', 'sks' => 3, 'semester' => '3', 'dosen_pengampu' => 'Dr. Budi Santoso', 'jadwal' => 'Senin, 08:00 - 10:00, Lab Komputer 1'];
-        }
-        return view('pages.admin.matakuliah_edit', compact('matakuliah'));
-    }
-
-    public function updateMatakuliah(Request $request, $id)
-    {
-        $request->validate([
-            'kode' => 'required|string|max:20|unique:mata_kuliahs,kode,' . $id,
-            'nama' => 'required|string|max:255',
-            'sks' => 'required|integer',
-            'semester' => 'required|string',
-            'dosen_pengampu' => 'required|string|max:255',
-            'jadwal' => 'required|string|max:255',
-        ]);
-
-        try {
-            if (Schema::hasTable('mata_kuliahs')) {
-                $mk = MataKuliah::findOrFail($id);
-                $mk->update($request->all());
-            }
-            return redirect()->route('admin.matakuliah.index')->with('success', 'Data mata kuliah berhasil diupdate!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal update data.');
-        }
-    }
-
-    public function destroyMatakuliah($id)
-    {
-        try {
-            if (Schema::hasTable('mata_kuliahs')) {
-                $mk = MataKuliah::findOrFail($id);
-                $mk->delete();
-            }
-            return redirect()->route('admin.matakuliah.index')->with('success', 'Data mata kuliah berhasil dihapus!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menghapus data.');
-        }
-    }
-    
+}
 
     // ==========================================
     // 5. TAHUN AJARAN CRUD
@@ -416,11 +585,6 @@ $prodis = collect([
         return view('pages.admin.data_tahunajaran', compact('tahunAjaran', 'tahunOptions'));
     }
 
-    public function createTahunAjaran()
-    {
-        return view('pages.admin.tahunajaran_create');
-    }
-
     public function storeTahunAjaran(Request $request)
     {
         $request->validate([
@@ -431,7 +595,6 @@ $prodis = collect([
         try {
             $status = $request->has('status') ? 'Aktif' : 'Nonaktif';
 
-
             $data = $request->all();
             $data['status'] = $status;
 
@@ -441,6 +604,19 @@ $prodis = collect([
             return redirect()->route('pages.admin.tahunajaran.index')->with('success', 'Data tahun ajaran berhasil ditambahkan!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menyimpan data.')->withInput();
+        }
+    }
+
+    public function destroyTahunAjaran($id)
+    {
+        try {
+            if (Schema::hasTable('tahun_ajarans')) {
+                $tahunAjaran = TahunAjaran::findOrFail($id);
+                $tahunAjaran->delete();
+            }
+            return redirect()->route('pages.admin.tahunajaran.index')->with('success', 'Data tahun ajaran berhasil dihapus!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus data.');
         }
     }
     
@@ -463,7 +639,7 @@ $prodis = collect([
         $prodis = collect(['Teknik Informatika', 'Sistem Informasi', 'Teknik Komputer', 'Semua Prodi']);
         $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
 
-        if (Schema::hasTable('paket_mata_kuliahs')) {
+        if (Schema::hasTable('paket_mata_kuliah')) {
             $paketMK = PaketMataKuliah::orderBy('created_at', 'desc')->get();
         } else {
             $paketMK = collect([
@@ -501,7 +677,7 @@ $prodis = collect([
             $data['total_sks'] = $totalSks;
             $data['jumlah_mk'] = count($selectedIds);
 
-            if (Schema::hasTable('paket_mata_kuliahs')) {
+            if (Schema::hasTable('paket_mata_kuliah')) {
                 $paket = PaketMataKuliah::create($data);
             }
 
@@ -511,5 +687,16 @@ $prodis = collect([
         }
     }
 
-   
+    public function destroyPaketMK($id)
+    {
+        try {
+            if (Schema::hasTable('paket_mata_kuliah')) {
+                $paket = PaketMataKuliah::findOrFail($id);
+                $paket->delete();
+            }
+            return redirect()->route('pages.admin.paketmk.index')->with('success', 'Data paket berhasil dihapus!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus data.');
+        }
+    }
 }

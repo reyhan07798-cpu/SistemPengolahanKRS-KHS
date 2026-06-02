@@ -70,13 +70,21 @@ class SimpleAuthService
                 $sessionData['nip']        = $dosen->nip;
                 $sessionData['name']       = $dosen->nama;
                 $sessionData['tipe_dosen'] = $dosen->tipe_dosen;
+                $sessionData['fakultas']   = $dosen->fakultas ?? null;
 
-                $sessionData['role'] = match($dosen->tipe_dosen) {
-                    'keduanya'   => 'dosen',
-                    'dosen_wali' => 'dosen_wali',
-                    'dosen_mk'   => 'dosen_mk',
-                    default      => ($role ?: 'dosen_mk'),
-                };
+                // Map tipe_dosen value ke role
+                $tipeDosen = strtolower($dosen->tipe_dosen ?? '');
+                
+                if (strpos($tipeDosen, 'wali') !== false && strpos($tipeDosen, 'matakuliah') !== false) {
+                    // "Dosen Wali & Matakuliah" atau "keduanya"
+                    $sessionData['role'] = 'dosen';
+                } elseif (strpos($tipeDosen, 'wali') !== false) {
+                    // "Dosen Wali"
+                    $sessionData['role'] = 'dosen_wali';
+                } else {
+                    // "Dosen Mata Kuliah" atau lainnya
+                    $sessionData['role'] = 'dosen_mk';
+                }
             }
         }
 

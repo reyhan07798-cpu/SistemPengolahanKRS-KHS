@@ -112,3 +112,109 @@ import './bootstrap';
         openDialog(opts);
     });
 })();
+
+// Toast Notification System
+(function () {
+    const container = document.getElementById('nbToastContainer');
+    if (!container) return;
+
+    /**
+     * Tampilkan toast notification
+     * @param {string} message - Pesan notifikasi
+     * @param {string} type - 'success' | 'error' | 'warning' | 'info'
+     * @param {number} duration - Durasi tampil (ms), default 4000
+     */
+    window.nbToast = function (message, type = 'info', duration = 4000) {
+        const icons = {
+            success: 'check_circle',
+            error: 'error',
+            warning: 'warning',
+            info: 'info',
+        };
+        const colors = {
+            success: 'text-green-600',
+            error: 'text-red-600',
+            warning: 'text-yellow-600',
+            info: 'text-blue-600',
+        };
+        const bgColors = {
+            success: 'bg-green-50',
+            error: 'bg-red-50',
+            warning: 'bg-yellow-50',
+            info: 'bg-blue-50',
+        };
+
+        const toast = document.createElement('div');
+        toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg pointer-events-auto ${bgColors[type] || 'bg-blue-50'} border border-gray-200`;
+        toast.style.animation = 'slideIn 0.3s ease-out';
+        toast.innerHTML = `
+            <span class="material-symbols-outlined ${colors[type] || 'text-blue-600'}">
+                ${icons[type] || 'info'}
+            </span>
+            <span class="text-sm font-medium text-gray-900">${message}</span>
+            <button type="button" class="ml-auto text-gray-400 hover:text-gray-600" onclick="this.parentElement.remove()">
+                <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+            </button>
+        `;
+
+        container.appendChild(toast);
+
+        if (duration > 0) {
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+    };
+
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%) translateY(0);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) translateY(0);
+            }
+        }
+        @keyframes slideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0) translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%) translateY(0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Auto-display session messages as toast
+    window.nbShowSessionMessages = function () {
+        const successEl = document.querySelector('[data-session-success]');
+        const errorEl = document.querySelector('[data-session-error]');
+
+        if (successEl) {
+            const message = successEl.dataset.sessionSuccess;
+            if (message) {
+                setTimeout(() => nbToast(message, 'success'), 100);
+            }
+        }
+
+        if (errorEl) {
+            const message = errorEl.dataset.sessionError;
+            if (message) {
+                setTimeout(() => nbToast(message, 'error'), 100);
+            }
+        }
+    };
+
+    // Run on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', nbShowSessionMessages);
+})();
+
+

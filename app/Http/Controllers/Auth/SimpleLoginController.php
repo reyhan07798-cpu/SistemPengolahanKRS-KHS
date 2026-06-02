@@ -75,7 +75,7 @@ class SimpleLoginController extends Controller
     private function redirectByRole(string $role, ?string $tipeDosen = null)
     {
         // Merangkap wali + MK → ke beranda wali (bisa switch ke MK dari sidebar)
-        if ($role === 'dosen' || $tipeDosen === 'keduanya') {
+        if ($role === 'dosen') {
             return redirect()->route('dosen.wali.beranda');
         }
 

@@ -3,7 +3,13 @@
 @section('title', 'Data Tahun Ajaran')
 @section('page_title', 'Tahun Ajaran')
 
-@section('content')
+@section('content')    {{-- Hidden session message indicators --}}
+    @if(session('success'))
+        <div data-session-success="{{ session('success') }}" style="display:none;"></div>
+    @endif
+    @if(session('error'))
+        <div data-session-error="{{ session('error') }}" style="display:none;"></div>
+    @endif
     {{-- Page Header --}}
     <div class="nb-page-header">
         <div>
@@ -60,9 +66,9 @@
 
     {{-- MODAL TAMBAH TAHUN AJARAN --}}
     <div id="modalOverlay" class="nb-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div class="nb-modal" style="max-width: 28rem;" onclick="event.stopPropagation()">
+        <div class="nb-modal" onclick="event.stopPropagation()">
             <div class="nb-modal-header">
-                <h3 id="modal-title">Tambah Semester Baru</h3>
+                <h3 id="modal-title">Tambah Tahun Ajaran Baru</h3>
                 <button type="button" onclick="closeModal()" class="nb-modal-close" aria-label="Tutup">
                     <span class="material-symbols-outlined" style="font-size:18px;">close</span>
                 </button>
@@ -71,42 +77,41 @@
             <form action="{{ route('pages.admin.tahunajaran.store') }}" method="POST">
                 @csrf
                 <div class="nb-modal-body">
-                    <div class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                         <div>
-                            <label class="nb-label">Nama Semester</label>
-                            <select name="semester">
+                            <label class="nb-label">Semester <span class="text-danger">*</span></label>
+                            <select name="semester" required>
+                                <option value="">Pilih Semester</option>
                                 <option value="Ganjil" {{ old('semester') == 'Ganjil' ? 'selected' : '' }}>Ganjil</option>
                                 <option value="Genap" {{ old('semester') == 'Genap' ? 'selected' : '' }}>Genap</option>
                             </select>
+                            @error('semester') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
                             <label class="nb-label">Tahun Ajaran <span class="text-danger">*</span></label>
                             <select name="tahun_ajaran" required>
-                                <option value="">Pilih tahun ajaran</option>
+                                <option value="">Pilih Tahun Ajaran</option>
                                 @foreach($tahunOptions as $tahun)
                                     <option value="{{ $tahun }}" {{ old('tahun_ajaran') == $tahun ? 'selected' : '' }}>{{ $tahun }}</option>
                                 @endforeach
                             </select>
+                            @error('tahun_ajaran') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
 
-                        <div class="bg-surface-alt border-2 border-ink rounded-md p-4">
-                            <label class="flex items-center justify-between cursor-pointer">
-                                <div>
-                                    <span class="nb-label" style="margin-bottom:2px;">Set sebagai Aktif</span>
-                                    <p class="text-xs text-muted">Periode aktif saat ini.</p>
-                                </div>
-                                <div class="relative">
-                                    <input type="checkbox" name="status" value="Aktif" class="nb-no-style sr-only peer" {{ old('status') ? 'checked' : '' }}>
-                                    <div class="w-12 h-6 bg-surface border-2 border-ink rounded-full peer-checked:bg-accent transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-ink after:border-2 after:border-ink after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-6 peer-checked:after:bg-white"></div>
-                                </div>
+                        <div class="md:col-span-2">
+                            <label class="nb-label flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="status" value="1" {{ old('status') ? 'checked' : '' }}>
+                                <span>Jadikan Status Aktif</span>
                             </label>
                         </div>
                     </div>
                 </div>
 
                 <div class="nb-modal-footer">
-                    <button type="button" onclick="closeModal()" class="nb-btn nb-btn-secondary nb-btn-sm">Batal</button>
+                    <button type="button" onclick="closeModal()" class="nb-btn nb-btn-secondary nb-btn-sm">
+                        Batal
+                    </button>
                     <button type="submit" class="nb-btn nb-btn-primary nb-btn-sm">
                         <span class="material-symbols-outlined" style="font-size:16px;">save</span>
                         Simpan
@@ -148,7 +153,6 @@
 
         data.forEach(ta => {
             const row = document.createElement('tr');
-            const editUrl = `/admin/tahun-ajaran/${ta.id}/edit`;
             const deleteUrl = `/admin/tahun-ajaran/${ta.id}`;
             const statusBadge = ta.status === 'Aktif' ? 'nb-badge-success' : 'nb-badge-stable';
             const semesterBadge = ta.semester === 'Ganjil' ? 'nb-badge-primary' : 'nb-badge-warning';
@@ -159,9 +163,6 @@
                 <td class="text-center"><span class="nb-badge ${statusBadge}">${ta.status}</span></td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <a href="${editUrl}" class="nb-row-action edit" title="Edit">
-                            <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
-                        </a>
                         <form action="${deleteUrl}" method="POST" data-nb-confirm="true" data-nb-confirm-title="Hapus Tahun Ajaran?" data-nb-confirm-desc="Tindakan ini tidak dapat dibatalkan. Pastikan tidak ada KRS aktif di periode ini." data-nb-confirm-button="Ya, Hapus" data-nb-confirm-icon="delete_forever" class="inline">
                             @csrf @method('DELETE')
                             <button type="submit" class="nb-row-action danger" title="Hapus">

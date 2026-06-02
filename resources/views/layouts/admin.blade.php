@@ -174,5 +174,34 @@
 
     {{-- Singleton Confirm Dialog (replace window.confirm) --}}
     <x-confirm-dialog />
+
+    {{-- Confirm Dialog dengan Title, Description, Icon --}}
+    <div id="nbConfirmOverlay" class="nb-modal-overlay hidden" role="dialog" aria-modal="true">
+        <div class="nb-modal" onclick="event.stopPropagation()">
+            <div class="nb-modal-body">
+                <div class="flex items-start gap-4">
+                    <div class="shrink-0">
+                        <span id="nbConfirmIcon" class="material-symbols-outlined text-4xl text-danger">delete_forever</span>
+                    </div>
+                    <div class="flex-1">
+                        <h3 id="nbConfirmTitle" class="nb-h3 mb-2">Konfirmasi</h3>
+                        <p id="nbConfirmDesc" class="text-muted mb-6">Apakah Anda yakin ingin melanjutkan?</p>
+                    </div>
+                    <button type="button" id="nbConfirmClose" class="nb-modal-close shrink-0" aria-label="Tutup">
+                        <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="nb-modal-footer">
+                <button type="button" id="nbConfirmCancel" class="nb-btn nb-btn-secondary">Batal</button>
+                <button type="button" id="nbConfirmConfirm" class="nb-btn nb-btn-danger">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Toast Notification --}}
+    <div id="nbToastContainer" class="fixed bottom-4 right-4 z-50 space-y-3 pointer-events-none">
+        <!-- Toast akan di-inject di sini -->
+    </div>
 </body>
 </html>
