@@ -163,12 +163,9 @@
                 <td class="text-center"><span class="nb-badge ${statusBadge}">${ta.status}</span></td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <form action="${deleteUrl}" method="POST" data-nb-confirm="true" data-nb-confirm-title="Hapus Tahun Ajaran?" data-nb-confirm-desc="Tindakan ini tidak dapat dibatalkan. Pastikan tidak ada KRS aktif di periode ini." data-nb-confirm-button="Ya, Hapus" data-nb-confirm-icon="delete_forever" class="inline">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="nb-row-action danger" title="Hapus">
-                                <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
-                            </button>
-                        </form>
+                        <button type="button" class="nb-row-action danger" title="Hapus" onclick="deleteData('${deleteUrl}', 'Hapus Tahun Ajaran?', 'Tindakan ini tidak dapat dibatalkan. Pastikan tidak ada KRS aktif di periode ini.', '${ta.tahun_ajaran}')">
+                            <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+                        </button>
                     </div>
                 </td>
             `;

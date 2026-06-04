@@ -217,4 +217,37 @@ import './bootstrap';
     document.addEventListener('DOMContentLoaded', nbShowSessionMessages);
 })();
 
+/**
+ * Global delete function untuk semua halaman admin
+ * @param {string} url - URL endpoint untuk delete
+ * @param {string} title - Judul konfirmasi (e.g., "Hapus Mata Kuliah?")
+ * @param {string} description - Deskripsi konfirmasi
+ * @param {string} itemName - Nama item yang akan dihapus (untuk ditampilkan di konfirmasi)
+ */
+window.deleteData = function (url, title, description, itemName) {
+    nbConfirm({
+        title: title,
+        desc: description.replace('{itemName}', itemName || 'item ini'),
+        button: 'Ya, Hapus',
+        variant: 'danger',
+        icon: 'delete_forever',
+        onConfirm: () => {
+            // Create and submit form
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                             document.querySelector('input[name="_token"]')?.value;
+            
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+            form.innerHTML = `
+                <input type="hidden" name="_token" value="${csrfToken}">
+                <input type="hidden" name="_method" value="DELETE">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+};
+
+
 

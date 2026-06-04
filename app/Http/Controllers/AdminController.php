@@ -381,16 +381,20 @@ public function destroyDosen($id)
     try {
         $dosen = Dosen::findOrFail($id);
 
-        if ($dosen->user_id) {
-            User::find($dosen->user_id)?->delete();
-        }
-
         $dosen->delete();
+
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Data dosen berhasil dihapus dari tampilan admin.']);
+        }
 
         return redirect()
             ->route('pages.admin.dosen.index')
-            ->with('success', 'Data dosen berhasil dihapus!');
+            ->with('success', 'Data dosen berhasil dihapus dari tampilan admin!');
     } catch (\Exception $e) {
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Gagal menghapus data: ' . $e->getMessage()], 500);
+        }
+
         return redirect()
             ->back()
             ->with('error', 'Gagal menghapus data: ' . $e->getMessage());
@@ -404,7 +408,13 @@ public function destroyDosen($id)
 public function indexMatakuliah()
 {
     $dosens = Schema::hasTable('dosen')
-        ? DB::table('dosen')->orderBy('nama', 'asc')->get()
+        ? DB::table('dosen')
+            ->when(
+                Schema::hasColumn('dosen', 'deleted_at'),
+                fn($query) => $query->whereNull('deleted_at')
+            )
+            ->orderBy('nama', 'asc')
+            ->get()
         : collect();
 
     $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
@@ -423,6 +433,10 @@ public function indexMatakuliah()
                 'mata_kuliah.updated_at',
                 'dosen.nama as dosen_pengampu'
             )
+            ->when(
+                Schema::hasColumn('mata_kuliah', 'deleted_at'),
+                fn($query) => $query->whereNull('mata_kuliah.deleted_at')
+            )
             ->orderBy('mata_kuliah.created_at', 'desc')
             ->get()
         : collect();
@@ -437,7 +451,13 @@ public function indexMatakuliah()
 public function createMatakuliah()
 {
     $dosens = Schema::hasTable('dosen')
-        ? DB::table('dosen')->orderBy('nama', 'asc')->get()
+        ? DB::table('dosen')
+            ->when(
+                Schema::hasColumn('dosen', 'deleted_at'),
+                fn($query) => $query->whereNull('deleted_at')
+            )
+            ->orderBy('nama', 'asc')
+            ->get()
         : collect();
 
     $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
@@ -544,15 +564,57 @@ public function updateMatakuliah(Request $request, $id)
     }
 }
 
-public function destroyMatakuliah($id)
+public function destroyMatakuliah(Request $request, $id)
 {
     try {
-        DB::table('mata_kuliah')->where('id', $id)->delete();
+        if (!Schema::hasTable('mata_kuliah')) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Tabel mata kuliah tidak ditemukan.'], 404);
+            }
+
+            return back()->with('error', 'Tabel mata kuliah tidak ditemukan.');
+        }
+
+        $matakuliah = DB::table('mata_kuliah')->where('id', $id)->first();
+
+        if (!$matakuliah) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Data mata kuliah tidak ditemukan.'], 404);
+            }
+
+            return back()->with('error', 'Data mata kuliah tidak ditemukan.');
+        }
+
+        if (!Schema::hasColumn('mata_kuliah', 'deleted_at')) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Kolom soft delete belum tersedia. Jalankan migration terlebih dahulu.'], 500);
+            }
+
+            return back()->with('error', 'Kolom soft delete belum tersedia. Jalankan migration terlebih dahulu.');
+        }
+
+        $updateData = [
+            'deleted_at' => now(),
+        ];
+
+        if (Schema::hasColumn('mata_kuliah', 'updated_at')) {
+            $updateData['updated_at'] = now();
+        }
+
+        DB::table('mata_kuliah')->where('id', $id)->update($updateData);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Data mata kuliah berhasil dihapus dari tampilan admin!']);
+        }
 
         return redirect()
             ->route('pages.admin.matakuliah.index')
-            ->with('success', 'Data mata kuliah berhasil dihapus!');
+            ->with('success', 'Data mata kuliah berhasil dihapus dari tampilan admin!');
     } catch (\Exception $e) {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Gagal menghapus mata kuliah: ' . $e->getMessage()], 500);
+        }
+
         return back()
             ->with('error', 'Gagal menghapus mata kuliah: ' . $e->getMessage());
     }
@@ -620,7 +682,7 @@ public function destroyMatakuliah($id)
         }
     }
     
-       // ==========================================
+    // ==========================================
     // 6. PAKET MATA KULIAH CRUD
     // ==========================================
 

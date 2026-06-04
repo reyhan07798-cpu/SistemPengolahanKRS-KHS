@@ -253,12 +253,9 @@
                         <a href="${editUrl}" class="nb-row-action edit" title="Edit">
                             <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
                         </a>
-                        <form action="${deleteUrl}" method="POST" data-nb-confirm="true" data-nb-confirm-title="Hapus Data Mahasiswa?" data-nb-confirm-desc="Tindakan ini tidak dapat dibatalkan. Data mahasiswa beserta riwayat KRS/KHS-nya akan dihapus permanen." data-nb-confirm-button="Ya, Hapus" data-nb-confirm-icon="delete_forever" class="inline">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="nb-row-action danger" title="Hapus">
-                                <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
-                            </button>
-                        </form>
+                        <button type="button" class="nb-row-action danger" title="Hapus" onclick="deleteData('${deleteUrl}', 'Hapus Data Mahasiswa?', 'Data mahasiswa beserta riwayat KRS/KHS-nya akan dihapus permanen.', '${mhs.nama}')">
+                            <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+                        </button>
                     </div>
                 </td>
             `;

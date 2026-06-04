@@ -58,6 +58,39 @@
         </div>
     </div>
 
+    <div id="adminDeleteModal" class="admin-delete-backdrop" aria-hidden="true">
+        <div class="admin-delete-modal" role="dialog" aria-modal="true" aria-labelledby="adminDeleteTitle">
+            <div class="admin-delete-header">
+                <div class="admin-delete-icon">
+                    <span class="material-symbols-outlined">menu_book</span>
+                </div>
+                <button type="button" class="admin-delete-close" id="adminDeleteClose" aria-label="Tutup">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="admin-delete-body">
+                <span class="admin-delete-badge">Soft Delete</span>
+                <h3 id="adminDeleteTitle">Hapus Mata Kuliah dari Tampilan?</h3>
+                <p id="adminDeleteMessage">
+                    Data mata kuliah tetap disimpan agar riwayat KRS dan nilai mahasiswa tidak hilang.
+                </p>
+                <div class="admin-delete-target">
+                    <span class="material-symbols-outlined">library_books</span>
+                    <strong id="adminDeleteName">Mata Kuliah</strong>
+                </div>
+            </div>
+
+            <div class="admin-delete-footer">
+                <button type="button" class="admin-delete-btn admin-delete-cancel" id="adminDeleteCancel">Batal</button>
+                <button type="button" class="admin-delete-btn admin-delete-confirm" id="adminDeleteConfirm">
+                    <span class="material-symbols-outlined">archive</span>
+                    Ya, Hapus Tampilan
+                </button>
+            </div>
+        </div>
+    </div>
+
     {{-- MODAL TAMBAH MATA KULIAH --}}
     <div id="modalOverlay" class="nb-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="nb-modal" onclick="event.stopPropagation()">
@@ -168,17 +201,165 @@
 @endsection
 
 @push('scripts')
+<style>
+    .admin-delete-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: rgba(15, 23, 42, 0.58);
+        backdrop-filter: blur(6px);
+    }
+
+    .admin-delete-backdrop.show {
+        display: flex;
+        animation: adminFadeIn 160ms ease-out;
+    }
+
+    .admin-delete-modal {
+        width: min(460px, 100%);
+        border-radius: 14px;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+        overflow: hidden;
+        animation: adminModalIn 180ms ease-out;
+    }
+
+    .admin-delete-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.1rem 1.25rem 0.25rem;
+    }
+
+    .admin-delete-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        color: #b42318;
+        background: linear-gradient(135deg, #fee4e2, #fff1f3);
+        border: 1px solid #fecdca;
+    }
+
+    .admin-delete-icon .material-symbols-outlined { font-size: 28px; }
+
+    .admin-delete-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        color: #64748b;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+    }
+
+    .admin-delete-body { padding: 0.75rem 1.25rem 1rem; }
+
+    .admin-delete-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.25rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: #b42318;
+        background: #fff1f3;
+        border: 1px solid #fecdca;
+    }
+
+    .admin-delete-body h3 {
+        margin: 0.8rem 0 0.4rem;
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: #111827;
+    }
+
+    .admin-delete-body p {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.55;
+    }
+
+    .admin-delete-target {
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.8rem 0.9rem;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        color: #334155;
+    }
+
+    .admin-delete-target strong {
+        word-break: break-word;
+    }
+
+    .admin-delete-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.65rem;
+        padding: 1rem 1.25rem 1.25rem;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .admin-delete-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        min-height: 40px;
+        padding: 0.55rem 0.95rem;
+        border-radius: 8px;
+        font-weight: 800;
+        border: 1px solid transparent;
+        cursor: pointer;
+    }
+
+    .admin-delete-cancel {
+        color: #334155;
+        background: #fff;
+        border-color: #cbd5e1;
+    }
+
+    .admin-delete-confirm {
+        color: #fff;
+        background: #dc2626;
+        border-color: #dc2626;
+        box-shadow: 0 10px 18px rgba(220, 38, 38, 0.22);
+    }
+
+    @keyframes adminFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes adminModalIn {
+        from { opacity: 0; transform: translateY(14px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+</style>
 <script>
-    const rawData = @json($matakuliah ?? []);
+    let rawData = @json($matakuliah ?? []);
     const tableBody = document.getElementById('tableBody');
     const emptyState = document.getElementById('emptyState');
 
-    const csrfField = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
-    const methodDeleteField = '<input type="hidden" name="_method" value="DELETE">';
     const methodPutField = '<input type="hidden" name="_method" value="PUT">';
+    const csrfToken = "{{ csrf_token() }}";
 
     const storeUrl = "{{ route('pages.admin.matakuliah.store') }}";
     const baseUrl = "{{ url('admin/matakuliah') }}";
+    let pendingDeleteResolver = null;
 
     function openModal() {
         const form = document.getElementById('modalForm');
@@ -256,6 +437,36 @@
         return value ?? '-';
     }
 
+    function escapeAttr(value) {
+        return String(safeText(value))
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function openDeleteModal(name) {
+        document.getElementById('adminDeleteName').textContent = name;
+        document.getElementById('adminDeleteModal').classList.add('show');
+        document.getElementById('adminDeleteModal').setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+
+        return new Promise(resolve => {
+            pendingDeleteResolver = resolve;
+        });
+    }
+
+    function closeDeleteModal(result = false) {
+        document.getElementById('adminDeleteModal').classList.remove('show');
+        document.getElementById('adminDeleteModal').setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+
+        if (pendingDeleteResolver) {
+            pendingDeleteResolver(result);
+            pendingDeleteResolver = null;
+        }
+    }
+
     function renderTable(data) {
         tableBody.innerHTML = '';
 
@@ -268,7 +479,7 @@
 
         data.forEach(mk => {
             const row = document.createElement('tr');
-            const deleteUrl = `/admin/matakuliah/${mk.id}`;
+            const itemName = escapeAttr(mk.nama);
 
             row.innerHTML = `
                 <td class="font-bold text-primary" style="font-family: var(--font-heading);">
@@ -297,22 +508,9 @@
                             <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
                         </button>
 
-                        <form
-                            action="${deleteUrl}"
-                            method="POST"
-                            data-nb-confirm="true"
-                            data-nb-confirm-title="Hapus Mata Kuliah?"
-                            data-nb-confirm-desc="Tindakan ini tidak dapat dibatalkan. Mata kuliah ini akan hilang dari paket KRS."
-                            data-nb-confirm-button="Ya, Hapus"
-                            data-nb-confirm-icon="delete_forever"
-                            class="inline"
-                        >
-                            ${csrfField}${methodDeleteField}
-
-                            <button type="submit" class="nb-row-action danger" title="Hapus">
-                                <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
-                            </button>
-                        </form>
+                        <button type="button" class="nb-row-action danger js-delete-mk" data-id="${mk.id}" data-name="${itemName}" title="Hapus">
+                            <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+                        </button>
                     </div>
                 </td>
             `;
@@ -321,8 +519,51 @@
         });
     }
 
+    async function deleteMatakuliah(id, name, button) {
+        const confirmed = await openDeleteModal(name);
+
+        if (!confirmed) {
+            return;
+        }
+
+        button.disabled = true;
+
+        try {
+            const response = await fetch(`${baseUrl}/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: new URLSearchParams({ _method: 'DELETE' }),
+            });
+
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Gagal menghapus mata kuliah.');
+            }
+
+            rawData = rawData.filter(mk => String(mk.id) !== String(id));
+            applyFilters();
+
+            if (window.nbToast) {
+                nbToast(result.message || 'Data mata kuliah berhasil dihapus dari tampilan admin!', 'success');
+            }
+        } catch (error) {
+            button.disabled = false;
+
+            if (window.nbToast) {
+                nbToast(error.message, 'error');
+            } else {
+                alert(error.message);
+            }
+        }
+    }
+
     function applyFilters() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase();
 
         const filtered = rawData.filter(mk => {
             const kode = (mk.kode_mk ?? '').toLowerCase();
@@ -335,6 +576,21 @@
     }
 
     document.getElementById('searchInput')?.addEventListener('keyup', applyFilters);
+    document.getElementById('adminDeleteCancel').addEventListener('click', () => closeDeleteModal(false));
+    document.getElementById('adminDeleteClose').addEventListener('click', () => closeDeleteModal(false));
+    document.getElementById('adminDeleteConfirm').addEventListener('click', () => closeDeleteModal(true));
+    document.getElementById('adminDeleteModal').addEventListener('click', event => {
+        if (event.target.id === 'adminDeleteModal') closeDeleteModal(false);
+    });
+    tableBody.addEventListener('click', (event) => {
+        const button = event.target.closest('.js-delete-mk');
+
+        if (!button) {
+            return;
+        }
+
+        deleteMatakuliah(button.dataset.id, button.dataset.name || 'mata kuliah ini', button);
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
         renderTable(rawData);

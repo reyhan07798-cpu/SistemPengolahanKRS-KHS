@@ -189,12 +189,9 @@
                 <td class="hidden lg:table-cell text-sm text-muted max-w-xs truncate">${pk.deskripsi || '-'}</td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <form action="${deleteUrl}" method="POST" data-nb-confirm="true" data-nb-confirm-title="Hapus Paket Mata Kuliah?" data-nb-confirm-desc="Tindakan ini tidak dapat dibatalkan. Mahasiswa yang menggunakan paket ini perlu memilih paket lain." data-nb-confirm-button="Ya, Hapus" data-nb-confirm-icon="delete_forever" class="inline">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="nb-row-action danger" title="Hapus">
-                                <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
-                            </button>
-                        </form>
+                        <button type="button" class="nb-row-action danger" title="Hapus" onclick="deleteData('${deleteUrl}', 'Hapus Paket Mata Kuliah?', 'Tindakan ini tidak dapat dibatalkan. Mahasiswa yang menggunakan paket ini perlu memilih paket lain.', '${pk.nama_paket}')">
+                            <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+                        </button>
                     </div>
                 </td>
             `;
