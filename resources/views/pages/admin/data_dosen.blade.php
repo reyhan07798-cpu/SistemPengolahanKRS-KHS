@@ -115,7 +115,7 @@
         <div class="admin-delete-modal" role="dialog" aria-modal="true" aria-labelledby="adminDeleteTitle">
             <div class="admin-delete-header">
                 <div class="admin-delete-icon">
-                    <span class="material-symbols-outlined">person_remove</span>
+                    <span class="material-symbols-outlined">delete</span>
                 </div>
                 <button type="button" class="admin-delete-close" id="adminDeleteClose" aria-label="Tutup">
                     <span class="material-symbols-outlined">close</span>
@@ -123,13 +123,13 @@
             </div>
 
             <div class="admin-delete-body">
-                <span class="admin-delete-badge">Soft Delete</span>
+                <span class="admin-delete-badge">Hapus Sementara</span>
                 <h3 id="adminDeleteTitle">Hapus Dosen dari Tampilan?</h3>
                 <p id="adminDeleteMessage">
-                    Data dosen tetap disimpan agar riwayat nilai dan mata kuliah tidak hilang.
+                    Data dosen tidak akan hilang permanen, hanya disembunyikan dari tampilan admin.
                 </p>
                 <div class="admin-delete-target">
-                    <span class="material-symbols-outlined">badge</span>
+                    <span class="material-symbols-outlined">person</span>
                     <strong id="adminDeleteName">Dosen</strong>
                 </div>
             </div>
@@ -137,8 +137,8 @@
             <div class="admin-delete-footer">
                 <button type="button" class="admin-delete-btn admin-delete-cancel" id="adminDeleteCancel">Batal</button>
                 <button type="button" class="admin-delete-btn admin-delete-confirm" id="adminDeleteConfirm">
-                    <span class="material-symbols-outlined">archive</span>
-                    Ya, Hapus Tampilan
+                    <span class="material-symbols-outlined">delete</span>
+                    Ya, Hapus
                 </button>
             </div>
         </div>
@@ -193,6 +193,7 @@
                                     <option value="{{ $prodi }}" {{ old('fakultas') == $prodi ? 'selected' : '' }}>{{ $prodi }}</option>
                                 @endforeach
                             </select>
+                            @error('fakultas') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="md:col-span-2">
@@ -221,6 +222,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     .admin-delete-backdrop {
         position: fixed;
@@ -468,7 +470,7 @@ let rawData = @json($dosen);
                 </td>
                 <td class="hidden md:table-cell text-sm text-primary">${dsn.email}</td>
                 <td class="hidden sm:table-cell text-center"><span class="nb-badge ${badgeClass}">${dsn.tipe_dosen}</span></td>
-                <td class="hidden lg:table-cell text-muted">${dsn.fakultas || dsn.prodi}</td>
+                <td class="hidden lg:table-cell text-muted">${safeText(dsn.fakultas || dsn.prodi)}</td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
                         <a href="/admin/dosen/${dsn.id}/edit" class="nb-row-action edit" title="Edit">
@@ -516,17 +518,21 @@ async function deleteDosen(id, name, button) {
             rawData = rawData.filter(dsn => String(dsn.id) !== String(id));
             filterTable();
 
-            if (window.nbToast) {
-                nbToast(result.message || 'Data dosen berhasil dihapus dari tampilan admin.', 'success');
-            }
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: result.message || 'Data dosen berhasil dihapus dari tampilan admin.',
+                timer: 1800,
+                showConfirmButton: false,
+            });
         } catch (error) {
             button.disabled = false;
 
-            if (window.nbToast) {
-                nbToast(error.message, 'error');
-            } else {
-                alert(error.message);
-            }
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: error.message || 'Gagal menghapus dosen dari tampilan.',
+            });
         }
     }
 

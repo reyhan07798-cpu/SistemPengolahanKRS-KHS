@@ -225,6 +225,7 @@ public function storeDosen(Request $request)
         'nama' => 'required|string|max:100',
         'email' => 'required|email|max:100|unique:dosen,email|unique:users,email',
         'tipe_dosen' => 'required|string',
+        'fakultas' => 'required|string|max:100',
         'alamat' => 'nullable|string',
         'no_hp' => 'nullable|string|max:20',
         'password' => 'required|string|min:4',
@@ -246,6 +247,7 @@ public function storeDosen(Request $request)
             $tipe = strtolower($validated['tipe_dosen']);
 
             if (
+                $tipe === 'keduanya' ||
                 str_contains($tipe, 'wali') &&
                 (str_contains($tipe, 'mata kuliah') || str_contains($tipe, 'mk') || str_contains($tipe, 'keduanya'))
             ) {
@@ -266,6 +268,7 @@ public function storeDosen(Request $request)
             'no_hp' => $validated['no_hp'] ?? null,
             'alamat' => $validated['alamat'] ?? null,
             'tipe_dosen' => $validated['tipe_dosen'],
+            'fakultas' => $validated['fakultas'],
         ]);
 
         return redirect()
@@ -312,6 +315,7 @@ public function updateDosen(Request $request, $id)
             Rule::unique('users', 'email')->ignore($dosen->user_id),
         ],
         'tipe_dosen' => 'required|string',
+        'fakultas' => 'required|string|max:100',
         'alamat' => 'nullable|string',
         'no_hp' => 'nullable|string|max:20',
         'password' => 'nullable|string|min:4',
@@ -340,6 +344,7 @@ public function updateDosen(Request $request, $id)
                     $tipe = strtolower($validated['tipe_dosen']);
 
                     if (
+                        $tipe === 'keduanya' ||
                         str_contains($tipe, 'wali') &&
                         (str_contains($tipe, 'mata kuliah') || str_contains($tipe, 'mk') || str_contains($tipe, 'keduanya'))
                     ) {
@@ -363,6 +368,7 @@ public function updateDosen(Request $request, $id)
             'no_hp' => $validated['no_hp'] ?? null,
             'alamat' => $validated['alamat'] ?? null,
             'tipe_dosen' => $validated['tipe_dosen'],
+            'fakultas' => $validated['fakultas'],
         ]);
 
         return redirect()
@@ -378,25 +384,47 @@ public function updateDosen(Request $request, $id)
 
 public function destroyDosen($id)
 {
+    $successMessage = 'Data dosen berhasil dihapus dari tampilan admin.';
+
     try {
+        if (!Schema::hasTable('dosen')) {
+            if (request()->expectsJson()) {
+                return response()->json(['message' => 'Tabel dosen tidak ditemukan.'], 404);
+            }
+
+            return redirect()
+                ->route('pages.admin.dosen.index')
+                ->with('error', 'Tabel dosen tidak ditemukan.');
+        }
+
+        if (!Schema::hasColumn('dosen', 'deleted_at')) {
+            if (request()->expectsJson()) {
+                return response()->json(['message' => 'Kolom soft delete belum tersedia. Jalankan migration terlebih dahulu.'], 500);
+            }
+
+            return redirect()
+                ->route('pages.admin.dosen.index')
+                ->with('error', 'Kolom soft delete belum tersedia. Jalankan migration terlebih dahulu.');
+        }
+
         $dosen = Dosen::findOrFail($id);
 
         $dosen->delete();
 
         if (request()->expectsJson()) {
-            return response()->json(['message' => 'Data dosen berhasil dihapus dari tampilan admin.']);
+            return response()->json(['message' => $successMessage]);
         }
 
         return redirect()
             ->route('pages.admin.dosen.index')
-            ->with('success', 'Data dosen berhasil dihapus dari tampilan admin!');
+            ->with('success', $successMessage);
     } catch (\Exception $e) {
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Gagal menghapus data: ' . $e->getMessage()], 500);
         }
 
         return redirect()
-            ->back()
+            ->route('pages.admin.dosen.index')
             ->with('error', 'Gagal menghapus data: ' . $e->getMessage());
     }
 }

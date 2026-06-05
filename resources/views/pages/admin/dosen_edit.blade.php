@@ -76,9 +76,10 @@
                         class="@error('tipe_dosen') is-invalid @enderror"
                         required
                     >
+                        @php($selectedTipeDosen = old('tipe_dosen', $dosen->tipe_dosen))
                         <option value="">Pilih peran dosen</option>
-                        <option value="Dosen Wali" {{ old('tipe_dosen', $dosen->tipe_dosen) == 'Dosen Wali' ? 'selected' : '' }}>Dosen Wali & Matakuliah</option>
-                        <option value="Dosen Mata Kuliah" {{ old('tipe_dosen', $dosen->tipe_dosen) == 'Dosen Mata Kuliah' ? 'selected' : '' }}>Dosen Mata Kuliah</option>
+                        <option value="keduanya" {{ in_array($selectedTipeDosen, ['keduanya', 'Dosen Wali']) ? 'selected' : '' }}>Dosen Wali & Matakuliah</option>
+                        <option value="Dosen Mata Kuliah" {{ $selectedTipeDosen == 'Dosen Mata Kuliah' ? 'selected' : '' }}>Dosen Mata Kuliah</option>
                     </select>
                     @error('tipe_dosen')
                         <p class="nb-form-error">{{ $message }}</p>

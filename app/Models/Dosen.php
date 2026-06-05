@@ -21,5 +21,6 @@ class Dosen extends Model
         'no_hp',
         'alamat',
         'tipe_dosen',
+        'fakultas',
     ];
 }
