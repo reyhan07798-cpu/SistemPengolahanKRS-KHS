@@ -55,9 +55,24 @@ class MhsPdfController extends Controller
                 ->with('error', 'Data mahasiswa tidak ditemukan.');
         }
 
+        $semesterAktif = DB::table('semesters')
+            ->where('is_active', 1)
+            ->first();
+
+        if (!$semesterAktif) {
+            return back()->with('error', 'Belum ada semester aktif.');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Nilai yang dicetak: hanya semester aktif
+        |--------------------------------------------------------------------------
+        */
         $khs = DB::table('nilai')
             ->join('mata_kuliah', 'nilai.mata_kuliah_id', '=', 'mata_kuliah.id')
             ->where('nilai.mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->where('nilai.tahun_ajaran', $semesterAktif->tahun_ajaran)
+            ->where('nilai.semester', $semesterAktif->semester_ke)
             ->select(
                 'mata_kuliah.kode_mk as kode',
                 'mata_kuliah.nama as mata_kuliah',
@@ -67,41 +82,74 @@ class MhsPdfController extends Controller
                 'nilai.tahun_ajaran',
                 'nilai.semester'
             )
-            ->orderBy('nilai.tahun_ajaran', 'desc')
-            ->orderBy('nilai.semester', 'asc')
+            ->orderBy('mata_kuliah.kode_mk', 'asc')
             ->get();
 
-        $semesterAktif = DB::table('semesters')
-            ->where('is_active', 1)
-            ->first();
-
         $totalSks = $khs->sum('sks');
+
         $totalKn = $khs->sum(function ($item) {
-            return $item->sks * $item->angka;
+            return ((int) $item->sks) * ((float) $item->angka);
         });
 
+        // IPS semester aktif
         $ips = $totalSks > 0 ? round($totalKn / $totalSks, 2) : 0;
+
+        /*
+        |--------------------------------------------------------------------------
+        | IPK Kumulatif sampai semester aktif
+        |--------------------------------------------------------------------------
+        */
+        $nilaiKumulatif = DB::table('nilai')
+            ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->where(function ($query) use ($semesterAktif) {
+                $query->where('tahun_ajaran', '<', $semesterAktif->tahun_ajaran)
+                    ->orWhere(function ($subQuery) use ($semesterAktif) {
+                        $subQuery->where('tahun_ajaran', $semesterAktif->tahun_ajaran)
+                            ->where('semester', '<=', $semesterAktif->semester_ke);
+                    });
+            })
+            ->get();
+
+        $totalSksKumulatif = $nilaiKumulatif->sum('sks');
+
+        $totalKnKumulatif = $nilaiKumulatif->sum(function ($item) {
+            return ((int) $item->sks) * ((float) $item->bobot);
+        });
+
+        $ipkKumulatif = $totalSksKumulatif > 0
+            ? round($totalKnKumulatif / $totalSksKumulatif, 2)
+            : 0;
 
         $data = [
             'mahasiswa' => $mahasiswa,
             'khs' => $khs,
-            'tahun' => $semesterAktif->tahun_ajaran ?? '2025/2026',
-            'semester' => strtoupper($semesterAktif->semester ?? 'GENAP'),
-            'semester_ke' => $semesterAktif->semester ?? '-',
+
+            'tahun' => $semesterAktif->tahun_ajaran,
+            'semester' => $semesterAktif->semester,
+            'semester_ke' => $semesterAktif->semester_ke,
+
             'kelas' => $mahasiswa->kelas ?? '-',
             'prodi' => 'Teknik Informatika',
             'pa' => 'Dosen Wali',
             'kaprodi' => 'Kepala Program Studi',
             'nip' => '-',
+
             'total_sks' => $totalSks,
             'total_kn' => $totalKn,
             'ips' => $ips,
-            'ipk' => $ips,
+            'ipk' => $ipkKumulatif,
         ];
 
         $pdf = Pdf::loadView('pages.mahasiswa.khs_pdf', $data)
             ->setPaper('A4', 'portrait');
 
-        return $pdf->stream('KHS_' . $mahasiswa->nim . '.pdf');
+        $namaFile = 'KHS_'
+            . $mahasiswa->nim . '_'
+            . str_replace('/', '-', $semesterAktif->tahun_ajaran)
+            . '_Semester_'
+            . $semesterAktif->semester
+            . '.pdf';
+
+        return $pdf->stream($namaFile);
     }
 }

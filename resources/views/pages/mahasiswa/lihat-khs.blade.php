@@ -25,9 +25,9 @@
                 <div class="nb-stat-icon">
                     <span class="material-symbols-outlined filled">trending_up</span>
                 </div>
-                <p class="nb-stat-label">IPK</p>
+                <p class="nb-stat-label">IPS</p>
             </div>
-            <div class="nb-stat-value">{{ number_format($ipk, 2) }}</div>
+            <div class="nb-stat-value">{{ number_format($ipsSemesterAktif, 2) }}</div>
         </div>
 
         <div class="nb-stat nb-stat--primary nb-stat--ribbon">
@@ -74,28 +74,54 @@
                 <tbody>
                     @forelse($ipSemester as $ip)
                         @php
-                            $ipsClass = $ip->ips >= 3.5 ? 'text-accent' : ($ip->ips >= 3.0 ? 'text-primary' : 'text-muted');
+                            $semesterText = match ((string) $ip->semester) {
+                                '1' => 'Ganjil',
+                                '2' => 'Genap',
+                                'Ganjil' => 'Ganjil',
+                                'Genap' => 'Genap',
+                                default => $ip->semester,
+                            };
+
+                            $semesterBadge = $semesterText === 'Ganjil'
+                                ? 'nb-badge-info'
+                                : 'nb-badge-primary';
+
+                            $ipsClass = $ip->ips >= 3.5
+                                ? 'text-accent'
+                                : ($ip->ips >= 3.0 ? 'text-primary' : 'text-muted');
                         @endphp
 
                         <tr>
                             <td class="text-center">
-                                <span class="nb-badge {{ $ip->semester === 'Ganjil' ? 'nb-badge-info' : 'nb-badge-primary' }}">
-                                    {{ $ip->semester }}
+                                <span class="nb-badge {{ $semesterBadge }}">
+                                    {{ $semesterText }}
                                 </span>
                             </td>
-                            <td class="text-center text-muted">{{ $ip->tahun_ajaran }}</td>
-                            <td class="text-center font-bold text-primary">{{ $ip->mk }} MK</td>
-                            <td class="text-center font-bold text-primary">{{ $ip->sks }} SKS</td>
+
+                            <td class="text-center text-muted">
+                                {{ $ip->tahun_ajaran }}
+                            </td>
+
+                            <td class="text-center font-bold text-primary">
+                                {{ $ip->mk }} MK
+                            </td>
+
+                            <td class="text-center font-bold text-primary">
+                                {{ $ip->sks }} SKS
+                            </td>
+
                             <td class="text-center">
                                 <span class="font-extrabold text-xl {{ $ipsClass }}" style="font-family:var(--font-heading);">
                                     {{ number_format($ip->ips, 2) }}
                                 </span>
                             </td>
+
                             <td class="text-center">
                                 <span class="font-bold text-ink" style="font-family:var(--font-heading);">
                                     {{ number_format($ip->ipk, 2) }}
                                 </span>
                             </td>
+
                             <td class="text-center">
                                 <span class="nb-badge {{ $ip->predikat['badge'] }}">
                                     {{ $ip->predikat['label'] }}
@@ -161,7 +187,10 @@
                 <span class="nb-eyebrow" style="color:var(--color-accent-soft);">Transkrip</span>
                 <h2 class="mt-1">Daftar Nilai</h2>
             </div>
-            <span class="nb-badge nb-badge-primary">{{ $mataKuliahCount }} Mata Kuliah</span>
+
+            <span class="nb-badge nb-badge-primary">
+                {{ $nilaiCount ?? $nilai->count() }} Mata Kuliah
+            </span>
         </div>
 
         <div class="overflow-x-auto">
@@ -182,14 +211,29 @@
                     @forelse($nilai as $n)
                         @php
                             $mutu = (float) $n->bobot;
-                            $mutuClass = $mutu >= 3.5 ? 'text-accent' : ($mutu >= 2.5 ? 'text-primary' : 'text-muted');
 
-                            $nilaiBadge = match($n->nilai) {
-                                'A','A-' => 'nb-badge-success',
-                                'B+','B' => 'nb-badge-primary',
-                                'B-','C+','C' => 'nb-badge-warning',
+                            $mutuClass = $mutu >= 3.5
+                                ? 'text-accent'
+                                : ($mutu >= 2.5 ? 'text-primary' : 'text-muted');
+
+                            $nilaiBadge = match ($n->nilai) {
+                                'A', 'A-' => 'nb-badge-success',
+                                'B+', 'B' => 'nb-badge-primary',
+                                'B-', 'C+', 'C' => 'nb-badge-warning',
                                 default => 'nb-badge-danger',
                             };
+
+                            $semesterText = match ((string) $n->semester) {
+                                '1' => 'Ganjil',
+                                '2' => 'Genap',
+                                'Ganjil' => 'Ganjil',
+                                'Genap' => 'Genap',
+                                default => $n->semester,
+                            };
+
+                            $semesterBadge = $semesterText === 'Ganjil'
+                                ? 'nb-badge-info'
+                                : 'nb-badge-primary';
                         @endphp
 
                         <tr>
@@ -206,8 +250,8 @@
                             </td>
 
                             <td class="text-center">
-                                <span class="nb-badge {{ $n->semester === 'Ganjil' ? 'nb-badge-info' : 'nb-badge-primary' }}">
-                                    {{ $n->semester }}
+                                <span class="nb-badge {{ $semesterBadge }}">
+                                    {{ $semesterText }}
                                 </span>
                             </td>
 

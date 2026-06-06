@@ -7,7 +7,7 @@
         <div>
             <span class="nb-eyebrow">Akademik</span>
             <h1 class="mt-2">Ambil KRS</h1>
-            <p>Pilih mata kuliah untuk semester ini. Maksimal 24 SKS per semester.</p>
+            <p>Pilih mata kuliah untuk semester aktif. Maksimal 24 SKS per semester.</p>
         </div>
     </div>
 
@@ -32,16 +32,16 @@
         </div>
     @endif
 
-    {{-- READ ONLY WARNING --}}
     <div id="readOnlyWarning" class="hidden nb-alert nb-alert-warning mb-6 flex items-center gap-2">
         <span class="material-symbols-outlined">lock</span>
         <div>
             <strong>Mode Read Only</strong>
-            <p class="text-sm mt-1">Anda tidak dapat mengajukan KRS untuk semester ini (semester lama / sudah mengajukan).</p>
+            <p class="text-sm mt-1">
+                Semester yang dipilih bukan semester aktif atau Anda sudah mengajukan KRS pada semester ini.
+            </p>
         </div>
     </div>
 
-    {{-- Stat Cards --}}
     <div class="nb-bento mb-6" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
         <div class="nb-stat nb-stat--info nb-stat--ribbon">
             <div class="flex items-center gap-3">
@@ -62,7 +62,9 @@
                 </div>
                 <p class="nb-stat-label">Sisa SKS</p>
             </div>
-            <div class="nb-stat-value" id="sisaSks">24</div>
+            <div class="nb-stat-value" id="sisaSks">
+                {{ $data['sisa_sks'] ?? 24 }}
+            </div>
         </div>
 
         <div class="nb-stat nb-stat--warning nb-stat--ribbon">
@@ -82,7 +84,6 @@
         </div>
     </div>
 
-    {{-- Filter --}}
     <div class="nb-card mb-6">
         <div class="flex items-center gap-3 mb-4">
             <span class="material-symbols-outlined text-primary">filter_list</span>
@@ -93,9 +94,11 @@
             <div>
                 <label class="nb-label">Tahun Ajaran</label>
                 <select id="filterTahun">
-                    @foreach($data['all_semesters'] as $sem)
-                        <option value="{{ $sem->tahun_ajaran }}" {{ $sem->is_active ? 'selected' : '' }}>
-                            {{ $sem->tahun_ajaran }} {{ $sem->is_active ? '(Aktif)' : '' }}
+                    @foreach($data['tahun_ajaran_list'] as $tahun)
+                        <option value="{{ $tahun->tahun_ajaran }}"
+                            {{ $tahun->tahun_ajaran == $data['tahun_ajaran_aktif'] ? 'selected' : '' }}>
+                            {{ $tahun->tahun_ajaran }}
+                            {{ $tahun->tahun_ajaran == $data['tahun_ajaran_aktif'] ? '(Aktif)' : '' }}
                         </option>
                     @endforeach
                 </select>
@@ -104,9 +107,11 @@
             <div>
                 <label class="nb-label">Semester</label>
                 <select id="filterSemester">
-                    @foreach($data['all_semesters'] as $sem)
-                        <option value="Semester {{ $sem->semester }} {{ $sem->tahun_ajaran }}" {{ $sem->is_active ? 'selected' : '' }}>
-                            Semester {{ $sem->semester }} {{ $sem->is_active ? '(Aktif)' : '' }}
+                    @foreach($data['semester_list'] as $sem)
+                        <option value="{{ $sem->semester }}"
+                            {{ $sem->semester == $data['semester_aktif_value'] ? 'selected' : '' }}>
+                            Semester {{ $sem->semester }}
+                            {{ $sem->semester == $data['semester_aktif_value'] ? '(Aktif)' : '' }}
                         </option>
                     @endforeach
                 </select>
@@ -121,7 +126,6 @@
         </div>
     </div>
 
-    {{-- Warning SKS --}}
     <div id="warningSks" class="hidden mb-4">
         <div class="nb-alert nb-alert-warning flex items-center gap-2">
             <span class="material-symbols-outlined">warning</span>
@@ -129,13 +133,12 @@
         </div>
     </div>
 
-    {{-- Form KRS --}}
     <form method="POST" action="{{ route('pages.mahasiswa.store-krs') }}" id="formKrs">
         @csrf
-        <input type="hidden" name="semester" id="inputSemester" value="{{ $data['semester_label'] ?? '' }}">
+
+        <input type="hidden" name="semester" id="inputSemester" value="{{ $data['semester_aktif_value'] ?? '' }}">
         <input type="hidden" name="tahun_ajaran" id="inputTahun" value="{{ $data['tahun_ajaran_aktif'] ?? '' }}">
 
-        {{-- Paket Wajib --}}
         <div id="containerWajib" class="nb-card-flat mb-6 hidden">
             <div class="nb-section-header">
                 <div>
@@ -146,6 +149,7 @@
                 </div>
                 <span class="nb-badge nb-badge-success">Wajib Diambil</span>
             </div>
+
             <div class="overflow-x-auto">
                 <table class="nb-table">
                     <thead>
@@ -163,7 +167,6 @@
             </div>
         </div>
 
-        {{-- Paket Mengulang --}}
         <div id="containerMengulang" class="nb-card-flat mb-6 hidden">
             <div class="nb-section-header" style="background-color:var(--color-warning);">
                 <div>
@@ -172,6 +175,7 @@
                 </div>
                 <span class="nb-badge nb-badge-stable">Nilai D / E</span>
             </div>
+
             <div class="overflow-x-auto">
                 <table class="nb-table">
                     <thead>
@@ -189,7 +193,6 @@
             </div>
         </div>
 
-        {{-- Summary SKS --}}
         <div id="summarySection" class="nb-card mb-6">
             <div class="flex flex-wrap justify-between items-center gap-4">
                 <div>
@@ -199,24 +202,26 @@
                         Maksimal: 24 SKS
                     </p>
                 </div>
+
                 <div class="flex gap-3 flex-wrap">
                     <button type="button" onclick="resetForm()" class="nb-btn nb-btn-secondary">
                         <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
                         Reset
                     </button>
+
                     <button type="submit" id="btnSubmit" class="nb-btn nb-btn-primary" disabled>
                         <span class="material-symbols-outlined" style="font-size:18px;">send</span>
                         Ajukan KRS
                     </button>
                 </div>
             </div>
+
             <p id="krsHelpText" class="text-xs text-muted mt-3">
                 Pilih minimal 1 mata kuliah untuk mengaktifkan tombol Ajukan KRS.
             </p>
         </div>
     </form>
 
-    {{-- Empty State --}}
     <div id="emptyState" class="nb-card text-center py-12">
         <span class="material-symbols-outlined text-muted" style="font-size:64px;">assignment</span>
         <h3 class="nb-h3 mt-4">Klik "Tampilkan Paket"</h3>
@@ -230,9 +235,9 @@
     let selectedSks = 0;
     let paketData = {};
     let isReadOnlyMode = false;
+    let existingTotalSks = {{ $data['total_sks'] ?? 0 }};
 
     document.addEventListener('DOMContentLoaded', function () {
-        // Auto load semester aktif saat pertama buka
         loadPaketSemester();
     });
 
@@ -242,13 +247,21 @@
 
         document.getElementById('inputSemester').value = semester;
         document.getElementById('inputTahun').value = tahun;
-        document.getElementById('labelSemesterWajib').textContent = semester;
+        document.getElementById('labelSemesterWajib').textContent = `Semester ${semester} ${tahun}`;
 
         const emptyState = document.getElementById('emptyState');
         const containerWajib = document.getElementById('containerWajib');
         const containerMengulang = document.getElementById('containerMengulang');
 
-        emptyState.innerHTML = `<div class="flex items-center justify-center gap-3 py-12"><div class="animate-spin"><span class="material-symbols-outlined">hourglass_top</span></div><span>Memuat paket semester...</span></div>`;
+        emptyState.innerHTML = `
+            <div class="flex items-center justify-center gap-3 py-12">
+                <div class="animate-spin">
+                    <span class="material-symbols-outlined">hourglass_top</span>
+                </div>
+                <span>Memuat paket semester...</span>
+            </div>
+        `;
+
         emptyState.classList.remove('hidden');
         containerWajib.classList.add('hidden');
         containerMengulang.classList.add('hidden');
@@ -257,34 +270,66 @@
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    emptyState.innerHTML = `<div class="nb-alert nb-alert-danger flex items-center gap-2 mb-4"><span class="material-symbols-outlined">error</span><div><strong>Gagal Memuat</strong><p class="text-sm mt-1">${data.message}</p></div></div>`;
+                    emptyState.innerHTML = `
+                        <div class="nb-alert nb-alert-danger flex items-center gap-2 mb-4">
+                            <span class="material-symbols-outlined">error</span>
+                            <div>
+                                <strong>Gagal Memuat</strong>
+                                <p class="text-sm mt-1">${data.message}</p>
+                            </div>
+                        </div>
+                    `;
+
                     paketData = {};
+                    isReadOnlyMode = false;
+                    existingTotalSks = 0;
                     resetForm();
                     return;
                 }
 
                 emptyState.classList.add('hidden');
+
                 paketData = data.paket_semester || {};
                 isReadOnlyMode = data.is_read_only || false;
-                
-                // Toggle UI Read Only
+                existingTotalSks = parseInt(data.total_sks_diambil || 0);
+
                 document.getElementById('readOnlyWarning').classList.toggle('hidden', !isReadOnlyMode);
                 document.getElementById('summarySection').classList.toggle('hidden', isReadOnlyMode);
-                
+
                 renderTabel();
                 resetForm();
             })
             .catch(error => {
                 console.error('Error:', error);
-                emptyState.innerHTML = `<div class="nb-alert nb-alert-danger flex items-center gap-2"><span class="material-symbols-outlined">error</span><div><strong>Terjadi Kesalahan</strong><p class="text-sm mt-1">Gagal memuat paket semester. Silakan coba lagi.</p></div></div>`;
+
+                emptyState.innerHTML = `
+                    <div class="nb-alert nb-alert-danger flex items-center gap-2">
+                        <span class="material-symbols-outlined">error</span>
+                        <div>
+                            <strong>Terjadi Kesalahan</strong>
+                            <p class="text-sm mt-1">Gagal memuat paket semester. Silakan coba lagi.</p>
+                        </div>
+                    </div>
+                `;
             });
     }
 
     function renderTabel() {
         renderTabelSection('tabelWajib', paketData.wajib || [], false);
         renderTabelSection('tabelMengulang', paketData.mengulang || [], true);
+
         document.getElementById('containerWajib').classList.toggle('hidden', (paketData.wajib || []).length === 0);
         document.getElementById('containerMengulang').classList.toggle('hidden', (paketData.mengulang || []).length === 0);
+
+        if ((paketData.wajib || []).length === 0 && (paketData.mengulang || []).length === 0) {
+            const emptyState = document.getElementById('emptyState');
+            emptyState.classList.remove('hidden');
+            emptyState.innerHTML = `
+                <span class="material-symbols-outlined text-muted" style="font-size:64px;">folder_off</span>
+                <h3 class="nb-h3 mt-4">Tidak ada paket mata kuliah</h3>
+                <p class="text-muted mt-2">Belum ada mata kuliah untuk semester dan tahun ajaran yang dipilih.</p>
+            `;
+        }
     }
 
     function renderTabelSection(tbodyId, data, isMengulang) {
@@ -292,19 +337,37 @@
         tbody.innerHTML = '';
 
         if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-muted font-medium">Tidak ada data</td></tr>`;
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-8 text-muted font-medium">
+                        Tidak ada data
+                    </td>
+                </tr>
+            `;
             return;
         }
 
         data.forEach(mk => {
             const row = document.createElement('tr');
+
             const nilaiLama = mk.nilaiLama || '-';
             const prasyarat = mk.prasyarat || '-';
-            const lastCell = isMengulang ? `<span class="nb-badge nb-badge-danger">${nilaiLama}</span>` : `<span class="text-muted text-sm">${prasyarat}</span>`;
-            
+
+            const lastCell = isMengulang
+                ? `<span class="nb-badge nb-badge-danger">${nilaiLama}</span>`
+                : `<span class="text-muted text-sm">${prasyarat}</span>`;
+
             row.innerHTML = `
                 <td class="text-center">
-                    <input type="checkbox" name="mata_kuliah_ids[]" value="${mk.id}" data-sks="${mk.sks}" class="chk-mk ${isMengulang ? 'chk-mengulang' : 'chk-wajib'} w-5 h-5 cursor-pointer" ${isMengulang ? 'data-mengulang="true"' : ''} style="accent-color:var(--color-accent);">
+                    <input
+                        type="checkbox"
+                        name="mata_kuliah_ids[]"
+                        value="${mk.id}"
+                        data-sks="${mk.sks}"
+                        class="chk-mk ${isMengulang ? 'chk-mengulang' : 'chk-wajib'} w-5 h-5 cursor-pointer"
+                        ${isMengulang ? 'data-mengulang="true"' : ''}
+                        style="accent-color:var(--color-accent);"
+                    >
                 </td>
                 <td class="font-bold text-primary" style="font-family:var(--font-heading);">${mk.kode || '-'}</td>
                 <td class="font-medium text-ink">${mk.matkul || '-'}</td>
@@ -312,6 +375,7 @@
                 <td class="text-center font-bold">${mk.sks || 0}</td>
                 <td class="text-center">${lastCell}</td>
             `;
+
             tbody.appendChild(row);
         });
 
@@ -321,13 +385,14 @@
     }
 
     function hitungSks() {
-        // LOGIC MENGULANG: Cek apakah semua wajib sudah tercentang
         let allWajibChecked = true;
+
         document.querySelectorAll('.chk-wajib').forEach(chk => {
-            if (!chk.checked) allWajibChecked = false;
+            if (!chk.checked) {
+                allWajibChecked = false;
+            }
         });
 
-        // Jika belum semua wajib tercentang, langsung uncheck semua mengulang & disable
         document.querySelectorAll('.chk-mengulang').forEach(chk => {
             if (!allWajibChecked) {
                 chk.checked = false;
@@ -335,14 +400,14 @@
             }
         });
 
-        // Hitung total SKS
         selectedSks = 0;
+
         document.querySelectorAll('.chk-mk:checked').forEach(chk => {
             selectedSks += parseInt(chk.dataset.sks) || 0;
         });
 
         document.getElementById('totalSks').textContent = selectedSks;
-        document.getElementById('sisaSks').textContent = MAX_SKS - selectedSks;
+        document.getElementById('sisaSks').textContent = Math.max(0, MAX_SKS - selectedSks);
 
         const warning = document.getElementById('warningSks');
         const warningInner = warning.querySelector('.nb-alert');
@@ -366,11 +431,11 @@
             btnSubmit.disabled = selectedSks === 0;
         }
 
-        // Disable checkbox yang belum dicentang jika melebihi SKS
         document.querySelectorAll('.chk-mk:not(:checked)').forEach(chk => {
             const sksMk = parseInt(chk.dataset.sks) || 0;
+
             if (chk.classList.contains('chk-mengulang') && !allWajibChecked) {
-                chk.disabled = true; // Disable mengulang jika wajib belum lengkap
+                chk.disabled = true;
             } else {
                 chk.disabled = (selectedSks + sksMk > MAX_SKS);
             }
@@ -381,7 +446,10 @@
 
     function updateHelpText(allWajibChecked = true) {
         const helpText = document.getElementById('krsHelpText');
-        if (!helpText) return;
+
+        if (!helpText) {
+            return;
+        }
 
         if (!allWajibChecked && document.querySelectorAll('.chk-mengulang').length > 0) {
             helpText.textContent = '⚠ Pilih semua Mata Kuliah Wajib terlebih dahulu sebelum memilih MK Mengulang.';
@@ -399,18 +467,49 @@
     }
 
     function resetForm() {
-        document.querySelectorAll('.chk-mk').forEach(chk => { chk.checked = false; chk.disabled = false; });
+        document.querySelectorAll('.chk-mk').forEach(chk => {
+            chk.checked = false;
+            chk.disabled = false;
+        });
+
         selectedSks = 0;
-        document.getElementById('totalSks').textContent = '0';
-        document.getElementById('sisaSks').textContent = MAX_SKS;
+
+        const totalSksEl = document.getElementById('totalSks');
+        const sisaSksEl = document.getElementById('sisaSks');
+        const btnSubmit = document.getElementById('btnSubmit');
+
         document.getElementById('warningSks').classList.add('hidden');
-        document.getElementById('btnSubmit').disabled = true;
-        
-        // Jika read only, langsung disable semua lagi
-        if(isReadOnlyMode) {
-            document.querySelectorAll('.chk-mk').forEach(chk => chk.disabled = true);
-            document.getElementById('btnSubmit').disabled = true;
+
+        if (isReadOnlyMode) {
+            document.querySelectorAll('.chk-mk').forEach(chk => {
+                chk.disabled = true;
+            });
+
+            if (totalSksEl) {
+                totalSksEl.textContent = existingTotalSks;
+            }
+
+            if (sisaSksEl) {
+                sisaSksEl.textContent = Math.max(0, MAX_SKS - existingTotalSks);
+            }
+
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+            }
+        } else {
+            if (totalSksEl) {
+                totalSksEl.textContent = '0';
+            }
+
+            if (sisaSksEl) {
+                sisaSksEl.textContent = MAX_SKS;
+            }
+
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+            }
         }
+
         updateHelpText();
     }
 </script>

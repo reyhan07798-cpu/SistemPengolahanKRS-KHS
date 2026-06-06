@@ -49,9 +49,9 @@
                 <div class="nb-stat-icon">
                     <span class="material-symbols-outlined filled">trending_up</span>
                 </div>
-                <p class="nb-stat-label">IPK</p>
+                <p class="nb-stat-label">IPS</p>
             </div>
-            <div class="nb-stat-value">{{ number_format($data['ipk'], 2) }}</div>
+            <div class="nb-stat-value">{{ number_format($data['ips'], 2) }}</div>
         </div>
 
         <div class="nb-stat nb-stat--warning nb-stat--ribbon">

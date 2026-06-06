@@ -86,6 +86,26 @@ class KhsMahasiswaController extends Controller
         return ['label' => 'Cukup', 'badge' => 'nb-badge-stable'];
     }
 
+    private function convertSemesterFilter($semesterFilter)
+    {
+        if (!$semesterFilter) {
+            return null;
+        }
+
+        $semesterMap = [
+            'Ganjil' => 1,
+            'Genap' => 2,
+            'ganjil' => 1,
+            'genap' => 2,
+            '1' => 1,
+            '2' => 2,
+            1 => 1,
+            2 => 2,
+        ];
+
+        return $semesterMap[$semesterFilter] ?? $semesterFilter;
+    }
+
     public function index(Request $request)
     {
         $mahasiswa = $this->currentMahasiswa();
@@ -97,10 +117,15 @@ class KhsMahasiswaController extends Controller
 
         $tahunFilter = $request->input('tahun_ajaran');
         $semesterFilter = $request->input('semester');
+        $semesterValue = $this->convertSemesterFilter($semesterFilter);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Ambil nilai untuk Daftar Nilai
+        |--------------------------------------------------------------------------
+        */
         $nilaiQuery = DB::table('nilai')
             ->join('mata_kuliah', 'nilai.mata_kuliah_id', '=', 'mata_kuliah.id')
-            ->leftJoin('semesters', 'nilai.semester_id', '=', 'semesters.id')
             ->where('nilai.mahasiswa_id', $mahasiswa->mahasiswa_id)
             ->select(
                 'nilai.id',
@@ -115,14 +140,15 @@ class KhsMahasiswaController extends Controller
                 'mata_kuliah.nama as nama_mk'
             )
             ->orderBy('nilai.tahun_ajaran', 'desc')
-            ->orderBy('nilai.semester', 'asc');
+            ->orderBy('nilai.semester', 'desc')
+            ->orderBy('mata_kuliah.kode_mk', 'asc');
 
         if ($tahunFilter) {
             $nilaiQuery->where('nilai.tahun_ajaran', $tahunFilter);
         }
 
-        if ($semesterFilter) {
-            $nilaiQuery->where('nilai.semester', $semesterFilter);
+        if ($semesterValue) {
+            $nilaiQuery->where('nilai.semester', $semesterValue);
         }
 
         $nilai = $nilaiQuery->get()->map(function ($item) {
@@ -132,17 +158,65 @@ class KhsMahasiswaController extends Controller
             return $item;
         });
 
-        $totalSks = $nilai->sum('sks');
-        $totalKn = $nilai->sum('kn');
-        $mataKuliahCount = $nilai->count();
-        $ipk = $totalSks > 0 ? round($totalKn / $totalSks, 2) : 0;
+        $nilaiCount = $nilai->count();
 
+        /*
+        |--------------------------------------------------------------------------
+        | Ambil semester aktif
+        |--------------------------------------------------------------------------
+        */
+        $semesterAktif = DB::table('semesters')
+            ->where('is_active', 1)
+            ->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Card Atas: IPS, Total SKS, dan Mata Kuliah Semester Aktif
+        |--------------------------------------------------------------------------
+        */
+        $nilaiSemesterAktif = collect();
+
+        if ($semesterAktif) {
+            $nilaiSemesterAktif = DB::table('nilai')
+                ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+                ->where('tahun_ajaran', $semesterAktif->tahun_ajaran)
+                ->where('semester', $semesterAktif->semester_ke)
+                ->get()
+                ->map(function ($item) {
+                    $item->kn = ((int) $item->sks) * ((float) $item->bobot);
+                    return $item;
+                });
+        }
+
+        $totalSks = $nilaiSemesterAktif->sum('sks');
+        $totalKn = $nilaiSemesterAktif->sum('kn');
+        $mataKuliahCount = $nilaiSemesterAktif->count();
+
+        // Ini IPS, karena hanya semester aktif
+        $ipsSemesterAktif = $totalSks > 0 ? round($totalKn / $totalSks, 2) : 0;
+
+        /*
+        |--------------------------------------------------------------------------
+        | List Tahun Ajaran untuk Filter
+        |--------------------------------------------------------------------------
+        */
         $listTahun = DB::table('nilai')
             ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
             ->select('tahun_ajaran')
             ->distinct()
             ->orderBy('tahun_ajaran', 'desc')
             ->pluck('tahun_ajaran');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tabel Indeks Prestasi Per Semester
+        |--------------------------------------------------------------------------
+        | IPS = per semester
+        | IPK Kumulatif = akumulasi dari semester awal sampai semester tersebut
+        |--------------------------------------------------------------------------
+        */
+        $runningSks = 0;
+        $runningKn = 0;
 
         $ipSemester = DB::table('nilai')
             ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
@@ -154,11 +228,19 @@ class KhsMahasiswaController extends Controller
             ->orderBy('tahun_ajaran', 'asc')
             ->orderBy('semester', 'asc')
             ->get()
-            ->map(function ($item) {
-                $ips = $item->sks > 0 ? round($item->total_kn / $item->sks, 2) : 0;
+            ->map(function ($item) use (&$runningSks, &$runningKn) {
+                $sksSemester = (int) $item->sks;
+                $knSemester = (float) $item->total_kn;
+
+                $ips = $sksSemester > 0 ? round($knSemester / $sksSemester, 2) : 0;
+
+                $runningSks += $sksSemester;
+                $runningKn += $knSemester;
+
+                $ipkKumulatif = $runningSks > 0 ? round($runningKn / $runningSks, 2) : 0;
 
                 $item->ips = $ips;
-                $item->ipk = $ips;
+                $item->ipk = $ipkKumulatif;
                 $item->predikat = $this->predikat($ips);
 
                 return $item;
@@ -176,13 +258,15 @@ class KhsMahasiswaController extends Controller
         return view('pages.mahasiswa.lihat-khs', compact(
             'data',
             'nilai',
-            'ipk',
+            'nilaiCount',
+            'ipsSemesterAktif',
             'totalSks',
             'mataKuliahCount',
             'listTahun',
             'ipSemester',
             'tahunFilter',
-            'semesterFilter'
+            'semesterFilter',
+            'semesterAktif'
         ));
     }
 }

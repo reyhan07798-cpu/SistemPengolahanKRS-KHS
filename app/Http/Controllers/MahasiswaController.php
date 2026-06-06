@@ -9,17 +9,11 @@ use Illuminate\Validation\Rule;
 
 class MahasiswaController extends Controller
 {
-    /**
-     * Helper: ambil user dari session simple auth.
-     */
     private function currentUserSession(): ?array
     {
         return session('user');
     }
 
-    /**
-     * Helper: ambil data mahasiswa yang sedang login.
-     */
     private function currentMahasiswa()
     {
         $userSession = $this->currentUserSession();
@@ -62,9 +56,6 @@ class MahasiswaController extends Controller
             ->first();
     }
 
-    /**
-     * Helper: ambil semester aktif.
-     */
     private function semesterAktif()
     {
         return DB::table('semesters')
@@ -72,9 +63,17 @@ class MahasiswaController extends Controller
             ->first();
     }
 
-    /**
-     * Halaman Beranda Mahasiswa
-     */
+    private function kelasPrefix($kelas): string
+    {
+        $kelas = trim((string) $kelas);
+
+        if ($kelas === '') {
+            return '';
+        }
+
+        return explode('-', $kelas)[0] ?? $kelas;
+    }
+
     public function index()
     {
         $mahasiswa = $this->currentMahasiswa();
@@ -86,28 +85,29 @@ class MahasiswaController extends Controller
 
         $mahasiswaId = $mahasiswa->mahasiswa_id;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Statistik Akademik dari tabel nilai
-        |--------------------------------------------------------------------------
-        */
-        $nilaiRecords = DB::table('nilai')
-            ->join('mata_kuliah', 'nilai.mata_kuliah_id', '=', 'mata_kuliah.id')
-            ->where('nilai.mahasiswa_id', $mahasiswaId)
-            ->select(
-                'nilai.id',
-                'nilai.mahasiswa_id',
-                'nilai.mata_kuliah_id',
-                'nilai.tahun_ajaran',
-                'nilai.semester',
-                'nilai.nilai',
-                'nilai.bobot',
-                'nilai.sks',
-                'mata_kuliah.kode_mk',
-                'mata_kuliah.nama as nama_mk'
-            )
-            ->orderBy('nilai.created_at', 'desc')
-            ->get();
+        $nilaiRecords = collect();
+
+        if ($semesterAktif) {
+            $nilaiRecords = DB::table('nilai')
+                ->join('mata_kuliah', 'nilai.mata_kuliah_id', '=', 'mata_kuliah.id')
+                ->where('nilai.mahasiswa_id', $mahasiswaId)
+                ->where('nilai.tahun_ajaran', $semesterAktif->tahun_ajaran)
+                ->where('nilai.semester', $semesterAktif->semester_ke)
+                ->select(
+                    'nilai.id',
+                    'nilai.mahasiswa_id',
+                    'nilai.mata_kuliah_id',
+                    'nilai.tahun_ajaran',
+                    'nilai.semester',
+                    'nilai.nilai',
+                    'nilai.bobot',
+                    'nilai.sks',
+                    'mata_kuliah.kode_mk',
+                    'mata_kuliah.nama as nama_mk'
+                )
+                ->orderBy('mata_kuliah.kode_mk', 'asc')
+                ->get();
+        }
 
         $totalSks = $nilaiRecords->sum('sks');
 
@@ -115,7 +115,7 @@ class MahasiswaController extends Controller
             return ((int) $item->sks) * ((float) $item->bobot);
         });
 
-        $ipk = $totalSks > 0 ? round($totalBobot / $totalSks, 2) : 0;
+        $ips = $totalSks > 0 ? round($totalBobot / $totalSks, 2) : 0;
 
         $mataKuliahLulus = $nilaiRecords
             ->filter(function ($item) {
@@ -123,11 +123,6 @@ class MahasiswaController extends Controller
             })
             ->count();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Nilai Terbaru
-        |--------------------------------------------------------------------------
-        */
         $nilaiTerbaru = $nilaiRecords
             ->take(5)
             ->map(function ($item) {
@@ -140,11 +135,6 @@ class MahasiswaController extends Controller
             })
             ->toArray();
 
-        /*
-        |--------------------------------------------------------------------------
-        | KRS Aktif dari krs_mahasiswa dan krs_detail
-        |--------------------------------------------------------------------------
-        */
         $krsAktif = [];
 
         if ($semesterAktif) {
@@ -182,13 +172,10 @@ class MahasiswaController extends Controller
             'prodi' => 'Teknik Informatika',
             'angkatan' => $mahasiswa->angkatan ?? '-',
             'email' => $mahasiswa->email ?? $mahasiswa->user_email ?? '-',
-
             'semester_aktif' => $semesterAktif ? $semesterAktif->semester : '-',
-
             'total_sks' => $totalSks,
-            'ipk' => $ipk,
+            'ips' => $ips,
             'mata_kuliah_lulus' => $mataKuliahLulus,
-
             'nilai_terbaru' => $nilaiTerbaru,
             'krs_aktif' => $krsAktif,
         ];
@@ -196,9 +183,6 @@ class MahasiswaController extends Controller
         return view('pages.mahasiswa.beranda', compact('data'));
     }
 
-    /**
-     * Halaman Profil Mahasiswa
-     */
     public function profil()
     {
         $mahasiswa = $this->currentMahasiswa();
@@ -230,9 +214,6 @@ class MahasiswaController extends Controller
         return view('pages.mahasiswa.profil', compact('data'));
     }
 
-    /**
-     * Update Profil Mahasiswa
-     */
     public function updateProfil(Request $request)
     {
         $userSession = $this->currentUserSession();
@@ -301,9 +282,6 @@ class MahasiswaController extends Controller
             ->with('success', 'Profil berhasil diperbarui!');
     }
 
-    /**
-     * Update Password Mahasiswa
-     */
     public function updatePassword(Request $request)
     {
         $userSession = $this->currentUserSession();
@@ -343,9 +321,6 @@ class MahasiswaController extends Controller
             ->with('success', 'Kata sandi berhasil diperbarui!');
     }
 
-    /**
-     * Halaman Ambil KRS
-     */
     public function ambilKrs()
     {
         $mahasiswa = $this->currentMahasiswa();
@@ -357,65 +332,74 @@ class MahasiswaController extends Controller
 
         $statusKrs = 'Belum Mengajukan';
         $isReadOnlyKrs = false;
+        $totalSksDiambil = 0;
 
         if ($semesterAktif) {
             $krsAktif = DB::table('krs_mahasiswa')
                 ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
                 ->where('semester_id', $semesterAktif->id)
+                ->latest('created_at')
                 ->first();
 
             if ($krsAktif) {
                 $statusKrs = ucfirst($krsAktif->status);
-                
-                // Jika status menunggu atau disetujui, KRS tidak bisa diedit/diajukan ulang
+                $totalSksDiambil = (int) $krsAktif->total_sks;
+
                 if (in_array($krsAktif->status, ['menunggu', 'disetujui'])) {
                     $isReadOnlyKrs = true;
                 }
             }
         }
 
-        // Ambil semua semester untuk dropdown filter (termasuk yang tidak aktif)
-        $allSemesters = DB::table('semesters')->orderByDesc('id')->get();
+        $tahunAjaranList = DB::table('semesters')
+            ->select('tahun_ajaran')
+            ->distinct()
+            ->orderBy('tahun_ajaran', 'desc')
+            ->get();
+
+        $semesterList = DB::table('semesters')
+            ->select('semester', 'semester_ke')
+            ->distinct()
+            ->orderBy('semester_ke', 'asc')
+            ->get();
 
         $data = [
             'nama' => $mahasiswa->nama ?? $mahasiswa->user_name ?? '-',
             'email' => $mahasiswa->email ?? $mahasiswa->user_email ?? '-',
+
             'semester_aktif' => $semesterAktif?->semester ?? '-',
             'semester_label' => $semesterAktif
                 ? 'Semester ' . $semesterAktif->semester . ' ' . $semesterAktif->tahun_ajaran
                 : '-',
-            'total_sks' => 0,
+
+            'total_sks' => $totalSksDiambil,
+            'sisa_sks' => max(0, 24 - $totalSksDiambil),
             'status_krs' => $statusKrs,
             'max_sks' => 24,
-            'tahun_ajaran_aktif' => $semesterAktif?->tahun_ajaran ?? '2025/2026',
+
+            'tahun_ajaran_aktif' => $semesterAktif?->tahun_ajaran ?? '-',
+            'semester_aktif_value' => $semesterAktif?->semester ?? '-',
+
             'is_semester_active' => $semesterAktif ? true : false,
-            'is_read_only_krs' => $isReadOnlyKrs, // Kirim ke view
-            'all_semesters' => $allSemesters,     // Kirim ke view
+            'is_read_only_krs' => $isReadOnlyKrs,
+
+            'tahun_ajaran_list' => $tahunAjaranList,
+            'semester_list' => $semesterList,
+            'semester_aktif_data' => $semesterAktif,
         ];
 
         return view('pages.mahasiswa.ambil-krs', compact('data'));
     }
 
-    /**
-     * API: Load Paket Semester berdasarkan filter
-     */
     public function getPaketSemester(Request $request)
     {
         $semesterRequest = $request->input('semester');
         $tahunAjaran = $request->input('tahun_ajaran');
 
-        // Cari semester berdasarkan filter (bisa aktif maupun tidak)
-        $semesterQuery = DB::table('semesters');
-        if ($tahunAjaran) {
-            $semesterQuery->where('tahun_ajaran', $tahunAjaran);
-        }
-        if (strpos($semesterRequest, 'Genap') !== false) {
-            $semesterQuery->where('semester', 'Genap');
-        } elseif (strpos($semesterRequest, 'Ganjil') !== false) {
-            $semesterQuery->where('semester', 'Ganjil');
-        }
-        
-        $semester = $semesterQuery->first();
+        $semester = DB::table('semesters')
+            ->where('tahun_ajaran', $tahunAjaran)
+            ->where('semester', $semesterRequest)
+            ->first();
 
         if (!$semester) {
             return response()->json([
@@ -424,51 +408,75 @@ class MahasiswaController extends Controller
             ], 404);
         }
 
-        // Cek apakah semester ini read-only
-        $isReadOnly = !(bool)$semester->is_active;
-
         $mahasiswa = $this->currentMahasiswa();
+
         if (!$mahasiswa) {
-            return response()->json(['error' => true, 'message' => 'Data mahasiswa tidak ditemukan.'], 403);
+            return response()->json([
+                'error' => true,
+                'message' => 'Data mahasiswa tidak ditemukan.',
+            ], 403);
         }
 
-        // Jika semester aktif, cek apakah mahasiswa sudah mengajukan KRS
-        if (!$isReadOnly) {
-            $existingKrs = DB::table('krs_mahasiswa')
-                ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
-                ->where('semester_id', $semester->id)
-                ->whereIn('status', ['menunggu', 'disetujui'])
-                ->first();
-                
-            if ($existingKrs) {
-                $isReadOnly = true; // Sudah mengajukan, jadi read only
-            }
+        $isReadOnly = !(bool) $semester->is_active;
+        $totalSksDiambil = 0;
+
+        $existingKrs = DB::table('krs_mahasiswa')
+            ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->where('semester_id', $semester->id)
+            ->whereIn('status', ['menunggu', 'disetujui'])
+            ->latest('created_at')
+            ->first();
+
+        if ($existingKrs) {
+            $isReadOnly = true;
+            $totalSksDiambil = (int) $existingKrs->total_sks;
         }
 
-        // 1. Cek mata kuliah yang pernah dapat D/E (Mengulang)
+        $kelasMahasiswa = $mahasiswa->kelas ?? '';
+        $kelasPrefix = $this->kelasPrefix($kelasMahasiswa);
+
         $mengulangIds = DB::table('nilai')
             ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
             ->whereIn('nilai', ['D', 'E'])
             ->pluck('mata_kuliah_id')
             ->toArray();
 
-        // 2. Ambil Semua Mata Kuliah yang ditawarkan di Semester Terpilih
         $allMk = DB::table('mata_kuliah')
-            ->leftJoin('dosen', 'mata_kuliah.dosen_id', '=', 'dosen.id')
-            ->where('mata_kuliah.semester_id', $semester->id)
+            ->leftJoin('dosen_matakuliah', 'mata_kuliah.id', '=', 'dosen_matakuliah.mata_kuliah_id')
+            ->leftJoin('dosen', 'dosen_matakuliah.dosen_id', '=', 'dosen.id')
+            ->where(function ($query) use ($semester) {
+                $query->where('mata_kuliah.semester_id', $semester->id)
+                    ->orWhere(function ($q) use ($semester) {
+                        $q->where('mata_kuliah.tahun_ajaran', $semester->tahun_ajaran)
+                            ->where('mata_kuliah.semester_ke', $semester->semester_ke);
+                    });
+            })
+            ->where(function ($query) use ($kelasMahasiswa, $kelasPrefix) {
+                $query->where('mata_kuliah.kelas', $kelasMahasiswa)
+                    ->orWhere('mata_kuliah.kelas', 'LIKE', $kelasPrefix . '%')
+                    ->orWhereNull('mata_kuliah.kelas');
+            })
             ->select(
                 'mata_kuliah.id',
                 'mata_kuliah.kode_mk as kode',
                 'mata_kuliah.nama as matkul',
                 'mata_kuliah.sks',
-                'dosen.nama as dosen'
+                'mata_kuliah.kelas',
+                'dosen.nama as dosen',
+                'dosen.nik'
             )
+            ->distinct()
+            ->orderBy('mata_kuliah.kode_mk', 'asc')
             ->get();
 
         $mkWajib = [];
         $mkMengulang = [];
 
         foreach ($allMk as $mk) {
+            $namaDosen = $mk->dosen
+                ? $mk->dosen . ($mk->nik ? ' (NIK: ' . $mk->nik . ')' : '')
+                : '-';
+
             if (in_array($mk->id, $mengulangIds)) {
                 $nilaiLama = DB::table('nilai')
                     ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
@@ -480,8 +488,9 @@ class MahasiswaController extends Controller
                     'id' => $mk->id,
                     'kode' => $mk->kode,
                     'matkul' => $mk->matkul,
-                    'dosen' => $mk->dosen ?? '-',
+                    'dosen' => $namaDosen,
                     'sks' => $mk->sks,
+                    'kelas' => $mk->kelas ?? '-',
                     'isMengulang' => true,
                     'nilaiLama' => $nilaiLama ?? '-',
                 ];
@@ -490,8 +499,9 @@ class MahasiswaController extends Controller
                     'id' => $mk->id,
                     'kode' => $mk->kode,
                     'matkul' => $mk->matkul,
-                    'dosen' => $mk->dosen ?? '-',
+                    'dosen' => $namaDosen,
                     'sks' => $mk->sks,
+                    'kelas' => $mk->kelas ?? '-',
                     'prasyarat' => '-',
                 ];
             }
@@ -501,7 +511,11 @@ class MahasiswaController extends Controller
             'error' => false,
             'semester' => 'Semester ' . $semester->semester . ' ' . $semester->tahun_ajaran,
             'tahun_ajaran' => $semester->tahun_ajaran,
-            'is_read_only' => $isReadOnly, // Kirim status ke frontend
+            'kelas_mahasiswa' => $mahasiswa->kelas,
+            'is_read_only' => $isReadOnly,
+            'is_active' => (bool) $semester->is_active,
+            'total_sks_diambil' => $totalSksDiambil,
+            'sisa_sks' => max(0, 24 - $totalSksDiambil),
             'paket_semester' => [
                 'wajib' => $mkWajib,
                 'mengulang' => $mkMengulang,
@@ -510,9 +524,6 @@ class MahasiswaController extends Controller
         ]);
     }
 
-    /**
-     * Simpan KRS Mahasiswa
-     */
     public function storeKrs(Request $request)
     {
         $request->validate([
@@ -522,51 +533,76 @@ class MahasiswaController extends Controller
             'tahun_ajaran' => ['required', 'string'],
         ]);
 
+        $mahasiswa = $this->currentMahasiswa();
+        $semesterAktif = $this->semesterAktif();
+
+        if (!$mahasiswa) {
+            return redirect()->route('login');
+        }
+
+        if (!$semesterAktif) {
+            return back()->with('error', 'Belum ada semester aktif.');
+        }
+
+        $mataKuliahIds = array_unique($request->input('mata_kuliah_ids'));
+        $tahunAjaran = $request->input('tahun_ajaran');
+        $semesterInput = $request->input('semester');
+
+        if ($tahunAjaran !== $semesterAktif->tahun_ajaran || $semesterInput !== $semesterAktif->semester) {
+            return back()->with('error', 'Hanya semester aktif yang dapat diajukan.');
+        }
+
+        $kelasMahasiswa = $mahasiswa->kelas ?? '';
+        $kelasPrefix = $this->kelasPrefix($kelasMahasiswa);
+
+        $validMataKuliahIds = DB::table('mata_kuliah')
+            ->whereIn('id', $mataKuliahIds)
+            ->where('semester_id', $semesterAktif->id)
+            ->where(function ($query) use ($kelasMahasiswa, $kelasPrefix) {
+                $query->where('kelas', $kelasMahasiswa)
+                    ->orWhere('kelas', 'LIKE', $kelasPrefix . '%');
+            })
+            ->pluck('id')
+            ->toArray();
+
+        if (count($validMataKuliahIds) !== count($mataKuliahIds)) {
+            return back()->with('error', 'Ada mata kuliah yang tidak sesuai dengan kelas Anda. Silakan pilih ulang KRS.');
+        }
+
+        $totalSks = DB::table('mata_kuliah')
+            ->whereIn('id', $validMataKuliahIds)
+            ->sum('sks');
+
+        if ($totalSks > 24) {
+            return back()->with('error', 'Total SKS tidak boleh melebihi 24 SKS. SKS yang dipilih: ' . $totalSks);
+        }
+
         try {
-            $mahasiswa = $this->currentMahasiswa();
-            $semesterAktif = $this->semesterAktif();
+            DB::beginTransaction();
 
-            if (!$mahasiswa) {
-                return redirect()->route('login');
-            }
-
-            if (!$semesterAktif) {
-                return back()->with('error', 'Belum ada semester aktif.');
-            }
-
-            $mataKuliahIds = $request->input('mata_kuliah_ids');
-            $tahunAjaran = $request->input('tahun_ajaran');
-
-            if ($tahunAjaran !== $semesterAktif->tahun_ajaran) {
-                return back()->with('error', 'Hanya semester aktif yang dapat diajukan.');
-            }
-
-            $totalSks = DB::table('mata_kuliah')
-                ->whereIn('id', $mataKuliahIds)
-                ->sum('sks');
-
-            if ($totalSks > 24) {
-                return back()->with('error', 'Total SKS tidak boleh melebihi 24 SKS. SKS yang dipilih: ' . $totalSks);
-            }
-
-            // Cek Double Submission & Ditolak
             $existingKrs = DB::table('krs_mahasiswa')
                 ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
                 ->where('semester_id', $semesterAktif->id)
                 ->first();
 
             if ($existingKrs) {
-                // Jika ditolak, hapus KRS lama agar bisa mengajukan ulang
                 if ($existingKrs->status === 'ditolak') {
-                    DB::table('krs_detail')->where('krs_mahasiswa_id', $existingKrs->id)->delete();
-                    DB::table('krs_mahasiswa')->where('id', $existingKrs->id)->delete();
+                    DB::table('krs_detail')
+                        ->where('krs_mahasiswa_id', $existingKrs->id)
+                        ->delete();
+
+                    DB::table('krs_mahasiswa')
+                        ->where('id', $existingKrs->id)
+                        ->delete();
                 } else {
-                    // Jika menunggu/disetujui, tolak pengajuan
-                    return back()->with('warning', 'Anda sudah mengajukan KRS di semester ini. Status: ' . ucfirst($existingKrs->status));
+                    DB::rollBack();
+
+                    return back()->with(
+                        'warning',
+                        'Anda sudah mengajukan KRS di semester ini. Status: ' . ucfirst($existingKrs->status)
+                    );
                 }
             }
-
-            DB::beginTransaction();
 
             $krsId = DB::table('krs_mahasiswa')->insertGetId([
                 'mahasiswa_id' => $mahasiswa->mahasiswa_id,
@@ -580,7 +616,7 @@ class MahasiswaController extends Controller
                 'updated_at' => now(),
             ]);
 
-            foreach ($mataKuliahIds as $mataKuliahId) {
+            foreach ($validMataKuliahIds as $mataKuliahId) {
                 DB::table('krs_detail')->insert([
                     'krs_mahasiswa_id' => $krsId,
                     'mata_kuliah_id' => $mataKuliahId,
@@ -601,9 +637,6 @@ class MahasiswaController extends Controller
         }
     }
 
-    /**
-     * Lihat KRS Mahasiswa yang sudah diambil
-     */
     public function viewKrs()
     {
         $mahasiswa = $this->currentMahasiswa();
@@ -629,7 +662,8 @@ class MahasiswaController extends Controller
                     ->select(
                         'mata_kuliah.kode_mk',
                         'mata_kuliah.nama',
-                        'mata_kuliah.sks'
+                        'mata_kuliah.sks',
+                        'mata_kuliah.kelas'
                     )
                     ->get();
 
@@ -678,27 +712,8 @@ class MahasiswaController extends Controller
         ]);
     }
 
-    /**
-     * Halaman Lihat KHS
-     */
     public function lihatKhs(Request $request)
     {
-        $mahasiswa = $this->currentMahasiswa();
-
-        if (!$mahasiswa) {
-            return redirect()->route('login');
-        }
-
-        $nilai = [];
-        $ipk = 0;
-        $totalSks = 0;
-        $mataKuliahCount = 0;
-
-        $data = [
-            'nama' => $mahasiswa->nama ?? $mahasiswa->user_name ?? '-',
-            'email' => $mahasiswa->email ?? $mahasiswa->user_email ?? '-',
-        ];
-
-        return view('pages.mahasiswa.lihat-khs', compact('nilai', 'ipk', 'totalSks', 'mataKuliahCount', 'data'));
+        return app(KhsMahasiswaController::class)->index($request);
     }
 }
