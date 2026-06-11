@@ -33,6 +33,12 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::delete('/{id}', [AdminController::class, 'destroyMahasiswa'])->name('destroy');
     });
 
+    Route::prefix('admin/semester-mahasiswa')->name('pages.admin.semester-mahasiswa.')->group(function () {
+        Route::get('/', [AdminController::class, 'indexSemesterMahasiswa'])->name('index');
+        Route::post('/naik-semester', [AdminController::class, 'promoteSemesterMahasiswa'])->name('promote');
+        Route::put('/{mahasiswaId}', [AdminController::class, 'updateSemesterMahasiswa'])->name('update');
+    });
+
     Route::prefix('admin/dosen')->name('pages.admin.dosen.')->group(function () {
         Route::get('/', [AdminController::class, 'indexDosen'])->name('index');
         Route::get('/create', [AdminController::class, 'createDosen'])->name('create');
@@ -52,13 +58,19 @@ Route::middleware('check.simple.auth')->group(function () {
 
     Route::prefix('admin/tahun-ajaran')->name('pages.admin.tahunajaran.')->group(function () {
         Route::get('/', [AdminController::class, 'indexTahunAjaran'])->name('index');
+        Route::get('/create', [AdminController::class, 'createTahunAjaran'])->name('create');
         Route::post('/', [AdminController::class, 'storeTahunAjaran'])->name('store');
+        Route::get('/{id}/edit', [AdminController::class, 'editTahunAjaran'])->name('edit');
+        Route::put('/{id}', [AdminController::class, 'updateTahunAjaran'])->name('update');
         Route::delete('/{id}', [AdminController::class, 'destroyTahunAjaran'])->name('destroy');
     });
 
     Route::prefix('admin/paket-mk')->name('pages.admin.paketmk.')->group(function () {
         Route::get('/', [AdminController::class, 'indexPaketMK'])->name('index');
+        Route::get('/create', [AdminController::class, 'createPaketMK'])->name('create');
         Route::post('/', [AdminController::class, 'storePaketMK'])->name('store');
+        Route::get('/{id}/edit', [AdminController::class, 'editPaketMK'])->name('edit');
+        Route::put('/{id}', [AdminController::class, 'updatePaketMK'])->name('update');
         Route::delete('/{id}', [AdminController::class, 'destroyPaketMK'])->name('destroy');
     });
 

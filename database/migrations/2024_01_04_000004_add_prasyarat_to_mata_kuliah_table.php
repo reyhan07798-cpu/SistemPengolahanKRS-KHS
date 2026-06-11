@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('mata_kuliahs') && !Schema::hasColumn('mata_kuliahs', 'prasyarat')) {
-            Schema::table('mata_kuliahs', function (Blueprint $table) {
+        if (Schema::hasTable('mata_kuliah') && !Schema::hasColumn('mata_kuliah', 'prasyarat')) {
+            Schema::table('mata_kuliah', function (Blueprint $table) {
                 $table->string('prasyarat')->nullable();
             });
         }
@@ -23,8 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('mata_kuliahs') && Schema::hasColumn('mata_kuliahs', 'prasyarat')) {
-            Schema::table('mata_kuliahs', function (Blueprint $table) {
+        if (Schema::hasTable('mata_kuliah') && Schema::hasColumn('mata_kuliah', 'prasyarat')) {
+            Schema::table('mata_kuliah', function (Blueprint $table) {
                 $table->dropColumn('prasyarat');
             });
         }

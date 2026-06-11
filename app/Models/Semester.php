@@ -14,6 +14,7 @@ class Semester extends Model
     protected $fillable = [
         'nama',
         'tahun_ajaran',
+        'semester',
         'semester_ke',
         'tanggal_mulai',
         'tanggal_selesai',

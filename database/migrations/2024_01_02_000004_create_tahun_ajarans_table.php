@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('semester'); // Ganjil or Genap
             $table->string('tahun_ajaran'); // e.g., "2023/2024"
-            $table->string('status')->default('aktif'); // aktif or tidak
+            $table->string('status')->default('Nonaktif');
             $table->timestamps();
         });
     }

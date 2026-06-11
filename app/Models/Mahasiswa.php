@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Mahasiswa extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'mahasiswa';
 
@@ -38,5 +40,10 @@ class Mahasiswa extends Model
     public function prodi(): BelongsTo
     {
         return $this->belongsTo(Prodi::class, 'prodi_id');
+    }
+
+    public function semesterRiwayat(): HasMany
+    {
+        return $this->hasMany(MahasiswaSemester::class, 'mahasiswa_id');
     }
 }

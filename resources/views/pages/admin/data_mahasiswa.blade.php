@@ -47,12 +47,7 @@
             </div>
             <div>
                 <label class="nb-label">Angkatan</label>
-                <select id="filterAngkatan">
-                    <option value="">Semua Angkatan</option>
-                    @foreach($angkatans as $angkatan)
-                        <option value="{{ $angkatan }}">{{ $angkatan }}</option>
-                    @endforeach
-                </select>
+                <input type="number" id="filterAngkatan" min="2000" max="2100" step="1" placeholder="Semua Angkatan">
             </div>
         </div>
     </div>
@@ -73,7 +68,7 @@
                         <th>NIM</th>
                         <th>Nama Lengkap</th>
                         <th class="hidden md:table-cell">Prodi</th>
-                        <th class="hidden lg:table-cell text-center">Kelas</th>
+                        <th class="hidden lg:table-cell text-center whitespace-nowrap">Kelas</th>
                         <th class="hidden sm:table-cell text-center">Angkatan</th>
                         <th class="hidden xl:table-cell">Dosen Wali</th>
                         <th class="hidden lg:table-cell">Email</th>
@@ -133,33 +128,25 @@
 
                         <div>
                             <label class="nb-label">Angkatan <span class="text-danger">*</span></label>
-                            <select name="angkatan" required>
-                                <option value="">Pilih Angkatan</option>
-                                @foreach($angkatans as $angkatan)
-                                    <option value="{{ $angkatan }}" {{ old('angkatan') == $angkatan ? 'selected' : '' }}>{{ $angkatan }}</option>
-                                @endforeach
-                            </select>
+                            <input type="number" name="angkatan" value="{{ old('angkatan') }}" min="2000" max="2100" step="1" placeholder="2026" required>
+                            @error('angkatan') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
                             <label class="nb-label">Kelas <span class="text-danger">*</span></label>
-                            <select name="kelas" required>
-                                <option value="">Pilih kelas</option>
-                                <option value="A" {{ old('kelas') == 'A' ? 'selected' : '' }}>Kelas A</option>
-                                <option value="B" {{ old('kelas') == 'B' ? 'selected' : '' }}>Kelas B</option>
-                                <option value="C" {{ old('kelas') == 'C' ? 'selected' : '' }}>Kelas C</option>
-                                <option value="D" {{ old('kelas') == 'D' ? 'selected' : '' }}>Kelas D</option>
-                            </select>
+                            <input type="text" name="kelas" value="{{ old('kelas') }}" maxlength="20" placeholder="IF2A Pagi" required>
+                            @error('kelas') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
-                            <label class="nb-label">Dosen Wali <span class="text-danger">*</span></label>
-                            <select name="dosen_wali" required>
+                            <label class="nb-label">Dosen Wali</label>
+                            <select name="dosen_wali_id">
                                 <option value="">Pilih dosen wali</option>
                                 @foreach($dosens as $dosen)
-                                    <option value="{{ $dosen->nama }}" {{ old('dosen_wali') == $dosen->nama ? 'selected' : '' }}>{{ $dosen->nama }}</option>
+                                    <option value="{{ $dosen->id }}" {{ old('dosen_wali_id') == $dosen->id ? 'selected' : '' }}>{{ $dosen->nama }}</option>
                                 @endforeach
                             </select>
+                            @error('dosen_wali_id') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
@@ -213,6 +200,14 @@
         if (e.target === this) closeModal();
     });
 
+    function escapeAttribute(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
     @if(old('_token') || $errors->any())
         document.addEventListener('DOMContentLoaded', () => { openModal(); });
     @endif
@@ -231,29 +226,36 @@
             const row = document.createElement('tr');
             const editUrl = `/admin/mahasiswa/${mhs.id}/edit`;
             const deleteUrl = `/admin/mahasiswa/${mhs.id}`;
-            const initials = mhs.nama.split(' ').map(n => n[0]).join('').substring(0, 2);
+            const nama = mhs.nama || '-';
+            const nim = mhs.nim || '-';
+            const prodi = mhs.prodi || '-';
+            const kelas = mhs.kelas || '-';
+            const angkatan = mhs.angkatan || '-';
+            const dosenWali = mhs.dosen_wali || '-';
+            const email = mhs.email || '-';
+            const initials = nama.split(' ').map(n => n[0]).join('').substring(0, 2);
 
             row.innerHTML = `
-                <td class="font-bold text-primary" style="font-family: var(--font-heading);">${mhs.nim}</td>
+                <td class="font-bold text-primary" style="font-family: var(--font-heading);">${nim}</td>
                 <td>
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-full bg-primary-soft border-2 border-ink flex items-center justify-center flex-shrink-0">
                             <span class="text-primary font-extrabold text-xs" style="font-family: var(--font-heading);">${initials}</span>
                         </div>
-                        <span class="font-medium text-ink">${mhs.nama}</span>
+                        <span class="font-medium text-ink">${nama}</span>
                     </div>
                 </td>
-                <td class="hidden md:table-cell text-muted">${mhs.prodi}</td>
-                <td class="hidden lg:table-cell text-center"><span class="nb-badge nb-badge-stable">${mhs.kelas}</span></td>
-                <td class="hidden sm:table-cell text-center text-muted">${mhs.angkatan}</td>
-                <td class="hidden xl:table-cell text-muted text-sm">${mhs.dosen_wali}</td>
-                <td class="hidden lg:table-cell text-sm text-primary">${mhs.email}</td>
+                <td class="hidden md:table-cell text-muted">${prodi}</td>
+                <td class="hidden lg:table-cell text-center whitespace-nowrap"><span class="nb-badge nb-badge-stable whitespace-nowrap">${kelas}</span></td>
+                <td class="hidden sm:table-cell text-center text-muted">${angkatan}</td>
+                <td class="hidden xl:table-cell text-muted text-sm">${dosenWali}</td>
+                <td class="hidden lg:table-cell text-sm text-primary">${email}</td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
                         <a href="${editUrl}" class="nb-row-action edit" title="Edit">
                             <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
                         </a>
-                        <button type="button" class="nb-row-action danger" title="Hapus" onclick="deleteData('${deleteUrl}', 'Hapus Data Mahasiswa?', 'Data mahasiswa beserta riwayat KRS/KHS-nya akan dihapus permanen.', '${mhs.nama}')">
+                        <button type="button" class="nb-row-action danger js-delete-mahasiswa" title="Hapus" data-url="${deleteUrl}" data-name="${escapeAttribute(nama)}">
                             <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
                         </button>
                     </div>
@@ -268,9 +270,11 @@
         const prodiFilter = document.getElementById('filterProdi').value;
         const angkatanFilter = document.getElementById('filterAngkatan').value;
         const filtered = rawData.filter(mhs => {
-            const matchSearch = mhs.nim.toLowerCase().includes(searchTerm) || mhs.nama.toLowerCase().includes(searchTerm);
+            const nim = String(mhs.nim || '').toLowerCase();
+            const nama = String(mhs.nama || '').toLowerCase();
+            const matchSearch = nim.includes(searchTerm) || nama.includes(searchTerm);
             const matchProdi = !prodiFilter || mhs.prodi === prodiFilter;
-            const matchAngkatan = !angkatanFilter || mhs.angkatan === angkatanFilter;
+            const matchAngkatan = !angkatanFilter || String(mhs.angkatan) === String(angkatanFilter);
             return matchSearch && matchProdi && matchAngkatan;
         });
         renderTable(filtered);
@@ -278,7 +282,21 @@
 
     document.getElementById('searchInput').addEventListener('keyup', applyFilters);
     document.getElementById('filterProdi').addEventListener('change', applyFilters);
-    document.getElementById('filterAngkatan').addEventListener('change', applyFilters);
+    document.getElementById('filterAngkatan').addEventListener('input', applyFilters);
+    tableBody.addEventListener('click', (event) => {
+        const button = event.target.closest('.js-delete-mahasiswa');
+
+        if (!button) {
+            return;
+        }
+
+        deleteData(
+            button.dataset.url,
+            'Hapus Data Mahasiswa?',
+            'Data mahasiswa akan disembunyikan dari tampilan admin.',
+            button.dataset.name || 'mahasiswa ini'
+        );
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
         renderTable(rawData);

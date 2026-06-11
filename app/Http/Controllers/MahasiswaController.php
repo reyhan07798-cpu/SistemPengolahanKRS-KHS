@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\PasswordVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -61,6 +62,25 @@ class MahasiswaController extends Controller
         return DB::table('semesters')
             ->where('is_active', 1)
             ->first();
+    }
+
+    private function mahasiswaSemesterAktif(int $mahasiswaId, ?int $semesterId = null)
+    {
+        $query = DB::table('mahasiswa_semester')
+            ->join('semesters', 'mahasiswa_semester.semester_id', '=', 'semesters.id')
+            ->where('mahasiswa_semester.mahasiswa_id', $mahasiswaId)
+            ->select(
+                'mahasiswa_semester.*',
+                'semesters.tahun_ajaran',
+                'semesters.semester',
+                'semesters.is_active'
+            );
+
+        if ($semesterId) {
+            return $query->where('mahasiswa_semester.semester_id', $semesterId)->first();
+        }
+
+        return $query->where('semesters.is_active', 1)->first();
     }
 
     private function kelasPrefix($kelas): string
@@ -303,7 +323,7 @@ class MahasiswaController extends Controller
             return back()->with('error', 'Akun user tidak ditemukan.');
         }
 
-        if (!Hash::check($validated['password_lama'], $user->password)) {
+        if (!PasswordVerifier::check($validated['password_lama'], $user->password)) {
             return back()->withErrors([
                 'password_lama' => 'Kata sandi lama tidak sesuai.',
             ]);
@@ -409,12 +429,27 @@ class MahasiswaController extends Controller
         }
 
         $mahasiswa = $this->currentMahasiswa();
+        $progressSemester = $mahasiswa ? $this->mahasiswaSemesterAktif($mahasiswa->mahasiswa_id, $semester->id) : null;
 
         if (!$mahasiswa) {
             return response()->json([
                 'error' => true,
                 'message' => 'Data mahasiswa tidak ditemukan.',
             ], 403);
+        }
+
+        if (!$progressSemester) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Semester mahasiswa belum diatur oleh admin.',
+            ], 422);
+        }
+
+        if (!in_array($progressSemester->status, ['aktif', 'mengulang'], true)) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Status semester Anda ' . ucfirst($progressSemester->status) . ', sehingga KRS belum dapat diajukan.',
+            ], 422);
         }
 
         $isReadOnly = !(bool) $semester->is_active;
@@ -444,13 +479,14 @@ class MahasiswaController extends Controller
         $allMk = DB::table('mata_kuliah')
             ->leftJoin('dosen_matakuliah', 'mata_kuliah.id', '=', 'dosen_matakuliah.mata_kuliah_id')
             ->leftJoin('dosen', 'dosen_matakuliah.dosen_id', '=', 'dosen.id')
-            ->where(function ($query) use ($semester) {
+            ->where(function ($query) use ($semester, $progressSemester) {
                 $query->where('mata_kuliah.semester_id', $semester->id)
                     ->orWhere(function ($q) use ($semester) {
                         $q->where('mata_kuliah.tahun_ajaran', $semester->tahun_ajaran)
                             ->where('mata_kuliah.semester_ke', $semester->semester_ke);
                     });
             })
+            ->where('mata_kuliah.semester_ke', $progressSemester->semester_ke)
             ->where(function ($query) use ($kelasMahasiswa, $kelasPrefix) {
                 $query->where('mata_kuliah.kelas', $kelasMahasiswa)
                     ->orWhere('mata_kuliah.kelas', 'LIKE', $kelasPrefix . '%')
@@ -511,6 +547,8 @@ class MahasiswaController extends Controller
             'error' => false,
             'semester' => 'Semester ' . $semester->semester . ' ' . $semester->tahun_ajaran,
             'tahun_ajaran' => $semester->tahun_ajaran,
+            'semester_ke_mahasiswa' => (int) $progressSemester->semester_ke,
+            'status_semester_mahasiswa' => $progressSemester->status,
             'kelas_mahasiswa' => $mahasiswa->kelas,
             'is_read_only' => $isReadOnly,
             'is_active' => (bool) $semester->is_active,
@@ -544,6 +582,16 @@ class MahasiswaController extends Controller
             return back()->with('error', 'Belum ada semester aktif.');
         }
 
+        $progressSemester = $this->mahasiswaSemesterAktif($mahasiswa->mahasiswa_id, $semesterAktif->id);
+
+        if (!$progressSemester) {
+            return back()->with('error', 'Semester Anda belum diatur oleh admin.');
+        }
+
+        if (!in_array($progressSemester->status, ['aktif', 'mengulang'], true)) {
+            return back()->with('error', 'Status semester Anda ' . ucfirst($progressSemester->status) . ', sehingga KRS belum dapat diajukan.');
+        }
+
         $mataKuliahIds = array_unique($request->input('mata_kuliah_ids'));
         $tahunAjaran = $request->input('tahun_ajaran');
         $semesterInput = $request->input('semester');
@@ -558,6 +606,7 @@ class MahasiswaController extends Controller
         $validMataKuliahIds = DB::table('mata_kuliah')
             ->whereIn('id', $mataKuliahIds)
             ->where('semester_id', $semesterAktif->id)
+            ->where('semester_ke', $progressSemester->semester_ke)
             ->where(function ($query) use ($kelasMahasiswa, $kelasPrefix) {
                 $query->where('kelas', $kelasMahasiswa)
                     ->orWhere('kelas', 'LIKE', $kelasPrefix . '%');
@@ -609,6 +658,8 @@ class MahasiswaController extends Controller
                 'semester_id' => $semesterAktif->id,
                 'tahun_ajaran' => $semesterAktif->tahun_ajaran,
                 'semester' => $semesterAktif->semester,
+                'semester_ke' => $progressSemester->semester_ke,
+                'kelas' => $mahasiswa->kelas,
                 'status' => 'menunggu',
                 'total_sks' => $totalSks,
                 'catatan' => null,

@@ -4,24 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class KrsMahasiswa extends Model
+class MahasiswaSemester extends Model
 {
-    protected $table = 'krs_mahasiswa';
+    protected $table = 'mahasiswa_semester';
 
     protected $fillable = [
         'mahasiswa_id',
         'semester_id',
-        'kelas',
         'semester_ke',
-        'tahun_ajaran',
-        'semester',
         'status',
-        'total_sks',
         'catatan',
-        'tanggal_disetujui',
-        'disetujui_oleh',
     ];
 
     public function mahasiswa(): BelongsTo
@@ -32,10 +25,5 @@ class KrsMahasiswa extends Model
     public function semesterData(): BelongsTo
     {
         return $this->belongsTo(Semester::class, 'semester_id');
-    }
-
-    public function detail(): HasMany
-    {
-        return $this->hasMany(KrsDetail::class, 'krs_mahasiswa_id');
     }
 }

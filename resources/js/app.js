@@ -21,31 +21,41 @@ import './bootstrap';
     const closeBtn = document.getElementById('nbConfirmClose');
 
     let pendingAction = null; // function untuk eksekusi saat user klik "Ya"
+    let pendingCancelAction = null;
 
     function openDialog(opts) {
         titleEl.textContent = opts.title || 'Konfirmasi';
         descEl.textContent = opts.desc || 'Apakah Anda yakin ingin melanjutkan?';
         iconEl.textContent = opts.icon || 'notifications_active';
         confirmBtn.textContent = opts.button || 'Ya, Lanjutkan';
-        card.setAttribute('data-variant', opts.variant || 'danger');
+        card?.setAttribute('data-variant', opts.variant || 'danger');
 
         pendingAction = opts.onConfirm || null;
+        pendingCancelAction = opts.onCancel || null;
 
+        overlay.classList.remove('hidden');
         overlay.classList.add('open');
         overlay.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
     }
 
-    function closeDialog() {
+    function closeDialog(runCancel = true) {
         overlay.classList.remove('open');
+        overlay.classList.add('hidden');
         overlay.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        const cancelAction = pendingCancelAction;
         pendingAction = null;
+        pendingCancelAction = null;
+
+        if (runCancel && typeof cancelAction === 'function') {
+            cancelAction();
+        }
     }
 
     confirmBtn?.addEventListener('click', () => {
         const action = pendingAction;
-        closeDialog();
+        closeDialog(false);
         if (typeof action === 'function') action();
     });
 
@@ -60,6 +70,19 @@ import './bootstrap';
 
     // Expose globally
     /** @type {any} */ (window).nbConfirm = openDialog;
+    /** @type {any} */ (window).nbConfirmDelete = function (opts = {}) {
+        return new Promise((resolve) => {
+            openDialog({
+                title: opts.title || 'Hapus Data?',
+                desc: opts.desc || 'Data akan disembunyikan dari tampilan admin.',
+                button: opts.button || 'Ya, Hapus',
+                variant: opts.variant || 'danger',
+                icon: opts.icon || 'delete_forever',
+                onConfirm: () => resolve(true),
+                onCancel: () => resolve(false),
+            });
+        });
+    };
 
     // Auto-attach to elements with data-nb-confirm
     function readOpts(el) {
@@ -225,29 +248,35 @@ import './bootstrap';
  * @param {string} itemName - Nama item yang akan dihapus (untuk ditampilkan di konfirmasi)
  */
 window.deleteData = function (url, title, description, itemName) {
-    nbConfirm({
+    const submitDelete = () => {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                         document.querySelector('input[name="_token"]')?.value;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        form.innerHTML = `
+            <input type="hidden" name="_token" value="${csrfToken || ''}">
+            <input type="hidden" name="_method" value="DELETE">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    };
+
+    if (typeof window.nbConfirm !== 'function') {
+        if (window.confirm(description.replace('{itemName}', itemName || 'item ini'))) {
+            submitDelete();
+        }
+        return;
+    }
+
+    window.nbConfirmDelete({
         title: title,
         desc: description.replace('{itemName}', itemName || 'item ini'),
         button: 'Ya, Hapus',
         variant: 'danger',
         icon: 'delete_forever',
-        onConfirm: () => {
-            // Create and submit form
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
-                             document.querySelector('input[name="_token"]')?.value;
-            
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = url;
-            form.innerHTML = `
-                <input type="hidden" name="_token" value="${csrfToken}">
-                <input type="hidden" name="_method" value="DELETE">
-            `;
-            document.body.appendChild(form);
-            form.submit();
-        }
+    }).then((confirmed) => {
+        if (confirmed) submitDelete();
     });
 };
-
-
-

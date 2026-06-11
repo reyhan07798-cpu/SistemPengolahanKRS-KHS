@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nama'); // e.g., "Semester Genap 2025/2026"
             $table->string('tahun_ajaran'); // e.g., "2025/2026"
+            $table->string('semester'); // Ganjil or Genap
             $table->integer('semester_ke'); // 1, 2, 3, etc.
             $table->date('tanggal_mulai');
             $table->date('tanggal_selesai');

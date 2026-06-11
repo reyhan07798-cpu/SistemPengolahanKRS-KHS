@@ -11,13 +11,42 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('krs_mahasiswa')) {
+            return;
+        }
+
         Schema::table('krs_mahasiswa', function (Blueprint $table) {
-            // Tambahkan field untuk tracking semester & tahun ajaran
-            $table->integer('semester_ke')->nullable()->after('mata_kuliah_id');
-            $table->string('tahun_ajaran')->nullable()->after('semester_ke');
-            $table->text('catatan')->nullable()->after('status');
-            $table->timestamp('tanggal_disetujui')->nullable()->after('catatan');
-            $table->unsignedBigInteger('disetujui_oleh')->nullable()->after('tanggal_disetujui');
+            if (!Schema::hasColumn('krs_mahasiswa', 'semester_id')) {
+                $table->foreignId('semester_id')->nullable()->after('mahasiswa_id')->constrained('semesters')->onDelete('set null');
+            }
+
+            if (!Schema::hasColumn('krs_mahasiswa', 'semester_ke')) {
+                $table->integer('semester_ke')->nullable()->after('semester_id');
+            }
+
+            if (!Schema::hasColumn('krs_mahasiswa', 'tahun_ajaran')) {
+                $table->string('tahun_ajaran')->nullable()->after('semester_ke');
+            }
+
+            if (!Schema::hasColumn('krs_mahasiswa', 'semester')) {
+                $table->string('semester', 20)->nullable()->after('tahun_ajaran');
+            }
+
+            if (!Schema::hasColumn('krs_mahasiswa', 'total_sks')) {
+                $table->integer('total_sks')->default(0)->after('status');
+            }
+
+            if (!Schema::hasColumn('krs_mahasiswa', 'catatan')) {
+                $table->text('catatan')->nullable()->after('total_sks');
+            }
+
+            if (!Schema::hasColumn('krs_mahasiswa', 'tanggal_disetujui')) {
+                $table->timestamp('tanggal_disetujui')->nullable()->after('catatan');
+            }
+
+            if (!Schema::hasColumn('krs_mahasiswa', 'disetujui_oleh')) {
+                $table->unsignedBigInteger('disetujui_oleh')->nullable()->after('tanggal_disetujui');
+            }
         });
     }
 
@@ -26,14 +55,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('krs_mahasiswa', function (Blueprint $table) {
-            $table->dropColumn([
-                'semester_ke',
-                'tahun_ajaran',
-                'catatan',
-                'tanggal_disetujui',
-                'disetujui_oleh'
-            ]);
-        });
+        // Kolom-kolom ini sekarang dibuat langsung di migration create_krs_mahasiswa_table.
+        // Migration ini dipertahankan sebagai no-op untuk database lama yang sudah pernah menjalankannya.
     }
 };

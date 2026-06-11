@@ -16,7 +16,7 @@ return new class extends Migration
             $table->decimal('nilai_uas', 5, 2)->nullable()->after('nilai_uts');
             $table->decimal('nilai_kehadiran', 5, 2)->nullable()->after('nilai_uas');
             $table->decimal('nilai_akhir', 5, 2)->nullable()->after('nilai_kehadiran');
-            $table->string('kelas', 5)->nullable()->after('nilai_akhir');
+            $table->string('kelas', 50)->nullable()->after('nilai_akhir');
 
             // Bobot variabel (dalam persen, default sesuai sistem lama)
             $table->decimal('bobot_tugas', 5, 2)->default(20)->after('kelas');
@@ -32,14 +32,14 @@ return new class extends Migration
         // Tambah kolom kelas ke krs_mahasiswa (jika belum ada)
         if (Schema::hasTable('krs_mahasiswa') && !Schema::hasColumn('krs_mahasiswa', 'kelas')) {
             Schema::table('krs_mahasiswa', function (Blueprint $table) {
-                $table->string('kelas', 5)->default('A')->after('mata_kuliah_id');
+                $table->string('kelas', 50)->nullable()->after('semester_id');
             });
         }
 
         // Tambah kolom kelas & dosen ke mata_kuliah (jika belum ada)
         if (Schema::hasTable('mata_kuliah') && !Schema::hasColumn('mata_kuliah', 'kelas')) {
             Schema::table('mata_kuliah', function (Blueprint $table) {
-                $table->string('kelas', 5)->nullable()->after('semester_ke');
+                $table->string('kelas', 50)->nullable()->after('semester_ke');
                 $table->string('dosen_nik')->nullable()->after('kelas');
             });
         }

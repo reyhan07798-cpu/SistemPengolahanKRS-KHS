@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\PasswordVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -878,8 +879,7 @@ class DosenMKController extends Controller
 
         $userDb = DB::table('users')->where('id', $dbDosen->user_id)->first();
 
-        $valid = ($request->password_lama === $userDb->password)
-            || Hash::check($request->password_lama, $userDb->password);
+        $valid = PasswordVerifier::check($request->password_lama, $userDb->password);
 
         if (!$valid) {
             return redirect()->back()->withErrors([

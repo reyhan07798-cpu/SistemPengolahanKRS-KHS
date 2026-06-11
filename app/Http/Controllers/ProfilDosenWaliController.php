@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\PasswordVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -127,9 +128,7 @@ class ProfilDosenWaliController extends Controller
         $userDb = DB::table('users')->where('id', $dbDosen->user_id)->first();
         if (!$userDb) return redirect()->back()->with('error', 'Akun tidak ditemukan.');
 
-        // Cek password lama (support plaintext legacy & bcrypt)
-        $valid = ($request->password_lama === $userDb->password)
-              || Hash::check($request->password_lama, $userDb->password);
+        $valid = PasswordVerifier::check($request->password_lama, $userDb->password);
 
         if (!$valid) {
             return redirect()->back()->withErrors(['password_lama' => 'Password lama tidak sesuai.']);

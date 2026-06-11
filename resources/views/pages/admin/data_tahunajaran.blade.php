@@ -90,12 +90,15 @@
 
                         <div>
                             <label class="nb-label">Tahun Ajaran <span class="text-danger">*</span></label>
-                            <select name="tahun_ajaran" required>
-                                <option value="">Pilih Tahun Ajaran</option>
-                                @foreach($tahunOptions as $tahun)
-                                    <option value="{{ $tahun }}" {{ old('tahun_ajaran') == $tahun ? 'selected' : '' }}>{{ $tahun }}</option>
-                                @endforeach
-                            </select>
+                            <input
+                                type="text"
+                                name="tahun_ajaran"
+                                value="{{ old('tahun_ajaran') }}"
+                                placeholder="Contoh: 2026/2027"
+                                pattern="[0-9]{4}/[0-9]{4}"
+                                inputmode="numeric"
+                                required
+                            >
                             @error('tahun_ajaran') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
 
@@ -128,6 +131,7 @@
     const tableBody = document.getElementById('tableBody');
     const emptyState = document.getElementById('emptyState');
     const totalDataSpan = document.getElementById('totalData');
+    const baseUrl = "{{ url('admin/tahun-ajaran') }}";
 
     function openModal() {
         document.getElementById('modalOverlay').classList.remove('hidden');
@@ -153,7 +157,8 @@
 
         data.forEach(ta => {
             const row = document.createElement('tr');
-            const deleteUrl = `/admin/tahun-ajaran/${ta.id}`;
+            const editUrl = `${baseUrl}/${ta.id}/edit`;
+            const deleteUrl = `${baseUrl}/${ta.id}`;
             const statusBadge = ta.status === 'Aktif' ? 'nb-badge-success' : 'nb-badge-stable';
             const semesterBadge = ta.semester === 'Ganjil' ? 'nb-badge-primary' : 'nb-badge-warning';
 
@@ -163,7 +168,10 @@
                 <td class="text-center"><span class="nb-badge ${statusBadge}">${ta.status}</span></td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <button type="button" class="nb-row-action danger" title="Hapus" onclick="deleteData('${deleteUrl}', 'Hapus Tahun Ajaran?', 'Tindakan ini tidak dapat dibatalkan. Pastikan tidak ada KRS aktif di periode ini.', '${ta.tahun_ajaran}')">
+                        <a href="${editUrl}" class="nb-row-action" title="Edit">
+                            <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
+                        </a>
+                        <button type="button" class="nb-row-action danger" title="Hapus" onclick="deleteData('${deleteUrl}', 'Hapus Tahun Ajaran?', 'Tahun ajaran akan disembunyikan dari tampilan admin.', '${ta.tahun_ajaran}')">
                             <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
                         </button>
                     </div>

@@ -90,7 +90,7 @@
                         @foreach($allMataKuliah as $mk)
                             <label class="flex items-start gap-3 cursor-pointer p-3 rounded hover:bg-white transition">
                                 <input type="checkbox" name="mata_kuliah[]" value="{{ $mk->id }}" 
-                                    {{ in_array($mk->id, old('mata_kuliah', [])) ? 'checked' : '' }} class="mt-1">
+                                    {{ in_array($mk->id, old('mata_kuliah', $selectedMataKuliahIds ?? [])) ? 'checked' : '' }} class="mt-1">
                                 <div class="flex-1">
                                     <div class="font-medium">{{ $mk->kode }}</div>
                                     <div class="text-sm text-muted">{{ $mk->nama }}</div>

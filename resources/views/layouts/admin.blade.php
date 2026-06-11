@@ -42,6 +42,13 @@
                     <span>Mahasiswa</span>
                 </a>
 
+                <a href="{{ route('pages.admin.semester-mahasiswa.index') }}"
+                   class="nb-nav-item {{ request()->routeIs('pages.admin.semester-mahasiswa.*') ? 'active' : '' }}"
+                   data-label="Semester Mahasiswa">
+                    <span class="material-symbols-outlined">moving</span>
+                    <span>Semester Mahasiswa</span>
+                </a>
+
                 <a href="{{ route('pages.admin.dosen.index') }}"
                    class="nb-nav-item {{ request()->routeIs('pages.admin.dosen.*') ? 'active' : '' }}"
                    data-label="Dosen">
@@ -178,7 +185,7 @@
 
     {{-- Confirm Dialog dengan Title, Description, Icon --}}
     <div id="nbConfirmOverlay" class="nb-modal-overlay hidden" role="dialog" aria-modal="true">
-        <div class="nb-modal" onclick="event.stopPropagation()">
+        <div id="nbConfirmCard" class="nb-modal" onclick="event.stopPropagation()">
             <div class="nb-modal-body">
                 <div class="flex items-start gap-4">
                     <div class="shrink-0">

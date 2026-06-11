@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('krs_detail', function (Blueprint $table) {
             $table->id();
             $table->foreignId('krs_mahasiswa_id')->constrained('krs_mahasiswa')->onDelete('cascade');
-            $table->foreignId('mata_kuliah_id')->constrained('mata_kuliahs')->onDelete('cascade');
+            $table->foreignId('mata_kuliah_id')->constrained('mata_kuliah')->onDelete('cascade');
             $table->timestamps();
         });
     }

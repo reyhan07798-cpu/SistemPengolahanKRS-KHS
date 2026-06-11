@@ -222,7 +222,6 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     .admin-delete-backdrop {
         position: fixed;
@@ -416,14 +415,16 @@ let rawData = @json($dosen);
     }
 
     function openDeleteModal(name) {
-        document.getElementById('adminDeleteName').textContent = name;
-        document.getElementById('adminDeleteModal').classList.add('show');
-        document.getElementById('adminDeleteModal').setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
+        if (window.nbConfirmDelete) {
+            return window.nbConfirmDelete({
+                title: 'Hapus Data Dosen?',
+                desc: `Data ${name} akan disembunyikan dari tampilan admin.`,
+                button: 'Ya, Hapus',
+                icon: 'delete_forever',
+            });
+        }
 
-        return new Promise(resolve => {
-            pendingDeleteResolver = resolve;
-        });
+        return Promise.resolve(window.confirm(`Hapus data ${name}?`));
     }
 
     function closeDeleteModal(result = false) {
@@ -518,21 +519,19 @@ async function deleteDosen(id, name, button) {
             rawData = rawData.filter(dsn => String(dsn.id) !== String(id));
             filterTable();
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil',
-                text: result.message || 'Data dosen berhasil dihapus dari tampilan admin.',
-                timer: 1800,
-                showConfirmButton: false,
-            });
+            if (window.nbToast) {
+                nbToast(result.message || 'Data dosen berhasil dihapus dari tampilan admin.', 'success');
+            } else {
+                alert(result.message || 'Data dosen berhasil dihapus dari tampilan admin.');
+            }
         } catch (error) {
             button.disabled = false;
 
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal',
-                text: error.message || 'Gagal menghapus dosen dari tampilan.',
-            });
+            if (window.nbToast) {
+                nbToast(error.message || 'Gagal menghapus dosen dari tampilan.', 'error');
+            } else {
+                alert(error.message || 'Gagal menghapus dosen dari tampilan.');
+            }
         }
     }
 
@@ -543,10 +542,10 @@ function filterTable() {
     }
 
     document.getElementById('filterProdi').addEventListener('change', filterTable);
-    document.getElementById('adminDeleteCancel').addEventListener('click', () => closeDeleteModal(false));
-    document.getElementById('adminDeleteClose').addEventListener('click', () => closeDeleteModal(false));
-    document.getElementById('adminDeleteConfirm').addEventListener('click', () => closeDeleteModal(true));
-    document.getElementById('adminDeleteModal').addEventListener('click', event => {
+    document.getElementById('adminDeleteCancel')?.addEventListener('click', () => closeDeleteModal(false));
+    document.getElementById('adminDeleteClose')?.addEventListener('click', () => closeDeleteModal(false));
+    document.getElementById('adminDeleteConfirm')?.addEventListener('click', () => closeDeleteModal(true));
+    document.getElementById('adminDeleteModal')?.addEventListener('click', event => {
         if (event.target.id === 'adminDeleteModal') closeDeleteModal(false);
     });
     tableBody.addEventListener('click', (event) => {

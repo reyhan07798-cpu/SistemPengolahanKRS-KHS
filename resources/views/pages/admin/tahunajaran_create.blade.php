@@ -43,12 +43,16 @@
             {{-- Tahun Ajaran --}}
             <div class="mb-6">
                 <label class="nb-label">Tahun Ajaran <span class="text-danger">*</span></label>
-                <select name="tahun_ajaran" required class="w-full @error('tahun_ajaran') nb-input-error @enderror">
-                    <option value="">Pilih Tahun Ajaran</option>
-                    @foreach($tahunOptions as $tahun)
-                        <option value="{{ $tahun }}" {{ old('tahun_ajaran') == $tahun ? 'selected' : '' }}>{{ $tahun }}</option>
-                    @endforeach
-                </select>
+                <input
+                    type="text"
+                    name="tahun_ajaran"
+                    value="{{ old('tahun_ajaran') }}"
+                    placeholder="Contoh: 2026/2027"
+                    pattern="[0-9]{4}/[0-9]{4}"
+                    inputmode="numeric"
+                    required
+                    class="w-full @error('tahun_ajaran') nb-input-error @enderror"
+                >
                 @error('tahun_ajaran')
                     <span class="nb-error-text">{{ $message }}</span>
                 @enderror

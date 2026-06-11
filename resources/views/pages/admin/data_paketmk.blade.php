@@ -113,9 +113,19 @@
 
                         <div class="md:col-span-2">
                             <label class="nb-label">Pilih Mata Kuliah <span class="text-danger">*</span></label>
-                            <div class="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-3">
+                            <div class="relative mb-3">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted" style="font-size:20px;">search</span>
+                                <input
+                                    type="text"
+                                    id="mkSearchInput"
+                                    placeholder="Cari kode atau nama mata kuliah"
+                                    class="w-full pl-10"
+                                    autocomplete="off"
+                                >
+                            </div>
+                            <div id="mkChecklist" class="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-3">
                                 @foreach($allMataKuliah as $mk)
-                                    <div class="flex items-center">
+                                    <div class="mk-option flex items-center" data-search="{{ strtolower(($mk->kode ?? '') . ' ' . ($mk->nama ?? '')) }}">
                                         <input type="checkbox" id="mk{{ $mk->id }}" name="mata_kuliah[]" value="{{ $mk->id }}" 
                                             {{ old('mata_kuliah') && in_array($mk->id, old('mata_kuliah', [])) ? 'checked' : '' }}>
                                         <label for="mk{{ $mk->id }}" class="ml-2 cursor-pointer">
@@ -123,6 +133,7 @@
                                         </label>
                                     </div>
                                 @endforeach
+                                <p id="mkSearchEmpty" class="hidden text-muted text-center py-4">Mata kuliah tidak ditemukan</p>
                             </div>
                             @error('mata_kuliah') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
@@ -148,10 +159,35 @@
     const rawData = @json($paketMK);
     const tableBody = document.getElementById('tableBody');
     const emptyState = document.getElementById('emptyState');
+    const mkSearchInput = document.getElementById('mkSearchInput');
+    const mkOptions = document.querySelectorAll('.mk-option');
+    const mkSearchEmpty = document.getElementById('mkSearchEmpty');
+
+    function filterMataKuliah() {
+        const keyword = (mkSearchInput?.value || '').trim().toLowerCase();
+        let visibleCount = 0;
+
+        mkOptions.forEach(option => {
+            const isMatch = option.dataset.search.includes(keyword);
+            option.classList.toggle('hidden', !isMatch);
+            if (isMatch) visibleCount++;
+        });
+
+        mkSearchEmpty?.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    function resetMataKuliahFilter() {
+        if (!mkSearchInput) return;
+
+        mkSearchInput.value = '';
+        filterMataKuliah();
+    }
 
     function openModal() {
+        resetMataKuliahFilter();
         document.getElementById('modalOverlay').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        mkSearchInput?.focus();
     }
     function closeModal() {
         document.getElementById('modalOverlay').classList.add('hidden');
@@ -172,24 +208,33 @@
 
         data.forEach(pk => {
             const row = document.createElement('tr');
+            const editUrl = `/admin/paket-mk/${pk.id}/edit`;
             const deleteUrl = `/admin/paket-mk/${pk.id}`;
+            const namaPaket = pk.nama_paket || '-';
+            const semester = pk.semester || '-';
+            const prodi = pk.prodi || '-';
+            const totalSks = pk.total_sks || 0;
+            const jumlahMk = pk.jumlah_mk || 0;
 
             row.innerHTML = `
-                <td class="font-bold text-primary" style="font-family: var(--font-heading);">${pk.nama_paket}</td>
-                <td class="text-center"><span class="nb-badge nb-badge-warning">Sem ${pk.semester}</span></td>
-                <td class="hidden md:table-cell text-muted">${pk.prodi}</td>
+                <td class="font-bold text-primary" style="font-family: var(--font-heading);">${namaPaket}</td>
+                <td class="text-center"><span class="nb-badge nb-badge-warning">Sem ${semester}</span></td>
+                <td class="hidden md:table-cell text-muted">${prodi}</td>
                 <td class="text-center">
-                    <span class="font-extrabold text-ink" style="font-family: var(--font-heading);">${pk.total_sks}</span>
+                    <span class="font-extrabold text-ink" style="font-family: var(--font-heading);">${totalSks}</span>
                     <span class="text-xs text-muted ml-1">SKS</span>
                 </td>
                 <td class="text-center">
-                    <span class="font-extrabold text-ink" style="font-family: var(--font-heading);">${pk.jumlah_mk}</span>
+                    <span class="font-extrabold text-ink" style="font-family: var(--font-heading);">${jumlahMk}</span>
                     <span class="text-xs text-muted ml-1">MK</span>
                 </td>
                 <td class="hidden lg:table-cell text-sm text-muted max-w-xs truncate">${pk.deskripsi || '-'}</td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <button type="button" class="nb-row-action danger" title="Hapus" onclick="deleteData('${deleteUrl}', 'Hapus Paket Mata Kuliah?', 'Tindakan ini tidak dapat dibatalkan. Mahasiswa yang menggunakan paket ini perlu memilih paket lain.', '${pk.nama_paket}')">
+                        <a href="${editUrl}" class="nb-row-action edit" title="Edit">
+                            <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
+                        </a>
+                        <button type="button" class="nb-row-action danger" title="Hapus" onclick="deleteData('${deleteUrl}', 'Hapus Paket Mata Kuliah?', 'Paket mata kuliah akan disembunyikan dari tampilan admin.', '${namaPaket}')">
                             <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
                         </button>
                     </div>
@@ -200,6 +245,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        mkSearchInput?.addEventListener('input', filterMataKuliah);
         renderTable(rawData);
     });
 </script>

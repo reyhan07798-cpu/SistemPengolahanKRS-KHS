@@ -446,14 +446,16 @@
     }
 
     function openDeleteModal(name) {
-        document.getElementById('adminDeleteName').textContent = name;
-        document.getElementById('adminDeleteModal').classList.add('show');
-        document.getElementById('adminDeleteModal').setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
+        if (window.nbConfirmDelete) {
+            return window.nbConfirmDelete({
+                title: 'Hapus Mata Kuliah?',
+                desc: `Data ${name} akan disembunyikan dari tampilan admin.`,
+                button: 'Ya, Hapus',
+                icon: 'delete_forever',
+            });
+        }
 
-        return new Promise(resolve => {
-            pendingDeleteResolver = resolve;
-        });
+        return Promise.resolve(window.confirm(`Hapus data ${name}?`));
     }
 
     function closeDeleteModal(result = false) {
@@ -576,10 +578,10 @@
     }
 
     document.getElementById('searchInput')?.addEventListener('keyup', applyFilters);
-    document.getElementById('adminDeleteCancel').addEventListener('click', () => closeDeleteModal(false));
-    document.getElementById('adminDeleteClose').addEventListener('click', () => closeDeleteModal(false));
-    document.getElementById('adminDeleteConfirm').addEventListener('click', () => closeDeleteModal(true));
-    document.getElementById('adminDeleteModal').addEventListener('click', event => {
+    document.getElementById('adminDeleteCancel')?.addEventListener('click', () => closeDeleteModal(false));
+    document.getElementById('adminDeleteClose')?.addEventListener('click', () => closeDeleteModal(false));
+    document.getElementById('adminDeleteConfirm')?.addEventListener('click', () => closeDeleteModal(true));
+    document.getElementById('adminDeleteModal')?.addEventListener('click', event => {
         if (event.target.id === 'adminDeleteModal') closeDeleteModal(false);
     });
     tableBody.addEventListener('click', (event) => {
