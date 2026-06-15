@@ -19,7 +19,7 @@ class MahasiswaController extends Controller
     {
         $userSession = $this->currentUserSession();
 
-        if (!$userSession) {
+        if (! $userSession) {
             return null;
         }
 
@@ -29,9 +29,11 @@ class MahasiswaController extends Controller
 
         return DB::table('mahasiswa')
             ->leftJoin('users', 'mahasiswa.user_id', '=', 'users.id')
+            ->leftJoin('prodi', 'mahasiswa.prodi_id', '=', 'prodi.id')
             ->select(
                 'mahasiswa.id as mahasiswa_id',
                 'mahasiswa.user_id',
+                'mahasiswa.prodi_id',
                 'mahasiswa.nim',
                 'mahasiswa.nama',
                 'mahasiswa.email',
@@ -43,15 +45,16 @@ class MahasiswaController extends Controller
                 'users.name as user_name',
                 'users.username',
                 'users.email as user_email',
-                'users.role'
+                'users.role',
+                'prodi.nama_prodi as prodi'
             )
             ->when($userId, function ($query) use ($userId) {
                 $query->where('mahasiswa.user_id', $userId);
             })
-            ->when(!$userId && $nim, function ($query) use ($nim) {
+            ->when(! $userId && $nim, function ($query) use ($nim) {
                 $query->where('mahasiswa.nim', $nim);
             })
-            ->when(!$userId && !$nim && $email, function ($query) use ($email) {
+            ->when(! $userId && ! $nim && $email, function ($query) use ($email) {
                 $query->where('mahasiswa.email', $email);
             })
             ->first();
@@ -85,7 +88,7 @@ class MahasiswaController extends Controller
 
     private function kelasPrefix($kelas): string
     {
-        $kelas = trim((string) $kelas);
+        $kelas = $this->normalizeKelas($kelas);
 
         if ($kelas === '') {
             return '';
@@ -94,18 +97,64 @@ class MahasiswaController extends Controller
         return explode('-', $kelas)[0] ?? $kelas;
     }
 
+    private function normalizeKelas(?string $kelas): string
+    {
+        $kelas = strtoupper(trim((string) $kelas));
+        $kelas = preg_replace('/\s+/', '-', $kelas);
+        $kelas = preg_replace('/-+/', '-', $kelas);
+
+        return trim($kelas, '-');
+    }
+
+    private function paketIdsUntukMahasiswa($mahasiswa, $semester, $progressSemester): array
+    {
+        if (! DB::getSchemaBuilder()->hasTable('paket_mata_kuliahs')) {
+            return [];
+        }
+
+        return DB::table('paket_mata_kuliahs')
+            ->leftJoin('semesters as paket_semesters', 'paket_mata_kuliahs.semester_id', '=', 'paket_semesters.id')
+            ->when(DB::getSchemaBuilder()->hasColumn('paket_mata_kuliahs', 'deleted_at'), function ($query) {
+                $query->whereNull('paket_mata_kuliahs.deleted_at');
+            })
+            ->when(! empty($mahasiswa->prodi_id), function ($query) use ($mahasiswa) {
+                $query->where('paket_mata_kuliahs.prodi_id', $mahasiswa->prodi_id);
+            })
+            ->where(function ($query) use ($semester, $progressSemester) {
+                $query->where('paket_mata_kuliahs.semester_id', $semester->id)
+                    ->orWhere('paket_semesters.semester_ke', $progressSemester->semester_ke);
+            })
+            ->pluck('paket_mata_kuliahs.id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
     public function index()
     {
         $mahasiswa = $this->currentMahasiswa();
         $semesterAktif = $this->semesterAktif();
 
-        if (!$mahasiswa) {
+        if (! $mahasiswa) {
             return redirect()->route('login');
         }
 
         $mahasiswaId = $mahasiswa->mahasiswa_id;
 
         $nilaiRecords = collect();
+        $ipkRecords = DB::getSchemaBuilder()->hasTable('nilai')
+            ? DB::table('nilai')
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->select('bobot', 'sks')
+                ->get()
+            : collect();
+
+        $totalSksIpk = $ipkRecords->sum('sks');
+        $totalBobotIpk = $ipkRecords->sum(function ($item) {
+            return ((int) $item->sks) * ((float) $item->bobot);
+        });
+        $ipk = $totalSksIpk > 0 ? round($totalBobotIpk / $totalSksIpk, 2) : 0;
 
         if ($semesterAktif) {
             $nilaiRecords = DB::table('nilai')
@@ -195,6 +244,7 @@ class MahasiswaController extends Controller
             'semester_aktif' => $semesterAktif ? $semesterAktif->semester : '-',
             'total_sks' => $totalSks,
             'ips' => $ips,
+            'ipk' => $ipk,
             'mata_kuliah_lulus' => $mataKuliahLulus,
             'nilai_terbaru' => $nilaiTerbaru,
             'krs_aktif' => $krsAktif,
@@ -207,7 +257,7 @@ class MahasiswaController extends Controller
     {
         $mahasiswa = $this->currentMahasiswa();
 
-        if (!$mahasiswa) {
+        if (! $mahasiswa) {
             return redirect()->route('login')
                 ->with('error', 'Data mahasiswa tidak ditemukan. Silakan login ulang.');
         }
@@ -226,7 +276,7 @@ class MahasiswaController extends Controller
             'kelas' => $mahasiswa->kelas ?? '-',
             'program_studi' => 'Teknik Informatika',
             'semester_aktif' => $semesterAktif
-                ? 'Semester ' . $semesterAktif->semester
+                ? 'Semester '.$semesterAktif->semester
                 : '-',
             'tahun_ajaran' => $semesterAktif->tahun_ajaran ?? '-',
         ];
@@ -238,7 +288,7 @@ class MahasiswaController extends Controller
     {
         $userSession = $this->currentUserSession();
 
-        if (!$userSession) {
+        if (! $userSession) {
             return redirect()->route('login');
         }
 
@@ -248,7 +298,7 @@ class MahasiswaController extends Controller
             ->where('user_id', $userId)
             ->first();
 
-        if (!$mahasiswa) {
+        if (! $mahasiswa) {
             return back()->with('error', 'Data mahasiswa tidak ditemukan.');
         }
 
@@ -306,7 +356,7 @@ class MahasiswaController extends Controller
     {
         $userSession = $this->currentUserSession();
 
-        if (!$userSession) {
+        if (! $userSession) {
             return redirect()->route('login');
         }
 
@@ -319,11 +369,11 @@ class MahasiswaController extends Controller
 
         $user = DB::table('users')->where('id', $userId)->first();
 
-        if (!$user) {
+        if (! $user) {
             return back()->with('error', 'Akun user tidak ditemukan.');
         }
 
-        if (!PasswordVerifier::check($validated['password_lama'], $user->password)) {
+        if (! PasswordVerifier::check($validated['password_lama'], $user->password)) {
             return back()->withErrors([
                 'password_lama' => 'Kata sandi lama tidak sesuai.',
             ]);
@@ -346,7 +396,7 @@ class MahasiswaController extends Controller
         $mahasiswa = $this->currentMahasiswa();
         $semesterAktif = $this->semesterAktif();
 
-        if (!$mahasiswa) {
+        if (! $mahasiswa) {
             return redirect()->route('login');
         }
 
@@ -389,7 +439,7 @@ class MahasiswaController extends Controller
 
             'semester_aktif' => $semesterAktif?->semester ?? '-',
             'semester_label' => $semesterAktif
-                ? 'Semester ' . $semesterAktif->semester . ' ' . $semesterAktif->tahun_ajaran
+                ? 'Semester '.$semesterAktif->semester.' '.$semesterAktif->tahun_ajaran
                 : '-',
 
             'total_sks' => $totalSksDiambil,
@@ -421,7 +471,7 @@ class MahasiswaController extends Controller
             ->where('semester', $semesterRequest)
             ->first();
 
-        if (!$semester) {
+        if (! $semester) {
             return response()->json([
                 'error' => true,
                 'message' => 'Semester tidak ditemukan.',
@@ -431,28 +481,28 @@ class MahasiswaController extends Controller
         $mahasiswa = $this->currentMahasiswa();
         $progressSemester = $mahasiswa ? $this->mahasiswaSemesterAktif($mahasiswa->mahasiswa_id, $semester->id) : null;
 
-        if (!$mahasiswa) {
+        if (! $mahasiswa) {
             return response()->json([
                 'error' => true,
                 'message' => 'Data mahasiswa tidak ditemukan.',
             ], 403);
         }
 
-        if (!$progressSemester) {
+        if (! $progressSemester) {
             return response()->json([
                 'error' => true,
                 'message' => 'Semester mahasiswa belum diatur oleh admin.',
             ], 422);
         }
 
-        if (!in_array($progressSemester->status, ['aktif', 'mengulang'], true)) {
+        if (! in_array($progressSemester->status, ['aktif', 'mengulang'], true)) {
             return response()->json([
                 'error' => true,
-                'message' => 'Status semester Anda ' . ucfirst($progressSemester->status) . ', sehingga KRS belum dapat diajukan.',
+                'message' => 'Status semester Anda '.ucfirst($progressSemester->status).', sehingga KRS belum dapat diajukan.',
             ], 422);
         }
 
-        $isReadOnly = !(bool) $semester->is_active;
+        $isReadOnly = ! (bool) $semester->is_active;
         $totalSksDiambil = 0;
 
         $existingKrs = DB::table('krs_mahasiswa')
@@ -467,8 +517,8 @@ class MahasiswaController extends Controller
             $totalSksDiambil = (int) $existingKrs->total_sks;
         }
 
-        $kelasMahasiswa = $mahasiswa->kelas ?? '';
-        $kelasPrefix = $this->kelasPrefix($kelasMahasiswa);
+        $kelasMahasiswa = $this->normalizeKelas($mahasiswa->kelas ?? '');
+        $paketIds = $this->paketIdsUntukMahasiswa($mahasiswa, $semester, $progressSemester);
 
         $mengulangIds = DB::table('nilai')
             ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
@@ -476,21 +526,22 @@ class MahasiswaController extends Controller
             ->pluck('mata_kuliah_id')
             ->toArray();
 
-        $allMk = DB::table('mata_kuliah')
+        $mataKuliahQuery = DB::table('mata_kuliah')
             ->leftJoin('dosen_matakuliah', 'mata_kuliah.id', '=', 'dosen_matakuliah.mata_kuliah_id')
-            ->leftJoin('dosen', 'dosen_matakuliah.dosen_id', '=', 'dosen.id')
-            ->where(function ($query) use ($semester, $progressSemester) {
-                $query->where('mata_kuliah.semester_id', $semester->id)
-                    ->orWhere(function ($q) use ($semester) {
-                        $q->where('mata_kuliah.tahun_ajaran', $semester->tahun_ajaran)
-                            ->where('mata_kuliah.semester_ke', $semester->semester_ke);
-                    });
-            })
+            ->leftJoin('dosen', 'dosen_matakuliah.dosen_id', '=', 'dosen.id');
+
+        if (! empty($paketIds)) {
+            $mataKuliahQuery
+                ->join('paket_mata_kuliah_details', 'mata_kuliah.id', '=', 'paket_mata_kuliah_details.mata_kuliah_id')
+                ->whereIn('paket_mata_kuliah_details.paket_mata_kuliah_id', $paketIds);
+        } else {
+            $mataKuliahQuery->whereRaw('1 = 0');
+        }
+
+        $allMk = $mataKuliahQuery
             ->where('mata_kuliah.semester_ke', $progressSemester->semester_ke)
-            ->where(function ($query) use ($kelasMahasiswa, $kelasPrefix) {
-                $query->where('mata_kuliah.kelas', $kelasMahasiswa)
-                    ->orWhere('mata_kuliah.kelas', 'LIKE', $kelasPrefix . '%')
-                    ->orWhereNull('mata_kuliah.kelas');
+            ->when(DB::getSchemaBuilder()->hasColumn('mata_kuliah', 'deleted_at'), function ($query) {
+                $query->whereNull('mata_kuliah.deleted_at');
             })
             ->select(
                 'mata_kuliah.id',
@@ -503,14 +554,16 @@ class MahasiswaController extends Controller
             )
             ->distinct()
             ->orderBy('mata_kuliah.kode_mk', 'asc')
-            ->get();
+            ->get()
+            ->unique(fn ($mk) => $mk->kode.'|'.$mk->matkul.'|'.$mk->sks)
+            ->values();
 
         $mkWajib = [];
         $mkMengulang = [];
 
         foreach ($allMk as $mk) {
             $namaDosen = $mk->dosen
-                ? $mk->dosen . ($mk->nik ? ' (NIK: ' . $mk->nik . ')' : '')
+                ? $mk->dosen.($mk->nik ? ' (NIK: '.$mk->nik.')' : '')
                 : '-';
 
             if (in_array($mk->id, $mengulangIds)) {
@@ -545,11 +598,11 @@ class MahasiswaController extends Controller
 
         return response()->json([
             'error' => false,
-            'semester' => 'Semester ' . $semester->semester . ' ' . $semester->tahun_ajaran,
+            'semester' => 'Semester '.$semester->semester.' '.$semester->tahun_ajaran,
             'tahun_ajaran' => $semester->tahun_ajaran,
             'semester_ke_mahasiswa' => (int) $progressSemester->semester_ke,
             'status_semester_mahasiswa' => $progressSemester->status,
-            'kelas_mahasiswa' => $mahasiswa->kelas,
+            'kelas_mahasiswa' => $kelasMahasiswa,
             'is_read_only' => $isReadOnly,
             'is_active' => (bool) $semester->is_active,
             'total_sks_diambil' => $totalSksDiambil,
@@ -574,22 +627,22 @@ class MahasiswaController extends Controller
         $mahasiswa = $this->currentMahasiswa();
         $semesterAktif = $this->semesterAktif();
 
-        if (!$mahasiswa) {
+        if (! $mahasiswa) {
             return redirect()->route('login');
         }
 
-        if (!$semesterAktif) {
+        if (! $semesterAktif) {
             return back()->with('error', 'Belum ada semester aktif.');
         }
 
         $progressSemester = $this->mahasiswaSemesterAktif($mahasiswa->mahasiswa_id, $semesterAktif->id);
 
-        if (!$progressSemester) {
+        if (! $progressSemester) {
             return back()->with('error', 'Semester Anda belum diatur oleh admin.');
         }
 
-        if (!in_array($progressSemester->status, ['aktif', 'mengulang'], true)) {
-            return back()->with('error', 'Status semester Anda ' . ucfirst($progressSemester->status) . ', sehingga KRS belum dapat diajukan.');
+        if (! in_array($progressSemester->status, ['aktif', 'mengulang'], true)) {
+            return back()->with('error', 'Status semester Anda '.ucfirst($progressSemester->status).', sehingga KRS belum dapat diajukan.');
         }
 
         $mataKuliahIds = array_unique($request->input('mata_kuliah_ids'));
@@ -600,18 +653,25 @@ class MahasiswaController extends Controller
             return back()->with('error', 'Hanya semester aktif yang dapat diajukan.');
         }
 
-        $kelasMahasiswa = $mahasiswa->kelas ?? '';
-        $kelasPrefix = $this->kelasPrefix($kelasMahasiswa);
+        $kelasMahasiswa = $this->normalizeKelas($mahasiswa->kelas ?? '');
+        $paketIds = $this->paketIdsUntukMahasiswa($mahasiswa, $semesterAktif, $progressSemester);
 
-        $validMataKuliahIds = DB::table('mata_kuliah')
-            ->whereIn('id', $mataKuliahIds)
-            ->where('semester_id', $semesterAktif->id)
-            ->where('semester_ke', $progressSemester->semester_ke)
-            ->where(function ($query) use ($kelasMahasiswa, $kelasPrefix) {
-                $query->where('kelas', $kelasMahasiswa)
-                    ->orWhere('kelas', 'LIKE', $kelasPrefix . '%');
-            })
-            ->pluck('id')
+        $validMataKuliahQuery = DB::table('mata_kuliah')
+            ->whereIn('mata_kuliah.id', $mataKuliahIds)
+            ->where('mata_kuliah.semester_ke', $progressSemester->semester_ke);
+
+        if (! empty($paketIds)) {
+            $validMataKuliahQuery
+                ->join('paket_mata_kuliah_details', 'mata_kuliah.id', '=', 'paket_mata_kuliah_details.mata_kuliah_id')
+                ->whereIn('paket_mata_kuliah_details.paket_mata_kuliah_id', $paketIds);
+        } else {
+            $validMataKuliahQuery->whereRaw('1 = 0');
+        }
+
+        $validMataKuliahIds = $validMataKuliahQuery
+            ->pluck('mata_kuliah.id')
+            ->unique()
+            ->values()
             ->toArray();
 
         if (count($validMataKuliahIds) !== count($mataKuliahIds)) {
@@ -623,7 +683,7 @@ class MahasiswaController extends Controller
             ->sum('sks');
 
         if ($totalSks > 24) {
-            return back()->with('error', 'Total SKS tidak boleh melebihi 24 SKS. SKS yang dipilih: ' . $totalSks);
+            return back()->with('error', 'Total SKS tidak boleh melebihi 24 SKS. SKS yang dipilih: '.$totalSks);
         }
 
         try {
@@ -648,7 +708,7 @@ class MahasiswaController extends Controller
 
                     return back()->with(
                         'warning',
-                        'Anda sudah mengajukan KRS di semester ini. Status: ' . ucfirst($existingKrs->status)
+                        'Anda sudah mengajukan KRS di semester ini. Status: '.ucfirst($existingKrs->status)
                     );
                 }
             }
@@ -659,7 +719,7 @@ class MahasiswaController extends Controller
                 'tahun_ajaran' => $semesterAktif->tahun_ajaran,
                 'semester' => $semesterAktif->semester,
                 'semester_ke' => $progressSemester->semester_ke,
-                'kelas' => $mahasiswa->kelas,
+                'kelas' => $kelasMahasiswa,
                 'status' => 'menunggu',
                 'total_sks' => $totalSks,
                 'catatan' => null,
@@ -680,11 +740,11 @@ class MahasiswaController extends Controller
 
             return redirect()
                 ->route('pages.mahasiswa.ambil-krs')
-                ->with('success', 'KRS berhasil diajukan! Total SKS: ' . $totalSks . ' SKS. Menunggu persetujuan dosen wali.');
+                ->with('success', 'KRS berhasil diajukan! Total SKS: '.$totalSks.' SKS. Menunggu persetujuan dosen wali.');
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 
@@ -692,7 +752,7 @@ class MahasiswaController extends Controller
     {
         $mahasiswa = $this->currentMahasiswa();
 
-        if (!$mahasiswa) {
+        if (! $mahasiswa) {
             return redirect()->route('login');
         }
 
@@ -723,7 +783,7 @@ class MahasiswaController extends Controller
                 return $krs;
             })
             ->groupBy(function ($item) {
-                return $item->tahun_ajaran . ' - Semester ' . $item->semester_nama;
+                return $item->tahun_ajaran.' - Semester '.$item->semester_nama;
             });
 
         $statistik = [];

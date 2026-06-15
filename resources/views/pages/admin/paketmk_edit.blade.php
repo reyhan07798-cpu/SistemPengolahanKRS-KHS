@@ -88,13 +88,19 @@
                 @if($allMataKuliah->count() > 0)
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         @foreach($allMataKuliah as $mk)
-                            <label class="flex items-start gap-3 cursor-pointer p-3 rounded hover:bg-white transition">
+                            <label
+                                class="mk-option flex items-start gap-3 cursor-pointer p-3 rounded hover:bg-white transition"
+                                data-semester="{{ $mk->semester_ke }}"
+                                data-prodi="{{ $mk->prodi }}"
+                            >
                                 <input type="checkbox" name="mata_kuliah[]" value="{{ $mk->id }}" 
                                     {{ in_array($mk->id, old('mata_kuliah', $selectedMataKuliahIds ?? [])) ? 'checked' : '' }} class="mt-1">
                                 <div class="flex-1">
                                     <div class="font-medium">{{ $mk->kode }}</div>
                                     <div class="text-sm text-muted">{{ $mk->nama }}</div>
-                                    <div class="text-xs text-primary font-medium mt-1">{{ $mk->sks }} SKS</div>
+                                    <div class="text-xs text-primary font-medium mt-1">
+                                        {{ $mk->sks }} SKS - Semester {{ $mk->semester_ke }} - {{ $mk->prodi }}
+                                    </div>
                                 </div>
                             </label>
                         @endforeach
@@ -138,6 +144,40 @@
 @push('scripts')
 <script>
     const mkData = @json($allMataKuliah);
+    const semesterSelect = document.querySelector('select[name="semester"]');
+    const prodiSelect = document.querySelector('select[name="prodi"]');
+    const mkOptions = document.querySelectorAll('.mk-option');
+
+    function syncProdiOptions() {
+        const semester = String(semesterSelect?.value || '');
+        const availableProdis = new Set(
+            mkData
+                .filter(mk => !semester || String(mk.semester_ke || '') === semester)
+                .map(mk => mk.prodi)
+                .filter(Boolean)
+        );
+
+        Array.from(prodiSelect?.options || []).forEach(option => {
+            option.hidden = option.value && availableProdis.size > 0 && !availableProdis.has(option.value);
+        });
+    }
+
+    function filterMataKuliah() {
+        const semester = String(semesterSelect?.value || '');
+        const prodi = String(prodiSelect?.value || '');
+
+        mkOptions.forEach(option => {
+            const isVisible = (!semester || String(option.dataset.semester || '') === semester)
+                && (!prodi || String(option.dataset.prodi || '') === prodi);
+
+            option.classList.toggle('hidden', !isVisible);
+
+            if (!isVisible) {
+                const checkbox = option.querySelector('input[type="checkbox"]');
+                if (checkbox) checkbox.checked = false;
+            }
+        });
+    }
 
     function updateSummary() {
         const checkboxes = document.querySelectorAll('input[name="mata_kuliah[]"]:checked');
@@ -157,6 +197,20 @@
         checkbox.addEventListener('change', updateSummary);
     });
 
-    document.addEventListener('DOMContentLoaded', updateSummary);
+    semesterSelect?.addEventListener('change', () => {
+        syncProdiOptions();
+        filterMataKuliah();
+        updateSummary();
+    });
+    prodiSelect?.addEventListener('change', () => {
+        filterMataKuliah();
+        updateSummary();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        syncProdiOptions();
+        filterMataKuliah();
+        updateSummary();
+    });
 </script>
 @endpush

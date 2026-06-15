@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class MahasiswaDosenMataKuliahSeeder extends Seeder
 {
@@ -20,7 +21,7 @@ class MahasiswaDosenMataKuliahSeeder extends Seeder
             $dosenIds = $this->seedDosen();
             $mahasiswaIds = $this->seedMahasiswa($prodiIds['IF'], $dosenIds['11111111']);
             $this->seedMahasiswaSemester($mahasiswaIds, $semesterIds);
-            $mataKuliahIds = $this->seedMataKuliah($semesterIds, $dosenIds);
+            $mataKuliahIds = $this->seedMataKuliah($semesterIds, $dosenIds, $prodiIds['IF']);
 
             $this->seedDosenMataKuliah($mataKuliahIds, $kelasIds, $dosenIds);
             $this->seedKrs($mahasiswaIds, $semesterIds, $mataKuliahIds);
@@ -56,8 +57,13 @@ class MahasiswaDosenMataKuliahSeeder extends Seeder
     private function seedProdi(): array
     {
         $data = [
-            'IF' => 'Teknik Informatika',
-            'SI' => 'Sistem Informasi',
+            'IF' => 'Informatika',
+            'TRL' => 'Teknologi Rekayasa Perangkat Lunak',
+            'TG' => 'Teknologi Geomatika',
+            'RKS' => 'Rekayasa Keamanan Siber',
+            'TRMA' => 'Teknologi Rekayasa Multimedia Animasi',
+            'ANIMASI' => 'Animasi',
+            'TP' => 'Teknologi Permainan',
         ];
 
         $ids = [];
@@ -169,7 +175,7 @@ class MahasiswaDosenMataKuliahSeeder extends Seeder
 
     private function seedKelas(): array
     {
-        $kelas = ['IF2A-PAGI', 'IF2B-PAGI'];
+        $kelas = ['IF1A-PAGI', 'IF1B-PAGI', 'IF2A-PAGI', 'IF2B-PAGI'];
         $ids = [];
 
         foreach ($kelas as $namaKelas) {
@@ -296,19 +302,19 @@ class MahasiswaDosenMataKuliahSeeder extends Seeder
                 'nim' => '3312601001',
                 'nama' => 'Irenessa Rosdin',
                 'email' => 'irenessa.rosdin@student.test',
-                'kelas' => 'IF2A-PAGI',
+                'kelas' => 'IF1A-PAGI',
             ],
             [
                 'nim' => '3312601002',
                 'nama' => 'Reyhan Pratama',
                 'email' => 'reyhan.pratama@student.test',
-                'kelas' => 'IF2A-PAGI',
+                'kelas' => 'IF1A-PAGI',
             ],
             [
                 'nim' => '3312601003',
                 'nama' => 'Siti Nurhaliza',
                 'email' => 'siti.nurhaliza@student.test',
-                'kelas' => 'IF2B-PAGI',
+                'kelas' => 'IF1B-PAGI',
             ],
         ];
 
@@ -405,7 +411,7 @@ class MahasiswaDosenMataKuliahSeeder extends Seeder
             ->delete();
     }
 
-    private function seedMataKuliah(array $semesterIds, array $dosenIds): array
+    private function seedMataKuliah(array $semesterIds, array $dosenIds, int $prodiId): array
     {
         $mataKuliahData = [
             ['kode_mk' => 'IF207', 'nama' => 'Proyek Pembuatan Prototipe', 'sks' => 3, 'semester' => '2025/2026-2', 'semester_ke' => 2, 'kelas' => 'IF2A-PAGI', 'dosen_nik' => '11111111'],
@@ -418,10 +424,10 @@ class MahasiswaDosenMataKuliahSeeder extends Seeder
             ['kode_mk' => 'IF210', 'nama' => 'Pemrograman Web', 'sks' => 3, 'semester' => '2025/2026-2', 'semester_ke' => 2, 'kelas' => 'IF2B-PAGI', 'dosen_nik' => '87654321'],
             ['kode_mk' => 'IF211', 'nama' => 'Basis Data', 'sks' => 3, 'semester' => '2025/2026-2', 'semester_ke' => 2, 'kelas' => 'IF2B-PAGI', 'dosen_nik' => '87654321'],
             ['kode_mk' => 'IF213', 'nama' => 'Bahasa Inggris untuk Komunikasi', 'sks' => 2, 'semester' => '2025/2026-2', 'semester_ke' => 2, 'kelas' => 'IF2B-PAGI', 'dosen_nik' => '87654321'],
-            ['kode_mk' => 'IF101', 'nama' => 'Pemrograman Dasar', 'sks' => 3, 'semester' => '2026/2027-1', 'semester_ke' => 1, 'kelas' => 'IF2A-PAGI', 'dosen_nik' => '1988000001'],
-            ['kode_mk' => 'IF102', 'nama' => 'Basis Data', 'sks' => 3, 'semester' => '2026/2027-1', 'semester_ke' => 1, 'kelas' => 'IF2A-PAGI', 'dosen_nik' => '1989000002'],
-            ['kode_mk' => 'IF103', 'nama' => 'Algoritma dan Struktur Data', 'sks' => 3, 'semester' => '2026/2027-1', 'semester_ke' => 1, 'kelas' => 'IF2A-PAGI', 'dosen_nik' => '1988000001'],
-            ['kode_mk' => 'IF104', 'nama' => 'Matematika Diskrit', 'sks' => 2, 'semester' => '2026/2027-1', 'semester_ke' => 1, 'kelas' => 'IF2A-PAGI', 'dosen_nik' => '1989000002'],
+            ['kode_mk' => 'IF101', 'nama' => 'Pemrograman Dasar', 'sks' => 3, 'semester' => '2026/2027-1', 'semester_ke' => 1, 'kelas' => 'IF1A-PAGI', 'dosen_nik' => '1988000001'],
+            ['kode_mk' => 'IF102', 'nama' => 'Basis Data', 'sks' => 3, 'semester' => '2026/2027-1', 'semester_ke' => 1, 'kelas' => 'IF1A-PAGI', 'dosen_nik' => '1989000002'],
+            ['kode_mk' => 'IF103', 'nama' => 'Algoritma dan Struktur Data', 'sks' => 3, 'semester' => '2026/2027-1', 'semester_ke' => 1, 'kelas' => 'IF1A-PAGI', 'dosen_nik' => '1988000001'],
+            ['kode_mk' => 'IF104', 'nama' => 'Matematika Diskrit', 'sks' => 2, 'semester' => '2026/2027-1', 'semester_ke' => 1, 'kelas' => 'IF1A-PAGI', 'dosen_nik' => '1989000002'],
         ];
 
         $ids = [];
@@ -429,6 +435,21 @@ class MahasiswaDosenMataKuliahSeeder extends Seeder
         foreach ($mataKuliahData as $mk) {
             $semester = DB::table('semesters')->where('id', $semesterIds[$mk['semester']])->first();
             $dosenId = $dosenIds[$mk['dosen_nik']];
+            $data = [
+                'nama' => $mk['nama'],
+                'sks' => $mk['sks'],
+                'semester_id' => $semester->id,
+                'dosen_id' => $dosenId,
+                'dosen_nik' => $mk['dosen_nik'],
+                'prasyarat' => null,
+                'deleted_at' => null,
+                'updated_at' => now(),
+                'created_at' => now(),
+            ];
+
+            if (Schema::hasColumn('mata_kuliah', 'prodi_id')) {
+                $data['prodi_id'] = $prodiId;
+            }
 
             DB::table('mata_kuliah')->updateOrInsert(
                 [
@@ -437,17 +458,7 @@ class MahasiswaDosenMataKuliahSeeder extends Seeder
                     'semester_ke' => $mk['semester_ke'],
                     'kelas' => $mk['kelas'],
                 ],
-                [
-                    'nama' => $mk['nama'],
-                    'sks' => $mk['sks'],
-                    'semester_id' => $semester->id,
-                    'dosen_id' => $dosenId,
-                    'dosen_nik' => $mk['dosen_nik'],
-                    'prasyarat' => null,
-                    'deleted_at' => null,
-                    'updated_at' => now(),
-                    'created_at' => now(),
-                ]
+                $data
             );
 
             $ids[$mk['kode_mk'] . '|' . $mk['kelas'] . '|' . $semester->tahun_ajaran] = (int) DB::table('mata_kuliah')

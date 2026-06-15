@@ -70,6 +70,7 @@
                         <th class="hidden md:table-cell">Prodi</th>
                         <th class="hidden lg:table-cell text-center whitespace-nowrap">Kelas</th>
                         <th class="hidden sm:table-cell text-center">Angkatan</th>
+                        <th class="hidden md:table-cell text-center">IPK</th>
                         <th class="hidden xl:table-cell">Dosen Wali</th>
                         <th class="hidden lg:table-cell">Email</th>
                         <th class="text-center">Aksi</th>
@@ -94,8 +95,9 @@
                 </button>
             </div>
 
-            <form action="{{ route('pages.admin.mahasiswa.store') }}" method="POST">
+            <form action="{{ route('pages.admin.mahasiswa.store') }}" method="POST" id="mahasiswaForm">
                 @csrf
+                <input type="hidden" name="_method" id="mahasiswaFormMethod" value="POST">
                 <div class="nb-modal-body">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                         <div>
@@ -133,12 +135,6 @@
                         </div>
 
                         <div>
-                            <label class="nb-label">Kelas <span class="text-danger">*</span></label>
-                            <input type="text" name="kelas" value="{{ old('kelas') }}" maxlength="20" placeholder="IF2A Pagi" required>
-                            @error('kelas') <p class="nb-form-error">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
                             <label class="nb-label">Dosen Wali</label>
                             <select name="dosen_wali_id">
                                 <option value="">Pilih dosen wali</option>
@@ -150,12 +146,42 @@
                         </div>
 
                         <div>
+                            <label class="nb-label">Semester Awal <span class="text-danger">*</span></label>
+                            <select name="semester_ke_awal" required>
+                                @for($i = 1; $i <= 14; $i++)
+                                    <option value="{{ $i }}" {{ old('semester_ke_awal', 1) == $i ? 'selected' : '' }}>Semester {{ $i }}</option>
+                                @endfor
+                            </select>
+                            @error('semester_ke_awal') <p class="nb-form-error">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="nb-label">Grup Kelas <span class="text-danger">*</span></label>
+                            <select name="kelas_grup" required>
+                                @foreach($kelasGroups as $group)
+                                    <option value="{{ $group }}" {{ old('kelas_grup', 'A') == $group ? 'selected' : '' }}>{{ $group }}</option>
+                                @endforeach
+                            </select>
+                            @error('kelas_grup') <p class="nb-form-error">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="nb-label">Sesi Kelas <span class="text-danger">*</span></label>
+                            <select name="sesi_kelas" required>
+                                @foreach($sesiOptions as $sesi)
+                                    <option value="{{ $sesi }}" {{ old('sesi_kelas', 'PAGI') == $sesi ? 'selected' : '' }}>{{ $sesi }}</option>
+                                @endforeach
+                            </select>
+                            @error('sesi_kelas') <p class="nb-form-error">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
                             <label class="nb-label">No. HP</label>
                             <input type="text" name="no_hp" value="{{ old('no_hp') }}" placeholder="081234567890">
                         </div>
 
                         <div>
-                            <label class="nb-label">Password Default <span class="text-danger">*</span></label>
+                            <label class="nb-label">Password <span class="text-danger js-password-required">*</span></label>
                             <input type="text" name="password" value="{{ old('password', 'mhs123') }}" placeholder="mhs123" required>
                             @error('password') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
@@ -187,8 +213,55 @@
     const tableBody = document.getElementById('tableBody');
     const emptyState = document.getElementById('emptyState');
     const totalDataSpan = document.getElementById('totalData');
+    const mahasiswaForm = document.getElementById('mahasiswaForm');
+    const mahasiswaFormMethod = document.getElementById('mahasiswaFormMethod');
+    const modalTitle = document.getElementById('modal-title');
+    const passwordRequiredMark = document.querySelector('.js-password-required');
 
-    function openModal() {
+    function parseKelas(kelas) {
+        const normalized = String(kelas || '').trim().toUpperCase().replace(/\s+/g, '-');
+        const match = normalized.match(/^(.+?)(\d{1,2})([A-Z])-(.+)$/);
+
+        return {
+            semester: match ? match[2] : '1',
+            group: match ? match[3] : 'A',
+            sesi: match ? match[4] : 'PAGI',
+        };
+    }
+
+    function openModal(mahasiswa = null) {
+        mahasiswaForm.reset();
+        mahasiswaForm.action = mahasiswa
+            ? `/admin/mahasiswa/${mahasiswa.id}`
+            : "{{ route('pages.admin.mahasiswa.store') }}";
+        mahasiswaFormMethod.value = mahasiswa ? 'PUT' : 'POST';
+        modalTitle.textContent = mahasiswa ? 'Edit Data Mahasiswa' : 'Tambah Mahasiswa Baru';
+
+        const passwordInput = mahasiswaForm.elements.password;
+        passwordInput.required = !mahasiswa;
+        passwordInput.value = mahasiswa ? '' : 'mhs123';
+        passwordInput.placeholder = mahasiswa ? 'Kosongkan jika tidak diubah' : 'mhs123';
+        passwordRequiredMark?.classList.toggle('hidden', !!mahasiswa);
+
+        if (mahasiswa) {
+            mahasiswaForm.elements.nim.value = mahasiswa.nim || '';
+            mahasiswaForm.elements.nama.value = mahasiswa.nama || '';
+            mahasiswaForm.elements.email.value = mahasiswa.email || '';
+            mahasiswaForm.elements.prodi.value = mahasiswa.prodi || '';
+            mahasiswaForm.elements.angkatan.value = mahasiswa.angkatan || '';
+            const kelasParts = parseKelas(mahasiswa.kelas);
+            mahasiswaForm.elements.semester_ke_awal.value = kelasParts.semester;
+            mahasiswaForm.elements.kelas_grup.value = kelasParts.group;
+            mahasiswaForm.elements.sesi_kelas.value = kelasParts.sesi;
+            mahasiswaForm.elements.dosen_wali_id.value = mahasiswa.dosen_wali_id || '';
+            mahasiswaForm.elements.no_hp.value = mahasiswa.no_hp || '';
+            mahasiswaForm.elements.alamat.value = mahasiswa.alamat || '';
+        } else {
+            mahasiswaForm.elements.semester_ke_awal.value = '1';
+            mahasiswaForm.elements.kelas_grup.value = 'A';
+            mahasiswaForm.elements.sesi_kelas.value = 'PAGI';
+        }
+
         document.getElementById('modalOverlay').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -224,7 +297,6 @@
 
         data.forEach(mhs => {
             const row = document.createElement('tr');
-            const editUrl = `/admin/mahasiswa/${mhs.id}/edit`;
             const deleteUrl = `/admin/mahasiswa/${mhs.id}`;
             const nama = mhs.nama || '-';
             const nim = mhs.nim || '-';
@@ -233,6 +305,7 @@
             const angkatan = mhs.angkatan || '-';
             const dosenWali = mhs.dosen_wali || '-';
             const email = mhs.email || '-';
+            const ipk = Number(mhs.ipk || 0).toFixed(2);
             const initials = nama.split(' ').map(n => n[0]).join('').substring(0, 2);
 
             row.innerHTML = `
@@ -248,13 +321,14 @@
                 <td class="hidden md:table-cell text-muted">${prodi}</td>
                 <td class="hidden lg:table-cell text-center whitespace-nowrap"><span class="nb-badge nb-badge-stable whitespace-nowrap">${kelas}</span></td>
                 <td class="hidden sm:table-cell text-center text-muted">${angkatan}</td>
+                <td class="hidden md:table-cell text-center"><span class="nb-badge nb-badge-primary">${ipk}</span></td>
                 <td class="hidden xl:table-cell text-muted text-sm">${dosenWali}</td>
                 <td class="hidden lg:table-cell text-sm text-primary">${email}</td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <a href="${editUrl}" class="nb-row-action edit" title="Edit">
+                        <button type="button" class="nb-row-action edit js-edit-mahasiswa" data-id="${mhs.id}" title="Edit">
                             <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
-                        </a>
+                        </button>
                         <button type="button" class="nb-row-action danger js-delete-mahasiswa" title="Hapus" data-url="${deleteUrl}" data-name="${escapeAttribute(nama)}">
                             <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
                         </button>
@@ -284,6 +358,13 @@
     document.getElementById('filterProdi').addEventListener('change', applyFilters);
     document.getElementById('filterAngkatan').addEventListener('input', applyFilters);
     tableBody.addEventListener('click', (event) => {
+        const editButton = event.target.closest('.js-edit-mahasiswa');
+        if (editButton) {
+            const mahasiswa = rawData.find(item => String(item.id) === String(editButton.dataset.id));
+            if (mahasiswa) openModal(mahasiswa);
+            return;
+        }
+
         const button = event.target.closest('.js-delete-mahasiswa');
 
         if (!button) {

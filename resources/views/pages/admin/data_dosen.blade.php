@@ -154,8 +154,9 @@
                 </button>
             </div>
 
-            <form action="{{ route('pages.admin.dosen.store') }}" method="POST">
+            <form action="{{ route('pages.admin.dosen.store') }}" method="POST" id="dosenForm">
                 @csrf
+                <input type="hidden" name="_method" id="dosenFormMethod" value="POST">
                 <div class="nb-modal-body">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                         <div>
@@ -197,12 +198,18 @@
                         </div>
 
                         <div class="md:col-span-2">
+                            <label class="nb-label">No. HP</label>
+                            <input type="text" name="no_hp" value="{{ old('no_hp') }}" placeholder="081234567890">
+                            @error('no_hp') <p class="nb-form-error">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="md:col-span-2">
                             <label class="nb-label">Alamat</label>
                             <textarea name="alamat" rows="2" placeholder="Alamat lengkap">{{ old('alamat') }}</textarea>
                         </div>
 
                         <div>
-                            <label class="nb-label">Password Default <span class="text-danger">*</span></label>
+                            <label class="nb-label">Password <span class="text-danger js-password-required">*</span></label>
                             <input type="text" name="password" value="{{ old('password', 'dosen123') }}" placeholder="dosen123" required>
                             @error('password') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
@@ -384,9 +391,34 @@ let rawData = @json($dosen);
     const filterProdiSelect = document.getElementById('filterProdi');
     const csrfToken = "{{ csrf_token() }}";
     const baseUrl = "{{ url('admin/dosen') }}";
+    const dosenForm = document.getElementById('dosenForm');
+    const dosenFormMethod = document.getElementById('dosenFormMethod');
+    const modalTitle = document.getElementById('modal-title');
+    const passwordRequiredMark = document.querySelector('.js-password-required');
     let pendingDeleteResolver = null;
 
-    function openModal() {
+    function openModal(dosen = null) {
+        dosenForm.reset();
+        dosenForm.action = dosen ? `${baseUrl}/${dosen.id}` : "{{ route('pages.admin.dosen.store') }}";
+        dosenFormMethod.value = dosen ? 'PUT' : 'POST';
+        modalTitle.textContent = dosen ? 'Edit Data Dosen' : 'Tambah Dosen Baru';
+
+        const passwordInput = dosenForm.elements.password;
+        passwordInput.required = !dosen;
+        passwordInput.value = dosen ? '' : 'dosen123';
+        passwordInput.placeholder = dosen ? 'Kosongkan jika tidak diubah' : 'dosen123';
+        passwordRequiredMark?.classList.toggle('hidden', !!dosen);
+
+        if (dosen) {
+            dosenForm.elements.nik.value = dosen.nik || '';
+            dosenForm.elements.nama.value = dosen.nama || '';
+            dosenForm.elements.email.value = dosen.email || '';
+            dosenForm.elements.tipe_dosen.value = normalizeTipeDosen(dosen.tipe_dosen);
+            dosenForm.elements.fakultas.value = dosen.fakultas || dosen.prodi || '';
+            dosenForm.elements.no_hp.value = dosen.no_hp || '';
+            dosenForm.elements.alamat.value = dosen.alamat || '';
+        }
+
         document.getElementById('modalOverlay').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -412,6 +444,16 @@ let rawData = @json($dosen);
             .replace(/"/g, '&quot;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
+    }
+
+    function normalizeTipeDosen(value) {
+        const tipe = String(value || '').toLowerCase();
+
+        if (tipe === 'keduanya' || tipe.includes('wali')) {
+            return 'keduanya';
+        }
+
+        return 'Dosen Mata Kuliah';
     }
 
     function openDeleteModal(name) {
@@ -474,9 +516,9 @@ let rawData = @json($dosen);
                 <td class="hidden lg:table-cell text-muted">${safeText(dsn.fakultas || dsn.prodi)}</td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <a href="/admin/dosen/${dsn.id}/edit" class="nb-row-action edit" title="Edit">
+                        <button type="button" class="nb-row-action edit js-edit-dosen" data-id="${dsn.id}" title="Edit">
                             <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
-                        </a>
+                        </button>
                         <button type="button" class="nb-row-action danger js-delete-dosen" data-id="${dsn.id}" data-name="${itemName}" title="Hapus">
                             <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
                         </button>
@@ -549,6 +591,13 @@ function filterTable() {
         if (event.target.id === 'adminDeleteModal') closeDeleteModal(false);
     });
     tableBody.addEventListener('click', (event) => {
+        const editButton = event.target.closest('.js-edit-dosen');
+        if (editButton) {
+            const dosen = rawData.find(item => String(item.id) === String(editButton.dataset.id));
+            if (dosen) openModal(dosen);
+            return;
+        }
+
         const button = event.target.closest('.js-delete-dosen');
 
         if (!button) {

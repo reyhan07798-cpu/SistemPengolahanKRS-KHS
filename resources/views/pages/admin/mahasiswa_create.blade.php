@@ -58,7 +58,7 @@
                 @enderror
             </div>
 
-            {{-- Program Studi & Angkatan & Kelas --}}
+            {{-- Program Studi & Angkatan --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
                     <label class="nb-label">Program Studi <span class="text-danger">*</span></label>
@@ -81,12 +81,41 @@
                         <span class="nb-error-text">{{ $message }}</span>
                     @enderror
                 </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <label class="nb-label">Semester Awal <span class="text-danger">*</span></label>
+                    <select name="semester_ke_awal" required class="w-full @error('semester_ke_awal') nb-input-error @enderror">
+                        @for($i = 1; $i <= 14; $i++)
+                            <option value="{{ $i }}" {{ old('semester_ke_awal', 1) == $i ? 'selected' : '' }}>Semester {{ $i }}</option>
+                        @endfor
+                    </select>
+                    @error('semester_ke_awal')
+                        <span class="nb-error-text">{{ $message }}</span>
+                    @enderror
+                </div>
 
                 <div>
-                    <label class="nb-label">Kelas <span class="text-danger">*</span></label>
-                    <input type="text" name="kelas" value="{{ old('kelas') }}" maxlength="20" placeholder="IF2A Pagi" required
-                        class="w-full @error('kelas') nb-input-error @enderror">
-                    @error('kelas')
+                    <label class="nb-label">Grup Kelas <span class="text-danger">*</span></label>
+                    <select name="kelas_grup" required class="w-full @error('kelas_grup') nb-input-error @enderror">
+                        @foreach($kelasGroups as $group)
+                            <option value="{{ $group }}" {{ old('kelas_grup', 'A') == $group ? 'selected' : '' }}>{{ $group }}</option>
+                        @endforeach
+                    </select>
+                    @error('kelas_grup')
+                        <span class="nb-error-text">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="nb-label">Sesi Kelas <span class="text-danger">*</span></label>
+                    <select name="sesi_kelas" required class="w-full @error('sesi_kelas') nb-input-error @enderror">
+                        @foreach($sesiOptions as $sesi)
+                            <option value="{{ $sesi }}" {{ old('sesi_kelas', 'PAGI') == $sesi ? 'selected' : '' }}>{{ $sesi }}</option>
+                        @endforeach
+                    </select>
+                    @error('sesi_kelas')
                         <span class="nb-error-text">{{ $message }}</span>
                     @enderror
                 </div>

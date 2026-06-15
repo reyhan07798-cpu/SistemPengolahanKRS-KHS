@@ -58,7 +58,9 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
                     <label class="nb-label">Program Studi <span class="text-danger">*</span></label>
-                    @php($selectedProdi = old('prodi', optional($mahasiswa->prodi)->nama_prodi))
+                    @php
+                        $selectedProdi = old('prodi', optional($mahasiswa->prodi)->nama_prodi);
+                    @endphp
                     <select name="prodi" required class="w-full @error('prodi') nb-input-error @enderror">
                         <option value="">Pilih prodi</option>
                         @foreach($prodis as $prodi)
@@ -78,12 +80,49 @@
                         <span class="nb-error-text">{{ $message }}</span>
                     @enderror
                 </div>
+            </div>
+
+            @php
+                $kelasValue = strtoupper(str_replace(' ', '-', old('kelas', $mahasiswa->kelas ?? '')));
+                preg_match('/^(.+?)(\d{1,2})([A-Z])-(.+)$/', $kelasValue, $kelasParts);
+                $selectedSemesterKe = old('semester_ke_awal', $kelasParts[2] ?? 1);
+                $selectedKelasGrup = old('kelas_grup', $kelasParts[3] ?? 'A');
+                $selectedSesiKelas = old('sesi_kelas', $kelasParts[4] ?? 'PAGI');
+            @endphp
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <label class="nb-label">Semester <span class="text-danger">*</span></label>
+                    <select name="semester_ke_awal" required class="w-full @error('semester_ke_awal') nb-input-error @enderror">
+                        @for($i = 1; $i <= 14; $i++)
+                            <option value="{{ $i }}" {{ (int) $selectedSemesterKe === $i ? 'selected' : '' }}>Semester {{ $i }}</option>
+                        @endfor
+                    </select>
+                    @error('semester_ke_awal')
+                        <span class="nb-error-text">{{ $message }}</span>
+                    @enderror
+                </div>
 
                 <div>
-                    <label class="nb-label">Kelas <span class="text-danger">*</span></label>
-                    <input type="text" name="kelas" value="{{ old('kelas', $mahasiswa->kelas) }}" maxlength="20" placeholder="IF2A Pagi" required
-                        class="w-full @error('kelas') nb-input-error @enderror">
-                    @error('kelas')
+                    <label class="nb-label">Grup Kelas <span class="text-danger">*</span></label>
+                    <select name="kelas_grup" required class="w-full @error('kelas_grup') nb-input-error @enderror">
+                        @foreach($kelasGroups as $group)
+                            <option value="{{ $group }}" {{ $selectedKelasGrup == $group ? 'selected' : '' }}>{{ $group }}</option>
+                        @endforeach
+                    </select>
+                    @error('kelas_grup')
+                        <span class="nb-error-text">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="nb-label">Sesi Kelas <span class="text-danger">*</span></label>
+                    <select name="sesi_kelas" required class="w-full @error('sesi_kelas') nb-input-error @enderror">
+                        @foreach($sesiOptions as $sesi)
+                            <option value="{{ $sesi }}" {{ $selectedSesiKelas == $sesi ? 'selected' : '' }}>{{ $sesi }}</option>
+                        @endforeach
+                    </select>
+                    @error('sesi_kelas')
                         <span class="nb-error-text">{{ $message }}</span>
                     @enderror
                 </div>

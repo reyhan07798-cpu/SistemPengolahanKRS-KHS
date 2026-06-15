@@ -54,6 +54,16 @@
             <div class="nb-stat-value">{{ number_format($data['ips'], 2) }}</div>
         </div>
 
+        <div class="nb-stat nb-stat--primary nb-stat--ribbon">
+            <div class="flex items-center gap-3">
+                <div class="nb-stat-icon">
+                    <span class="material-symbols-outlined filled">school</span>
+                </div>
+                <p class="nb-stat-label">IPK</p>
+            </div>
+            <div class="nb-stat-value">{{ number_format($data['ipk'] ?? 0, 2) }}</div>
+        </div>
+
         <div class="nb-stat nb-stat--warning nb-stat--ribbon">
             <div class="flex items-center gap-3">
                 <div class="nb-stat-icon">

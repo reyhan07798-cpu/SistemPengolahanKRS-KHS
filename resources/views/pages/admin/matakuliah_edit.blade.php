@@ -9,7 +9,7 @@
         <div>
             <span class="nb-eyebrow">Master Data</span>
             <h1 class="mt-2">Edit Mata Kuliah</h1>
-            <p>Ubah informasi mata kuliah {{ $matakuliah->kode ?? 'N/A' }}</p>
+            <p>Ubah informasi mata kuliah {{ $matakuliah->kode_mk ?? 'N/A' }}</p>
         </div>
         <a href="{{ route('pages.admin.matakuliah.index') }}" class="nb-btn nb-btn-secondary">
             <span class="material-symbols-outlined" style="font-size:20px;">arrow_back</span>
@@ -32,9 +32,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                     <label class="nb-label">Kode Mata Kuliah <span class="text-danger">*</span></label>
-                    <input type="text" name="kode" value="{{ old('kode', $matakuliah->kode ?? '') }}" placeholder="IF101" required
-                        class="w-full @error('kode') nb-input-error @enderror">
-                    @error('kode')
+                    <input type="text" name="kode_mk" value="{{ old('kode_mk', $matakuliah->kode_mk ?? '') }}" placeholder="IF101" required
+                        class="w-full @error('kode_mk') nb-input-error @enderror">
+                    @error('kode_mk')
                         <span class="nb-error-text">{{ $message }}</span>
                     @enderror
                 </div>
@@ -70,25 +70,42 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                     <label class="nb-label">Semester <span class="text-danger">*</span></label>
-                    <select name="semester" required class="w-full @error('semester') nb-input-error @enderror">
+                    <select name="semester_ke" required class="w-full @error('semester_ke') nb-input-error @enderror">
                         <option value="">Pilih Semester</option>
                         @for ($i = 1; $i <= 8; $i++)
-                            <option value="{{ $i }}" {{ old('semester', $matakuliah->semester ?? '') == $i ? 'selected' : '' }}>Semester {{ $i }}</option>
+                            <option value="{{ $i }}" {{ old('semester_ke', $matakuliah->semester_ke ?? '') == $i ? 'selected' : '' }}>Semester {{ $i }}</option>
                         @endfor
                     </select>
-                    @error('semester')
+                    @error('semester_ke')
                         <span class="nb-error-text">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div>
-                    <label class="nb-label">Dosen Pengampu <span class="text-danger">*</span></label>
-                    <input type="text" name="dosen_pengampu" value="{{ old('dosen_pengampu', $matakuliah->dosen_pengampu ?? '') }}" placeholder="Dr. Budi Santoso" required
-                        class="w-full @error('dosen_pengampu') nb-input-error @enderror">
-                    @error('dosen_pengampu')
+                    <label class="nb-label">Program Studi <span class="text-danger">*</span></label>
+                    <select name="prodi" required class="w-full @error('prodi') nb-input-error @enderror">
+                        <option value="">Pilih Program Studi</option>
+                        @foreach($prodis ?? [] as $prodi)
+                            <option value="{{ $prodi }}" {{ old('prodi', $matakuliah->prodi ?? '') == $prodi ? 'selected' : '' }}>{{ $prodi }}</option>
+                        @endforeach
+                    </select>
+                    @error('prodi')
                         <span class="nb-error-text">{{ $message }}</span>
                     @enderror
                 </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="nb-label">Dosen Pengampu</label>
+                <select name="dosen_id" class="w-full @error('dosen_id') nb-input-error @enderror">
+                    <option value="">-- Pilih Dosen --</option>
+                    @foreach($dosens ?? [] as $dosen)
+                        <option value="{{ $dosen->id }}" {{ old('dosen_id', $matakuliah->dosen_id ?? '') == $dosen->id ? 'selected' : '' }}>{{ $dosen->nama }}</option>
+                    @endforeach
+                </select>
+                @error('dosen_id')
+                    <span class="nb-error-text">{{ $message }}</span>
+                @enderror
             </div>
 
             {{-- Jadwal Section --}}

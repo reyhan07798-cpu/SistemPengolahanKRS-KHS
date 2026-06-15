@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('nama');
             $table->integer('sks');
             $table->foreignId('semester_id')->nullable()->constrained('semesters')->onDelete('set null');
+            $table->foreignId('prodi_id')->nullable()->constrained('prodi')->onDelete('set null');
             $table->foreignId('dosen_id')->nullable()->constrained('dosen')->onDelete('set null');
             $table->string('tahun_ajaran')->nullable();
             $table->integer('semester_ke')->nullable();

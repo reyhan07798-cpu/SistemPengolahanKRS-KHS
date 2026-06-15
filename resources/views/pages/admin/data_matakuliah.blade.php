@@ -43,6 +43,7 @@
                         <th>Nama Mata Kuliah</th>
                         <th class="text-center">SKS</th>
                         <th class="hidden sm:table-cell">Semester</th>
+                        <th class="hidden md:table-cell">Prodi</th>
                         <th class="hidden md:table-cell">Dosen Pengampu</th>
                         <th class="text-center">Aksi</th>
                     </tr>
@@ -164,6 +165,21 @@
                                 @endfor
                             </select>
                             @error('semester_ke')
+                                <p class="nb-form-error">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="nb-label">Program Studi <span class="text-danger">*</span></label>
+                            <select id="input_prodi" name="prodi" required>
+                                <option value="">Pilih Program Studi</option>
+                                @foreach($prodis ?? [] as $prodi)
+                                    <option value="{{ $prodi }}" {{ old('prodi') == $prodi ? 'selected' : '' }}>
+                                        {{ $prodi }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('prodi')
                                 <p class="nb-form-error">{{ $message }}</p>
                             @enderror
                         </div>
@@ -374,6 +390,7 @@
         document.getElementById('input_sks').value = '';
         document.getElementById('input_nama').value = '';
         document.getElementById('input_semester_ke').value = '';
+        document.getElementById('input_prodi').value = '';
         document.getElementById('input_dosen_id').value = '';
 
         // reset submit button (preserve icon)
@@ -408,6 +425,7 @@
         document.getElementById('input_sks').value = mk.sks || '';
         document.getElementById('input_nama').value = mk.nama || '';
         document.getElementById('input_semester_ke').value = mk.semester_ke || '';
+        document.getElementById('input_prodi').value = mk.prodi || '';
         document.getElementById('input_dosen_id').value = mk.dosen_id ?? '';
 
         // change submit button text (preserve icon)
@@ -501,6 +519,10 @@
                 </td>
 
                 <td class="hidden md:table-cell text-muted">
+                    ${safeText(mk.prodi)}
+                </td>
+
+                <td class="hidden md:table-cell text-muted">
                     ${safeText(mk.dosen_pengampu)}
                 </td>
 
@@ -570,8 +592,9 @@
         const filtered = rawData.filter(mk => {
             const kode = (mk.kode_mk ?? '').toLowerCase();
             const nama = (mk.nama ?? '').toLowerCase();
+            const prodi = (mk.prodi ?? '').toLowerCase();
 
-            return kode.includes(searchTerm) || nama.includes(searchTerm);
+            return kode.includes(searchTerm) || nama.includes(searchTerm) || prodi.includes(searchTerm);
         });
 
         renderTable(filtered);

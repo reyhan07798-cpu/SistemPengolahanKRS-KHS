@@ -74,8 +74,9 @@
                 </button>
             </div>
 
-            <form action="{{ route('pages.admin.tahunajaran.store') }}" method="POST">
+            <form action="{{ route('pages.admin.tahunajaran.store') }}" method="POST" id="tahunAjaranForm">
                 @csrf
+                <input type="hidden" name="_method" id="tahunAjaranFormMethod" value="POST">
                 <div class="nb-modal-body">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                         <div>
@@ -104,7 +105,7 @@
 
                         <div class="md:col-span-2">
                             <label class="nb-label flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" name="status" value="1" {{ old('status') ? 'checked' : '' }}>
+                                <input type="checkbox" name="status" value="1" id="tahunAjaranStatus" {{ old('status') ? 'checked' : '' }}>
                                 <span>Jadikan Status Aktif</span>
                             </label>
                         </div>
@@ -132,8 +133,22 @@
     const emptyState = document.getElementById('emptyState');
     const totalDataSpan = document.getElementById('totalData');
     const baseUrl = "{{ url('admin/tahun-ajaran') }}";
+    const tahunAjaranForm = document.getElementById('tahunAjaranForm');
+    const tahunAjaranFormMethod = document.getElementById('tahunAjaranFormMethod');
+    const modalTitle = document.getElementById('modal-title');
 
-    function openModal() {
+    function openModal(tahunAjaran = null) {
+        tahunAjaranForm.reset();
+        tahunAjaranForm.action = tahunAjaran ? `${baseUrl}/${tahunAjaran.id}` : "{{ route('pages.admin.tahunajaran.store') }}";
+        tahunAjaranFormMethod.value = tahunAjaran ? 'PUT' : 'POST';
+        modalTitle.textContent = tahunAjaran ? 'Edit Tahun Ajaran' : 'Tambah Tahun Ajaran Baru';
+
+        if (tahunAjaran) {
+            tahunAjaranForm.elements.semester.value = tahunAjaran.semester || '';
+            tahunAjaranForm.elements.tahun_ajaran.value = tahunAjaran.tahun_ajaran || '';
+            document.getElementById('tahunAjaranStatus').checked = tahunAjaran.status === 'Aktif';
+        }
+
         document.getElementById('modalOverlay').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -157,7 +172,6 @@
 
         data.forEach(ta => {
             const row = document.createElement('tr');
-            const editUrl = `${baseUrl}/${ta.id}/edit`;
             const deleteUrl = `${baseUrl}/${ta.id}`;
             const statusBadge = ta.status === 'Aktif' ? 'nb-badge-success' : 'nb-badge-stable';
             const semesterBadge = ta.semester === 'Ganjil' ? 'nb-badge-primary' : 'nb-badge-warning';
@@ -168,9 +182,9 @@
                 <td class="text-center"><span class="nb-badge ${statusBadge}">${ta.status}</span></td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
-                        <a href="${editUrl}" class="nb-row-action" title="Edit">
+                        <button type="button" class="nb-row-action js-edit-tahunajaran" data-id="${ta.id}" title="Edit">
                             <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
-                        </a>
+                        </button>
                         <button type="button" class="nb-row-action danger" title="Hapus" onclick="deleteData('${deleteUrl}', 'Hapus Tahun Ajaran?', 'Tahun ajaran akan disembunyikan dari tampilan admin.', '${ta.tahun_ajaran}')">
                             <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
                         </button>
@@ -183,6 +197,17 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         renderTable(rawData);
+    });
+
+    tableBody.addEventListener('click', (event) => {
+        const editButton = event.target.closest('.js-edit-tahunajaran');
+
+        if (!editButton) {
+            return;
+        }
+
+        const tahunAjaran = rawData.find(item => String(item.id) === String(editButton.dataset.id));
+        if (tahunAjaran) openModal(tahunAjaran);
     });
 </script>
 @endpush
