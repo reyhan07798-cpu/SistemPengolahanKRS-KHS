@@ -127,6 +127,7 @@ class KhsMahasiswaController extends Controller
         $nilaiQuery = DB::table('nilai')
             ->join('mata_kuliah', 'nilai.mata_kuliah_id', '=', 'mata_kuliah.id')
             ->where('nilai.mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->where('nilai.status', 'final')
             ->select(
                 'nilai.id',
                 'nilai.mahasiswa_id',
@@ -181,6 +182,7 @@ class KhsMahasiswaController extends Controller
                 ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
                 ->where('tahun_ajaran', $semesterAktif->tahun_ajaran)
                 ->where('semester', $semesterAktif->semester_ke)
+                ->where('status', 'final')
                 ->get()
                 ->map(function ($item) {
                     $item->kn = ((int) $item->sks) * ((float) $item->bobot);
@@ -202,6 +204,7 @@ class KhsMahasiswaController extends Controller
         */
         $listTahun = DB::table('nilai')
             ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->where('status', 'final')
             ->select('tahun_ajaran')
             ->distinct()
             ->orderBy('tahun_ajaran', 'desc')
@@ -220,6 +223,7 @@ class KhsMahasiswaController extends Controller
 
         $ipSemester = DB::table('nilai')
             ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->where('status', 'final')
             ->select('tahun_ajaran', 'semester')
             ->selectRaw('COUNT(*) as mk')
             ->selectRaw('SUM(sks) as sks')
@@ -246,6 +250,9 @@ class KhsMahasiswaController extends Controller
                 return $item;
             });
 
+        // IPK Kumulatif keseluruhan (akumulasi semua semester sampai saat ini)
+        $ipkKumulatif = $runningSks > 0 ? round($runningKn / $runningSks, 2) : 0;
+
         $data = [
             'nama' => $mahasiswa->nama ?? $mahasiswa->user_name ?? '-',
             'nim' => $mahasiswa->nim ?? '-',
@@ -266,7 +273,8 @@ class KhsMahasiswaController extends Controller
             'ipSemester',
             'tahunFilter',
             'semesterFilter',
-            'semesterAktif'
+            'semesterAktif',
+            'ipkKumulatif'
         ));
     }
 }

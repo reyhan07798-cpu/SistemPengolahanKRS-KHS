@@ -146,6 +146,7 @@ class MahasiswaController extends Controller
         $ipkRecords = DB::getSchemaBuilder()->hasTable('nilai')
             ? DB::table('nilai')
                 ->where('mahasiswa_id', $mahasiswaId)
+                ->where('status', 'final')
                 ->select('bobot', 'sks')
                 ->get()
             : collect();
@@ -162,6 +163,7 @@ class MahasiswaController extends Controller
                 ->where('nilai.mahasiswa_id', $mahasiswaId)
                 ->where('nilai.tahun_ajaran', $semesterAktif->tahun_ajaran)
                 ->where('nilai.semester', $semesterAktif->semester_ke)
+                ->where('nilai.status', 'final')
                 ->select(
                     'nilai.id',
                     'nilai.mahasiswa_id',
@@ -522,6 +524,7 @@ class MahasiswaController extends Controller
 
         $mengulangIds = DB::table('nilai')
             ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->where('status', 'final')
             ->whereIn('nilai', ['D', 'E'])
             ->pluck('mata_kuliah_id')
             ->toArray();
@@ -570,6 +573,7 @@ class MahasiswaController extends Controller
                 $nilaiLama = DB::table('nilai')
                     ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
                     ->where('mata_kuliah_id', $mk->id)
+                    ->where('status', 'final')
                     ->orderByDesc('created_at')
                     ->value('nilai');
 

@@ -17,6 +17,7 @@ class Nilai extends Model
         'nilai',
         'bobot',
         'sks',
+        'status',
     ];
 
     public function mahasiswa()

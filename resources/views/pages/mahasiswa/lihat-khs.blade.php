@@ -20,6 +20,16 @@
 
     {{-- Stat Cards --}}
     <div class="nb-bento mb-6" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+        <div class="nb-stat nb-stat--success nb-stat--ribbon">
+            <div class="flex items-center gap-3">
+                <div class="nb-stat-icon">
+                    <span class="material-symbols-outlined filled">workspace_premium</span>
+                </div>
+                <p class="nb-stat-label">IPK Kumulatif</p>
+            </div>
+            <div class="nb-stat-value">{{ number_format($ipkKumulatif, 2) }}</div>
+        </div>
+
         <div class="nb-stat nb-stat--accent nb-stat--ribbon">
             <div class="flex items-center gap-3">
                 <div class="nb-stat-icon">

@@ -73,6 +73,7 @@ class MhsPdfController extends Controller
             ->where('nilai.mahasiswa_id', $mahasiswa->mahasiswa_id)
             ->where('nilai.tahun_ajaran', $semesterAktif->tahun_ajaran)
             ->where('nilai.semester', $semesterAktif->semester_ke)
+            ->where('nilai.status', 'final')
             ->select(
                 'mata_kuliah.kode_mk as kode',
                 'mata_kuliah.nama as mata_kuliah',
@@ -101,6 +102,7 @@ class MhsPdfController extends Controller
         */
         $nilaiKumulatif = DB::table('nilai')
             ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->where('status', 'final')
             ->where(function ($query) use ($semesterAktif) {
                 $query->where('tahun_ajaran', '<', $semesterAktif->tahun_ajaran)
                     ->orWhere(function ($subQuery) use ($semesterAktif) {

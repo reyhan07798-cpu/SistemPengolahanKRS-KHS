@@ -174,9 +174,9 @@
                 </span>
 
                 @if(!$isReadOnly)
-                    <button onclick="simpanSemua()" id="btnSimpanSemua" class="nb-btn nb-btn-primary nb-btn-sm">
-                        <span class="material-symbols-outlined" style="font-size:16px;">save</span>
-                        Simpan Semua
+                    <button onclick="finalisasi()" id="btnFinalisasi" class="nb-btn nb-btn-primary nb-btn-sm">
+                        <span class="material-symbols-outlined" style="font-size:16px;">verified</span>
+                        Finalisasi
                     </button>
                 @endif
             </div>
@@ -220,9 +220,7 @@
                         </th>
                         <th class="text-center">Nilai Akhir</th>
                         <th class="text-center">Grade</th>
-                        @if(!$isReadOnly)
-                            <th class="text-center">Aksi</th>
-                        @endif
+                        <th class="text-center">Status</th>
                     </tr>
                 </thead>
 
@@ -253,7 +251,7 @@
                                                step="0.5"
                                                placeholder="—"
                                                data-mhs="{{ $mhs['id'] }}"
-                                               oninput="hitungBaris({{ $mhs['id'] }})"
+                                               oninput="onNilaiInput({{ $mhs['id'] }})"
                                                style="width:68px;padding:5px 3px;border:1.5px solid var(--nb-border);border-radius:6px;font-size:12px;text-align:center;background:var(--nb-surface);">
                                     @else
                                         <span class="text-sm font-medium">
@@ -278,19 +276,18 @@
                                 </span>
                             </td>
 
-                            @if(!$isReadOnly)
-                                <td class="text-center">
-                                    <button onclick="simpanSatu({{ $mhs['id'] }})"
-                                            id="btn_{{ $mhs['id'] }}"
-                                            class="nb-btn nb-btn-primary nb-btn-sm">
-                                        <span class="material-symbols-outlined" style="font-size:14px;">save</span>
-                                    </button>
-
-                                    <span id="ok_{{ $mhs['id'] }}" class="text-xs text-green-600 hidden ml-1">
-                                        ✓
-                                    </span>
-                                </td>
-                            @endif
+                            @php
+                                $statusBadge = match($mhs['status'] ?? null) {
+                                    'final' => ['label' => 'Final', 'class' => 'nb-badge-success'],
+                                    'draft' => ['label' => 'Draft', 'class' => 'nb-badge-warning'],
+                                    default => ['label' => 'Belum Diisi', 'class' => 'nb-badge-stable'],
+                                };
+                            @endphp
+                            <td class="text-center">
+                                <span id="status_{{ $mhs['id'] }}">
+                                    <span class="nb-badge {{ $statusBadge['class'] }}">{{ $statusBadge['label'] }}</span>
+                                </span>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -323,6 +320,7 @@ const KODE_MK = '{{ $filterKodeMK ?? "" }}';
 const KELAS = '{{ $filterKelas ?? "" }}';
 const CSRF = '{{ csrf_token() }}';
 const URL_SIMPAN = '{{ route("dosen.mk.simpan-nilai") }}';
+const URL_FINALISASI = '{{ route("dosen.mk.finalisasi-nilai") }}';
 const URL_KELAS = '{{ route("dosen.mk.kelas-by-mk") }}';
 
 function onMKChange(sel) {
@@ -441,21 +439,35 @@ function recalcAll() {
     updateBobotTotal();
 }
 
-async function simpanSatu(id) {
+const autoSaveTimers = {};
+
+function onNilaiInput(id) {
+    hitungBaris(id);
+
+    clearTimeout(autoSaveTimers[id]);
+    autoSaveTimers[id] = setTimeout(() => simpanSatu(id, { silent: true }), 800);
+}
+
+function setStatusBadge(id, label, cls) {
+    const el = document.getElementById('status_' + id);
+
+    if (el) {
+        el.innerHTML = '<span class="nb-badge ' + cls + '">' + label + '</span>';
+    }
+}
+
+async function simpanSatu(id, opts = {}) {
     const b = getBobots();
     const total = b.tugas + b.praktikum + b.uts + b.uas + b.kehadiran;
 
     if (Math.abs(total - 100) > 0.01) {
-        alert('Total bobot harus 100%. Sekarang: ' + total + '%');
-        return;
+        if (!opts.silent) {
+            alert('Total bobot harus 100%. Sekarang: ' + total + '%');
+        }
+        return false;
     }
 
-    const btn = document.getElementById('btn_' + id);
-
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">hourglass_empty</span>';
-    }
+    setStatusBadge(id, 'Menyimpan…', 'nb-badge-stable');
 
     const fd = new FormData();
 
@@ -491,20 +503,14 @@ async function simpanSatu(id) {
                 console.error(await res.text());
             }
 
-            alert(message);
-            return;
+            setStatusBadge(id, 'Gagal Tersimpan', 'nb-badge-danger');
+            if (!opts.silent) alert(message);
+            return false;
         }
 
         const data = await res.json();
 
         if (data.success) {
-            const ok = document.getElementById('ok_' + id);
-
-            if (ok) {
-                ok.classList.remove('hidden');
-                setTimeout(() => ok.classList.add('hidden'), 2000);
-            }
-
             const el = document.getElementById('akhir_' + id);
             const gr = document.getElementById('grade_' + id);
 
@@ -517,36 +523,88 @@ async function simpanSatu(id) {
                 gr.textContent = data.grade;
                 gr.className = 'nb-badge ' + g.cls;
             }
+
+            setStatusBadge(id, 'Draft', 'nb-badge-warning');
+            return true;
         } else {
-            alert(data.message || 'Gagal menyimpan nilai.');
+            setStatusBadge(id, 'Gagal Tersimpan', 'nb-badge-danger');
+            if (!opts.silent) alert(data.message || 'Gagal menyimpan nilai.');
+            return false;
         }
     } catch (e) {
         console.error('Catch Error:', e);
-        alert('Terjadi kesalahan sistem. Buka Console Browser (F12) untuk detail.');
-    }
-
-    if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">save</span>';
+        setStatusBadge(id, 'Gagal Tersimpan', 'nb-badge-danger');
+        if (!opts.silent) alert('Terjadi kesalahan sistem. Buka Console Browser (F12) untuk detail.');
+        return false;
     }
 }
 
-async function simpanSemua() {
+async function finalisasi() {
     const rows = document.querySelectorAll('[id^="row_"]');
-    const btn = document.getElementById('btnSimpanSemua');
+    const btn = document.getElementById('btnFinalisasi');
+
+    if (!rows.length) return;
+
+    const b = getBobots();
+    const totalBobot = b.tugas + b.praktikum + b.uts + b.uas + b.kehadiran;
+
+    if (Math.abs(totalBobot - 100) > 0.01) {
+        alert('Total bobot harus 100%. Sekarang: ' + totalBobot + '%');
+        return;
+    }
+
+    if (!confirm('Finalisasi nilai untuk ' + rows.length + ' mahasiswa? Setelah difinalisasi, nilai akan langsung bisa dilihat mahasiswa di KHS mereka.')) {
+        return;
+    }
 
     if (btn) {
         btn.disabled = true;
-        btn.textContent = 'Menyimpan...';
+        btn.textContent = 'Menyimpan draft...';
     }
 
+    // Pastikan semua perubahan terbaru di setiap baris sudah tersimpan sebagai draft
     for (const row of rows) {
-        await simpanSatu(row.id.replace('row_', ''));
+        await simpanSatu(row.id.replace('row_', ''), { silent: true });
+    }
+
+    if (btn) {
+        btn.textContent = 'Memfinalisasi...';
+    }
+
+    const fd = new FormData();
+    fd.append('_token', CSRF);
+    fd.append('kode_mk', KODE_MK);
+    fd.append('kelas', KELAS);
+
+    try {
+        const res = await fetch(URL_FINALISASI, {
+            method: 'POST',
+            body: fd,
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            document.querySelectorAll('[id^="row_"]').forEach(row => {
+                setStatusBadge(row.id.replace('row_', ''), 'Final', 'nb-badge-success');
+            });
+
+            alert(data.message);
+        } else {
+            alert(data.message || 'Gagal memfinalisasi nilai.');
+        }
+    } catch (e) {
+        console.error('Catch Error:', e);
+        alert('Terjadi kesalahan sistem saat memfinalisasi. Buka Console Browser (F12) untuk detail.');
     }
 
     if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">save</span> Simpan Semua';
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">verified</span> Finalisasi';
     }
 }
 

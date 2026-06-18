@@ -340,6 +340,7 @@ class DosenMKController extends Controller
                             'nilai_kehadiran' => $nilaiRow->nilai_kehadiran ?? null,
                             'nilai_akhir' => $nilaiRow->nilai_akhir ?? null,
                             'grade' => $nilaiRow->nilai ?? null,
+                            'status' => $nilaiRow->status ?? null,
 
                             'bobot_tugas' => $nilaiRow->bobot_tugas ?? 20,
                             'bobot_praktikum' => $nilaiRow->bobot_praktikum ?? 15,
@@ -494,6 +495,7 @@ class DosenMKController extends Controller
             'bobot_kehadiran' => $bobotKehadiran,
 
             'dosen_nik' => $nik,
+            'status' => 'draft',
             'updated_at' => now(),
         ]);
 
@@ -529,6 +531,102 @@ class DosenMKController extends Controller
             'nilai_akhir' => round($nilaiAkhir, 2),
             'grade' => $konversi['grade'],
             'mutu' => $konversi['mutu'],
+        ]);
+    }
+
+    public function finalisasiNilai(Request $request)
+    {
+        $kodeMK = $request->input('kode_mk');
+        $kelas = $request->input('kelas');
+
+        if (!$kodeMK || !$kelas) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mata kuliah dan kelas wajib dipilih.',
+            ], 422);
+        }
+
+        $dosenId = $this->dosenId();
+        $nik = $this->dosenNik();
+
+        $mk = DB::table('mata_kuliah')
+            ->join('semesters', 'mata_kuliah.semester_id', '=', 'semesters.id')
+            ->leftJoin('dosen_matakuliah', 'mata_kuliah.id', '=', 'dosen_matakuliah.mata_kuliah_id')
+            ->leftJoin('dosen', 'dosen_matakuliah.dosen_id', '=', 'dosen.id')
+            ->leftJoin('kelas', 'dosen_matakuliah.kelas_id', '=', 'kelas.id')
+            ->where('mata_kuliah.kode_mk', $kodeMK)
+            ->whereRaw('COALESCE(kelas.nama_kelas, mata_kuliah.kelas) = ?', [$kelas])
+            ->where(function ($query) use ($dosenId, $nik) {
+                if ($dosenId) {
+                    $query->where('dosen_matakuliah.dosen_id', $dosenId)
+                        ->orWhere('mata_kuliah.dosen_id', $dosenId);
+                }
+
+                if ($nik) {
+                    $query->orWhere('dosen.nik', $nik)
+                        ->orWhere('mata_kuliah.dosen_nik', $nik);
+                }
+            })
+            ->select(
+                'mata_kuliah.*',
+                DB::raw('COALESCE(kelas.nama_kelas, mata_kuliah.kelas) as kelas_final'),
+                'semesters.is_active',
+                'semesters.id as sem_id'
+            )
+            ->first();
+
+        if (!$mk) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mata kuliah atau kelas tidak ditemukan.',
+            ], 404);
+        }
+
+        if (!(bool) $mk->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak bisa finalisasi nilai di semester yang tidak aktif.',
+            ], 403);
+        }
+
+        $mahasiswaIds = $this->getMahasiswaByMK($mk->id, $kelas)->pluck('id')->toArray();
+
+        if (empty($mahasiswaIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada mahasiswa pada kelas ini.',
+            ], 404);
+        }
+
+        $kelasFinal = $mk->kelas_final ?? $kelas;
+        $kelasPendek = str_replace('-PAGI', '-', $kelasFinal);
+
+        $jumlahDifinalisasi = DB::table('nilai')
+            ->whereIn('mahasiswa_id', $mahasiswaIds)
+            ->where('mata_kuliah_id', $mk->id)
+            ->where('semester_id', $mk->sem_id)
+            ->where(function ($q) use ($kelasFinal, $kelasPendek) {
+                $q->where('kelas', $kelasFinal)
+                    ->orWhere('kelas', $kelasPendek)
+                    ->orWhereNull('kelas');
+            })
+            ->whereNotNull('nilai_akhir')
+            ->update([
+                'status' => 'final',
+                'updated_at' => now(),
+            ]);
+
+        if ($jumlahDifinalisasi === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Belum ada nilai yang diisi untuk difinalisasi.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Nilai $jumlahDifinalisasi mahasiswa berhasil difinalisasi dan kini dapat dilihat mahasiswa.",
+            'jumlah' => $jumlahDifinalisasi,
         ]);
     }
 

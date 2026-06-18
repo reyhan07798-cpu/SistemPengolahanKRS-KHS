@@ -116,6 +116,7 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::get('/beranda', [DosenMKController::class, 'index'])->name('beranda');
         Route::get('/input-nilai', [DosenMKController::class, 'inputNilai'])->name('input-nilai');
         Route::post('/simpan-nilai', [DosenMKController::class, 'simpanNilai'])->name('simpan-nilai');
+        Route::post('/finalisasi-nilai', [DosenMKController::class, 'finalisasiNilai'])->name('finalisasi-nilai');
         Route::get('/lihat-nilai', [DosenMKController::class, 'lihatNilai'])->name('lihat-nilai');
         Route::get('/profil', [ProfilDosenWaliController::class, 'index'])->name('profil');
         Route::put('/profil', [ProfilDosenWaliController::class, 'update'])->name('profil.update');
@@ -145,6 +146,7 @@ Route::middleware('check.simple.auth')->group(function () {
         Route::get('/beranda', [DosenMKController::class, 'index'])->name('beranda');
         Route::get('/input-nilai', [DosenMKController::class, 'inputNilai'])->name('input-nilai');
         Route::post('/simpan-nilai', [DosenMKController::class, 'simpanNilai'])->name('simpan-nilai');
+        Route::post('/finalisasi-nilai', [DosenMKController::class, 'finalisasiNilai'])->name('finalisasi-nilai');
         Route::get('/lihat-nilai', [DosenMKController::class, 'lihatNilai'])->name('lihat-nilai');
         Route::get('/kelas-by-mk', [DosenMKController::class, 'getKelasByMK'])->name('kelas-by-mk');
         Route::get('/profil', [DosenMKController::class, 'profil'])->name('profil');

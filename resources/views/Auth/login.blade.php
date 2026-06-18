@@ -131,7 +131,13 @@
 
     <!-- Right: Form -->
     <div class="relative flex min-h-screen flex-col justify-center p-6 lg:p-12 overflow-hidden z-10">
-      
+
+      <!-- Kembali ke landing page - desktop only -->
+      <a href="/" class="hidden lg:inline-flex nb-btn nb-btn-secondary nb-btn-sm absolute top-6 left-6 z-30">
+        <i class="fas fa-arrow-left"></i>
+        Kembali
+      </a>
+
       <!-- Radials desktop only -->
       <div aria-hidden="true" class="hidden lg:block absolute inset-0 isolate -z-10 opacity-60">
         <div class="absolute top-0 right-0 h-[600px] w-[600px] -translate-y-1/2 translate-x-1/3 rounded-full bg-[radial-gradient(circle_at_50%_50%,var(--color-primary-soft)_0%,transparent_60%)]"></div>
