@@ -10,7 +10,7 @@ trait HandlesProdiData
     protected function getProdiOptions()
     {
         $fallback = collect([
-            'Informatika',
+            'Teknik Informatika',
             'Teknologi Rekayasa Perangkat Lunak',
             'Teknologi Geomatika',
             'Rekayasa Keamanan Siber',
@@ -68,6 +68,7 @@ trait HandlesProdiData
         $normalized = strtolower(trim($namaProdi));
         $map = [
             'informatika' => 'IF',
+            'teknik informatika' => 'IF',
             'teknologi rekayasa perangkat lunak' => 'TRL',
             'teknologi geomatika' => 'TG',
             'rekayasa keamanan siber' => 'RKS',

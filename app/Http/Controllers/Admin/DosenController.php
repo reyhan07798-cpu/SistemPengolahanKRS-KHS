@@ -59,9 +59,9 @@ class DosenController extends Controller
                 $role = 'dosen_mk';
                 $tipe = strtolower($validated['tipe_dosen']);
                 if (
-                    $tipe === 'keduanya' ||
+                    $tipe === 'Dosen Wali & Mata Kuliah' ||
                     str_contains($tipe, 'wali') &&
-                    (str_contains($tipe, 'mata kuliah') || str_contains($tipe, 'mk') || str_contains($tipe, 'keduanya'))
+                    (str_contains($tipe, 'mata kuliah') || str_contains($tipe, 'mk') || str_contains($tipe, 'Dosen Wali & Mata Kuliah'))
                 ) {
                     $role = 'dosen';
                 } elseif (str_contains($tipe, 'wali')) {
@@ -138,9 +138,9 @@ class DosenController extends Controller
                         $role = 'dosen_mk';
                         $tipe = strtolower($validated['tipe_dosen']);
                         if (
-                            $tipe === 'keduanya' ||
+                            $tipe === 'Dosen Wali & Mata Kuliah' ||
                             str_contains($tipe, 'wali') &&
-                            (str_contains($tipe, 'mata kuliah') || str_contains($tipe, 'mk') || str_contains($tipe, 'keduanya'))
+                            (str_contains($tipe, 'mata kuliah') || str_contains($tipe, 'mk') || str_contains($tipe, 'Dosen Wali & Mata Kuliah'))
                         ) {
                             $role = 'dosen';
                         } elseif (str_contains($tipe, 'wali')) {

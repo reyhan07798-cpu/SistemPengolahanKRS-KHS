@@ -155,6 +155,7 @@ class MahasiswaController extends Controller
         $totalBobotIpk = $ipkRecords->sum(function ($item) {
             return ((int) $item->sks) * ((float) $item->bobot);
         });
+
         $ipk = $totalSksIpk > 0 ? round($totalBobotIpk / $totalSksIpk, 2) : 0;
 
         if ($semesterAktif) {
@@ -438,23 +439,18 @@ class MahasiswaController extends Controller
         $data = [
             'nama' => $mahasiswa->nama ?? $mahasiswa->user_name ?? '-',
             'email' => $mahasiswa->email ?? $mahasiswa->user_email ?? '-',
-
             'semester_aktif' => $semesterAktif?->semester ?? '-',
             'semester_label' => $semesterAktif
                 ? 'Semester '.$semesterAktif->semester.' '.$semesterAktif->tahun_ajaran
                 : '-',
-
             'total_sks' => $totalSksDiambil,
             'sisa_sks' => max(0, 24 - $totalSksDiambil),
             'status_krs' => $statusKrs,
             'max_sks' => 24,
-
             'tahun_ajaran_aktif' => $semesterAktif?->tahun_ajaran ?? '-',
             'semester_aktif_value' => $semesterAktif?->semester ?? '-',
-
             'is_semester_active' => $semesterAktif ? true : false,
             'is_read_only_krs' => $isReadOnlyKrs,
-
             'tahun_ajaran_list' => $tahunAjaranList,
             'semester_list' => $semesterList,
             'semester_aktif_data' => $semesterAktif,
@@ -530,8 +526,7 @@ class MahasiswaController extends Controller
             ->toArray();
 
         $mataKuliahQuery = DB::table('mata_kuliah')
-            ->leftJoin('dosen_matakuliah', 'mata_kuliah.id', '=', 'dosen_matakuliah.mata_kuliah_id')
-            ->leftJoin('dosen', 'dosen_matakuliah.dosen_id', '=', 'dosen.id');
+            ->leftJoin('dosen', 'mata_kuliah.dosen_id', '=', 'dosen.id');
 
         if (! empty($paketIds)) {
             $mataKuliahQuery

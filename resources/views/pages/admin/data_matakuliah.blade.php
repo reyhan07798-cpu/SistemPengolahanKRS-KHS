@@ -263,7 +263,9 @@
         border: 1px solid #fecdca;
     }
 
-    .admin-delete-icon .material-symbols-outlined { font-size: 28px; }
+    .admin-delete-icon .material-symbols-outlined {
+        font-size: 28px;
+    }
 
     .admin-delete-close {
         width: 36px;
@@ -277,7 +279,9 @@
         cursor: pointer;
     }
 
-    .admin-delete-body { padding: 0.75rem 1.25rem 1rem; }
+    .admin-delete-body {
+        padding: 0.75rem 1.25rem 1rem;
+    }
 
     .admin-delete-badge {
         display: inline-flex;
@@ -355,6 +359,18 @@
         box-shadow: 0 10px 18px rgba(220, 38, 38, 0.22);
     }
 
+    .mk-semester-row td {
+        background: #f1f5f9;
+        color: #003b73;
+        font-weight: 900;
+        font-family: var(--font-heading);
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        padding: 14px 20px;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
     @keyframes adminFadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
@@ -365,6 +381,7 @@
         to { opacity: 1; transform: translateY(0) scale(1); }
     }
 </style>
+
 <script>
     let rawData = @json($matakuliah ?? []);
     const tableBody = document.getElementById('tableBody');
@@ -381,11 +398,10 @@
         const form = document.getElementById('modalForm');
         document.getElementById('modal-title').innerText = 'Tambah Mata Kuliah Baru';
         form.action = storeUrl;
-        // remove method override if exists
+
         const methodInput = form.querySelector('input[name="_method"]');
         if (methodInput) methodInput.remove();
 
-        // reset fields
         document.getElementById('input_kode_mk').value = '';
         document.getElementById('input_sks').value = '';
         document.getElementById('input_nama').value = '';
@@ -393,9 +409,10 @@
         document.getElementById('input_prodi').value = '';
         document.getElementById('input_dosen_id').value = '';
 
-        // reset submit button (preserve icon)
         const submitBtn = document.querySelector('#modalForm button[type="submit"]');
-        if (submitBtn) submitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">save</span> Simpan';
+        if (submitBtn) {
+            submitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">save</span> Simpan';
+        }
 
         document.getElementById('modalOverlay').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -403,6 +420,7 @@
 
     function openEditModal(id) {
         const mk = rawData.find(m => m.id == id);
+
         if (!mk) {
             alert('Data mata kuliah tidak ditemukan.');
             return;
@@ -412,15 +430,14 @@
         document.getElementById('modal-title').innerText = 'Edit Mata Kuliah';
         form.action = baseUrl + '/' + id;
 
-        // add PUT method override if not present
         const existing = form.querySelector('input[name="_method"]');
+
         if (!existing) {
             form.insertAdjacentHTML('afterbegin', methodPutField);
         } else {
             existing.value = 'PUT';
         }
 
-        // fill fields
         document.getElementById('input_kode_mk').value = mk.kode_mk || '';
         document.getElementById('input_sks').value = mk.sks || '';
         document.getElementById('input_nama').value = mk.nama || '';
@@ -428,9 +445,10 @@
         document.getElementById('input_prodi').value = mk.prodi || '';
         document.getElementById('input_dosen_id').value = mk.dosen_id ?? '';
 
-        // change submit button text (preserve icon)
         const submitBtn = document.querySelector('#modalForm button[type="submit"]');
-        if (submitBtn) submitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">save</span> Update Mata Kuliah';
+        if (submitBtn) {
+            submitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">save</span> Update Mata Kuliah';
+        }
 
         document.getElementById('modalOverlay').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -497,49 +515,85 @@
 
         emptyState.classList.add('hidden');
 
-        data.forEach(mk => {
-            const row = document.createElement('tr');
-            const itemName = escapeAttr(mk.nama);
+        const sortedData = [...data].sort((a, b) => {
+            const semesterA = Number(a.semester_ke || 0);
+            const semesterB = Number(b.semester_ke || 0);
 
-            row.innerHTML = `
-                <td class="font-bold text-primary" style="font-family: var(--font-heading);">
-                    ${safeText(mk.kode_mk)}
-                </td>
+            if (semesterA !== semesterB) {
+                return semesterA - semesterB;
+            }
 
-                <td class="font-medium text-ink">
-                    ${safeText(mk.nama)}
-                </td>
+            return String(a.kode_mk || '').localeCompare(String(b.kode_mk || ''));
+        });
 
-                <td class="text-center">
-                    <span class="nb-badge nb-badge-primary">${safeText(mk.sks)} SKS</span>
-                </td>
+        const groupedData = sortedData.reduce((groups, mk) => {
+            const semester = mk.semester_ke || 'Lainnya';
 
-                <td class="hidden sm:table-cell text-muted">
-                    Semester ${safeText(mk.semester_ke)}
-                </td>
+            if (!groups[semester]) {
+                groups[semester] = [];
+            }
 
-                <td class="hidden md:table-cell text-muted">
-                    ${safeText(mk.prodi)}
-                </td>
+            groups[semester].push(mk);
 
-                <td class="hidden md:table-cell text-muted">
-                    ${safeText(mk.dosen_pengampu)}
-                </td>
+            return groups;
+        }, {});
 
-                <td class="text-center">
-                    <div class="flex items-center justify-center gap-2">
-                        <button type="button" onclick="openEditModal(${mk.id})" class="nb-row-action" title="Edit">
-                            <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
-                        </button>
+        Object.keys(groupedData).forEach(semester => {
+            const semesterRow = document.createElement('tr');
+            semesterRow.className = 'mk-semester-row';
 
-                        <button type="button" class="nb-row-action danger js-delete-mk" data-id="${mk.id}" data-name="${itemName}" title="Hapus">
-                            <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
-                        </button>
-                    </div>
+            semesterRow.innerHTML = `
+                <td colspan="7">
+                    Semester ${semester}
                 </td>
             `;
 
-            tableBody.appendChild(row);
+            tableBody.appendChild(semesterRow);
+
+            groupedData[semester].forEach(mk => {
+                const row = document.createElement('tr');
+                const itemName = escapeAttr(mk.nama);
+
+                row.innerHTML = `
+                    <td class="font-bold text-primary" style="font-family: var(--font-heading);">
+                        ${safeText(mk.kode_mk)}
+                    </td>
+
+                    <td class="font-medium text-ink">
+                        ${safeText(mk.nama)}
+                    </td>
+
+                    <td class="text-center">
+                        <span class="nb-badge nb-badge-primary">${safeText(mk.sks)} SKS</span>
+                    </td>
+
+                    <td class="hidden sm:table-cell text-muted">
+                        Semester ${safeText(mk.semester_ke)}
+                    </td>
+
+                    <td class="hidden md:table-cell text-muted">
+                        ${safeText(mk.prodi)}
+                    </td>
+
+                    <td class="hidden md:table-cell text-muted">
+                        ${safeText(mk.dosen_pengampu)}
+                    </td>
+
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button type="button" onclick="openEditModal(${mk.id})" class="nb-row-action" title="Edit">
+                                <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
+                            </button>
+
+                            <button type="button" class="nb-row-action danger js-delete-mk" data-id="${mk.id}" data-name="${itemName}" title="Hapus">
+                                <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            });
         });
     }
 
@@ -607,6 +661,7 @@
     document.getElementById('adminDeleteModal')?.addEventListener('click', event => {
         if (event.target.id === 'adminDeleteModal') closeDeleteModal(false);
     });
+
     tableBody.addEventListener('click', (event) => {
         const button = event.target.closest('.js-delete-mk');
 

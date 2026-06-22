@@ -124,6 +124,10 @@
                                     autocomplete="off"
                                 >
                             </div>
+                            <div class="mb-3 flex items-center gap-2">
+                                <input type="checkbox" id="selectAllMk" class="cursor-pointer">
+                                <label for="selectAllMk" class="cursor-pointer font-medium text-sm">Pilih Semua Mata Kuliah</label>
+                            </div>
                             <div id="mkChecklist" class="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-3">
                                 @foreach($allMataKuliah as $mk)
                                     <div
@@ -175,6 +179,7 @@
     const mkSearchInput = document.getElementById('mkSearchInput');
     const mkOptions = document.querySelectorAll('.mk-option');
     const mkSearchEmpty = document.getElementById('mkSearchEmpty');
+    const selectAllMk = document.getElementById('selectAllMk');
     const paketSubmitBtn = document.getElementById('paketSubmitBtn');
     const jumlahMkSpan = document.getElementById('jumlahMk');
     const totalSksPaketSpan = document.getElementById('totalSksPaket');
@@ -234,6 +239,7 @@
                 if (checkbox) checkbox.checked = false;
             }
         });
+        updateSelectAllState();
     }
 
     function filterMataKuliah() {
@@ -247,6 +253,7 @@
         });
 
         mkSearchEmpty?.classList.toggle('hidden', visibleCount > 0);
+        updateSelectAllState();
     }
 
     function resetMataKuliahFilter() {
@@ -254,6 +261,30 @@
 
         mkSearchInput.value = '';
         filterMataKuliah();
+    }
+
+    function getVisibleCheckboxes() {
+        return Array.from(document.querySelectorAll('.mk-option'))
+            .filter(option => !option.classList.contains('hidden'))
+            .map(option => option.querySelector('input[type="checkbox"]'))
+            .filter(Boolean);
+    }
+
+    function updateSelectAllState() {
+        if (!selectAllMk) return;
+
+        const visibleCheckboxes = getVisibleCheckboxes();
+        if (visibleCheckboxes.length === 0) {
+            selectAllMk.checked = false;
+            selectAllMk.indeterminate = false;
+            selectAllMk.disabled = true;
+            return;
+        }
+
+        const checkedCount = visibleCheckboxes.filter(cb => cb.checked).length;
+        selectAllMk.disabled = false;
+        selectAllMk.checked = checkedCount === visibleCheckboxes.length;
+        selectAllMk.indeterminate = checkedCount > 0 && checkedCount < visibleCheckboxes.length;
     }
 
     function updatePaketSummary() {
@@ -270,6 +301,8 @@
         const isOverLimit = totalSks > 24;
         sksPaketWarning?.classList.toggle('hidden', !isOverLimit);
         if (paketSubmitBtn) paketSubmitBtn.disabled = isOverLimit;
+
+        updateSelectAllState();
     }
 
     function openModal(paket = null) {
@@ -297,6 +330,7 @@
         resetMataKuliahFilter();
         uncheckHiddenOptions();
         updatePaketSummary();
+        if (selectAllMk) selectAllMk.checked = false;
         document.getElementById('modalOverlay').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
         mkSearchInput?.focus();
@@ -366,6 +400,13 @@
         prodiSelect?.addEventListener('change', () => {
             filterMataKuliah();
             uncheckHiddenOptions();
+            updatePaketSummary();
+        });
+        selectAllMk?.addEventListener('change', function () {
+            const visibleCheckboxes = getVisibleCheckboxes();
+            visibleCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
             updatePaketSummary();
         });
         document.querySelectorAll('input[name="mata_kuliah[]"]').forEach(checkbox => {

@@ -39,7 +39,6 @@
     @endif
 
     {{-- Stats Cards --}}
-
     <div class="nb-bento" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
         <div class="nb-stat nb-stat--accent nb-stat--ribbon">
             <div class="flex items-center gap-3">
@@ -62,7 +61,7 @@
         </div>
     </div>
 
-    {{-- Filter Card - Di bawah Stats --}}
+    {{-- Filter Card --}}
     <div class="nb-card mb-6">
         <div class="flex items-center gap-3 mb-4">
             <span class="material-symbols-outlined text-primary">search</span>
@@ -82,7 +81,6 @@
     </div>
 
     {{-- Table Card --}}
-
     <div class="nb-card-flat">
         <div class="nb-section-header">
             <div>
@@ -90,6 +88,7 @@
                 <h2 class="mt-1">Daftar Dosen</h2>
             </div>
         </div>
+
         <div class="overflow-x-auto">
             <table class="nb-table">
                 <thead>
@@ -105,6 +104,7 @@
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
+
         <div id="emptyState" class="hidden py-12 text-center">
             <span class="material-symbols-outlined text-muted" style="font-size:48px;">badge</span>
             <p class="mt-2 text-muted font-medium">Tidak ada data dosen</p>
@@ -144,7 +144,7 @@
         </div>
     </div>
 
-    {{-- MODAL TAMBAH DOSEN --}}
+    {{-- MODAL TAMBAH / EDIT DOSEN --}}
     <div id="modalOverlay" class="nb-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="nb-modal" onclick="event.stopPropagation()">
             <div class="nb-modal-header">
@@ -157,6 +157,7 @@
             <form action="{{ route('pages.admin.dosen.store') }}" method="POST" id="dosenForm">
                 @csrf
                 <input type="hidden" name="_method" id="dosenFormMethod" value="POST">
+
                 <div class="nb-modal-body">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                         <div>
@@ -181,17 +182,24 @@
                             <label class="nb-label">Peran Dosen <span class="text-danger">*</span></label>
                             <select name="tipe_dosen" required>
                                 <option value="">Pilih peran dosen</option>
-                                <option value="keduanya" {{ old('tipe_dosen') == 'keduanya' ? 'selected' : '' }}>Dosen Wali & Matakuliah</option>
-                                <option value="Dosen Mata Kuliah" {{ old('tipe_dosen') == 'Dosen Mata Kuliah' ? 'selected' : '' }}>Dosen Mata Kuliah</option>
+                                <option value="keduanya" {{ old('tipe_dosen') == 'keduanya' ? 'selected' : '' }}>
+                                    Dosen Wali &amp; Mata Kuliah
+                                </option>
+                                <option value="Dosen Mata Kuliah" {{ old('tipe_dosen') == 'Dosen Mata Kuliah' ? 'selected' : '' }}>
+                                    Dosen Mata Kuliah
+                                </option>
                             </select>
+                            @error('tipe_dosen') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
-                            <label class="nb-label">Program Studi    <span class="text-danger">*</span></label>
+                            <label class="nb-label">Program Studi <span class="text-danger">*</span></label>
                             <select name="fakultas" required>
                                 <option value="">Pilih Prodi</option>
-@foreach($prodis as $prodi)
-                                    <option value="{{ $prodi }}" {{ old('fakultas') == $prodi ? 'selected' : '' }}>{{ $prodi }}</option>
+                                @foreach($prodis as $prodi)
+                                    <option value="{{ $prodi }}" {{ old('fakultas') == $prodi ? 'selected' : '' }}>
+                                        {{ $prodi }}
+                                    </option>
                                 @endforeach
                             </select>
                             @error('fakultas') <p class="nb-form-error">{{ $message }}</p> @enderror
@@ -206,6 +214,7 @@
                         <div class="md:col-span-2">
                             <label class="nb-label">Alamat</label>
                             <textarea name="alamat" rows="2" placeholder="Alamat lengkap">{{ old('alamat') }}</textarea>
+                            @error('alamat') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
@@ -275,7 +284,9 @@
         border: 1px solid #fecdca;
     }
 
-    .admin-delete-icon .material-symbols-outlined { font-size: 28px; }
+    .admin-delete-icon .material-symbols-outlined {
+        font-size: 28px;
+    }
 
     .admin-delete-close {
         width: 36px;
@@ -289,7 +300,9 @@
         cursor: pointer;
     }
 
-    .admin-delete-body { padding: 0.75rem 1.25rem 1rem; }
+    .admin-delete-body {
+        padding: 0.75rem 1.25rem 1rem;
+    }
 
     .admin-delete-badge {
         display: inline-flex;
@@ -382,20 +395,20 @@
         to { opacity: 1; transform: translateY(0) scale(1); }
     }
 </style>
+
 <script>
-let rawData = @json($dosen);
+    let rawData = @json($dosen);
+
     const tableBody = document.getElementById('tableBody');
     const emptyState = document.getElementById('emptyState');
     const countWaliSpan = document.getElementById('countWali');
     const countMKSpan = document.getElementById('countMK');
-    const filterProdiSelect = document.getElementById('filterProdi');
     const csrfToken = "{{ csrf_token() }}";
     const baseUrl = "{{ url('admin/dosen') }}";
     const dosenForm = document.getElementById('dosenForm');
     const dosenFormMethod = document.getElementById('dosenFormMethod');
     const modalTitle = document.getElementById('modal-title');
     const passwordRequiredMark = document.querySelector('.js-password-required');
-    let pendingDeleteResolver = null;
 
     function openModal(dosen = null) {
         dosenForm.reset();
@@ -422,16 +435,20 @@ let rawData = @json($dosen);
         document.getElementById('modalOverlay').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
+
     function closeModal() {
         document.getElementById('modalOverlay').classList.add('hidden');
         document.body.style.overflow = 'auto';
     }
+
     document.getElementById('modalOverlay')?.addEventListener('click', function (e) {
         if (e.target === this) closeModal();
     });
 
     @if(old('_token') || $errors->any())
-        document.addEventListener('DOMContentLoaded', () => { openModal(); });
+        document.addEventListener('DOMContentLoaded', () => {
+            openModal();
+        });
     @endif
 
     function safeText(value) {
@@ -449,11 +466,21 @@ let rawData = @json($dosen);
     function normalizeTipeDosen(value) {
         const tipe = String(value || '').toLowerCase();
 
-        if (tipe === 'keduanya' || tipe.includes('wali')) {
+        if (
+            tipe === 'keduanya' ||
+            tipe.includes('wali') ||
+            tipe.includes('dosen wali & mata kuliah')
+        ) {
             return 'keduanya';
         }
 
         return 'Dosen Mata Kuliah';
+    }
+
+    function displayTipeDosen(value) {
+        return normalizeTipeDosen(value) === 'keduanya'
+            ? 'Dosen Wali & Mata Kuliah'
+            : 'Dosen Mata Kuliah';
     }
 
     function openDeleteModal(name) {
@@ -469,50 +496,57 @@ let rawData = @json($dosen);
         return Promise.resolve(window.confirm(`Hapus data ${name}?`));
     }
 
-    function closeDeleteModal(result = false) {
-        document.getElementById('adminDeleteModal').classList.remove('show');
-        document.getElementById('adminDeleteModal').setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-
-        if (pendingDeleteResolver) {
-            pendingDeleteResolver(result);
-            pendingDeleteResolver = null;
-        }
-    }
-
     function renderTable(data) {
         tableBody.innerHTML = '';
+
         if (data.length === 0) {
             emptyState.classList.remove('hidden');
             countWaliSpan.textContent = 0;
             countMKSpan.textContent = 0;
             return;
         }
+
         emptyState.classList.add('hidden');
 
         let waliCount = 0;
         let mkCount = 0;
 
         data.forEach(dsn => {
-            if (dsn.tipe_dosen === 'Dosen Wali') waliCount++; else mkCount++;
+            const tipeValue = normalizeTipeDosen(dsn.tipe_dosen);
+            const tipeLabel = displayTipeDosen(dsn.tipe_dosen);
+
+            if (tipeValue === 'keduanya') {
+                waliCount++;
+                mkCount++;
+            } else {
+                mkCount++;
+            }
 
             const row = document.createElement('tr');
-            const initials = dsn.nama.split(' ').map(n => n[0]).join('').substring(0, 2);
-            const badgeClass = dsn.tipe_dosen === 'Dosen Wali' ? 'nb-badge-success' : 'nb-badge-primary';
-            const itemName = escapeAttr(dsn.nama);
+            const namaDosen = safeText(dsn.nama);
+            const initials = namaDosen
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .substring(0, 2);
+
+            const badgeClass = tipeValue === 'keduanya' ? 'nb-badge-success' : 'nb-badge-primary';
+            const itemName = escapeAttr(namaDosen);
 
             row.innerHTML = `
-                <td class="font-bold text-primary" style="font-family: var(--font-heading);">${dsn.nik}</td>
+                <td class="font-bold text-primary" style="font-family: var(--font-heading);">${safeText(dsn.nik)}</td>
                 <td>
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-full bg-accent-soft border-2 border-ink flex items-center justify-center flex-shrink-0">
                             <span class="text-ink font-extrabold text-xs" style="font-family: var(--font-heading);">${initials}</span>
                         </div>
-                        <span class="font-medium text-ink">${dsn.nama}</span>
+                        <span class="font-medium text-ink">${namaDosen}</span>
                     </div>
                 </td>
-                <td class="hidden md:table-cell text-sm text-primary">${dsn.email}</td>
-                <td class="hidden sm:table-cell text-center"><span class="nb-badge ${badgeClass}">${dsn.tipe_dosen}</span></td>
+                <td class="hidden md:table-cell text-sm text-primary">${safeText(dsn.email)}</td>
+                <td class="hidden sm:table-cell text-center">
+                    <span class="nb-badge ${badgeClass}">${tipeLabel}</span>
+                </td>
                 <td class="hidden lg:table-cell text-muted">${safeText(dsn.fakultas || dsn.prodi)}</td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
@@ -525,6 +559,7 @@ let rawData = @json($dosen);
                     </div>
                 </td>
             `;
+
             tableBody.appendChild(row);
         });
 
@@ -532,7 +567,7 @@ let rawData = @json($dosen);
         countMKSpan.textContent = mkCount;
     }
 
-async function deleteDosen(id, name, button) {
+    async function deleteDosen(id, name, button) {
         const confirmed = await openDeleteModal(name);
 
         if (!confirmed) {
@@ -577,34 +612,30 @@ async function deleteDosen(id, name, button) {
         }
     }
 
-function filterTable() {
+    function filterTable() {
         const prodi = document.getElementById('filterProdi').value;
         const filtered = rawData.filter(dsn => !prodi || dsn.fakultas === prodi || dsn.prodi === prodi);
         renderTable(filtered);
     }
 
     document.getElementById('filterProdi').addEventListener('change', filterTable);
-    document.getElementById('adminDeleteCancel')?.addEventListener('click', () => closeDeleteModal(false));
-    document.getElementById('adminDeleteClose')?.addEventListener('click', () => closeDeleteModal(false));
-    document.getElementById('adminDeleteConfirm')?.addEventListener('click', () => closeDeleteModal(true));
-    document.getElementById('adminDeleteModal')?.addEventListener('click', event => {
-        if (event.target.id === 'adminDeleteModal') closeDeleteModal(false);
-    });
+
     tableBody.addEventListener('click', (event) => {
         const editButton = event.target.closest('.js-edit-dosen');
+
         if (editButton) {
             const dosen = rawData.find(item => String(item.id) === String(editButton.dataset.id));
             if (dosen) openModal(dosen);
             return;
         }
 
-        const button = event.target.closest('.js-delete-dosen');
+        const deleteButton = event.target.closest('.js-delete-dosen');
 
-        if (!button) {
+        if (!deleteButton) {
             return;
         }
 
-        deleteDosen(button.dataset.id, button.dataset.name || 'dosen ini', button);
+        deleteDosen(deleteButton.dataset.id, deleteButton.dataset.name || 'dosen ini', deleteButton);
     });
 
     document.addEventListener('DOMContentLoaded', () => {

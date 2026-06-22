@@ -69,7 +69,7 @@
             {{-- Deskripsi --}}
             <div class="mb-8">
                 <label class="nb-label">Deskripsi</label>
-                <textarea name="deskripsi" rows="3" placeholder="Deskripsi paket mata kuliah..." 
+                <textarea name="deskripsi" rows="3" placeholder="Deskripsi paket mata kuliah..."
                     class="w-full @error('deskripsi') nb-input-error @enderror">{{ old('deskripsi') }}</textarea>
                 @error('deskripsi')
                     <span class="nb-error-text">{{ $message }}</span>
@@ -85,6 +85,13 @@
             {{-- Mata Kuliah Checklist --}}
             <div class="mb-6 bg-light rounded-lg p-4 border">
                 @if($allMataKuliah->count() > 0)
+
+                    {{-- Pilih Semua --}}
+                    <label class="flex items-center gap-3 cursor-pointer p-3 rounded bg-white border mb-4 font-semibold">
+                        <input type="checkbox" id="selectAllMataKuliah">
+                        <span>Pilih Semua Mata Kuliah</span>
+                    </label>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         @foreach($allMataKuliah as $mk)
                             <label
@@ -92,8 +99,9 @@
                                 data-semester="{{ $mk->semester_ke }}"
                                 data-prodi="{{ $mk->prodi }}"
                             >
-                                <input type="checkbox" name="mata_kuliah[]" value="{{ $mk->id }}" 
-                                    {{ in_array($mk->id, old('mata_kuliah', [])) ? 'checked' : '' }} class="mt-1">
+                                <input type="checkbox" name="mata_kuliah[]" value="{{ $mk->id }}"
+                                    data-sks="{{ $mk->sks }}"
+                                    {{ in_array($mk->id, old('mata_kuliah', [])) ? 'checked' : '' }} class="mt-1 mk-checkbox">
                                 <div class="flex-1">
                                     <div class="font-medium">{{ $mk->kode }}</div>
                                     <div class="text-sm text-muted">{{ $mk->nama }}</div>
@@ -107,6 +115,7 @@
                 @else
                     <p class="text-muted text-center py-6">Tidak ada mata kuliah tersedia</p>
                 @endif
+
                 @error('mata_kuliah')
                     <div class="nb-error-text mt-3">{{ $message }}</div>
                 @enderror
@@ -146,6 +155,7 @@
     const semesterSelect = document.querySelector('select[name="semester"]');
     const prodiSelect = document.querySelector('select[name="prodi"]');
     const mkOptions = document.querySelectorAll('.mk-option');
+    const selectAllMataKuliah = document.getElementById('selectAllMataKuliah');
 
     function syncProdiOptions() {
         const semester = String(semesterSelect?.value || '');
@@ -165,6 +175,32 @@
         }
     }
 
+    function getVisibleCheckboxes() {
+        return Array.from(document.querySelectorAll('.mk-option'))
+            .filter(option => !option.classList.contains('hidden'))
+            .map(option => option.querySelector('input[name="mata_kuliah[]"]'))
+            .filter(Boolean);
+    }
+
+    function updateSelectAllState() {
+        if (!selectAllMataKuliah) return;
+
+        const visibleCheckboxes = getVisibleCheckboxes();
+
+        if (visibleCheckboxes.length === 0) {
+            selectAllMataKuliah.checked = false;
+            selectAllMataKuliah.indeterminate = false;
+            selectAllMataKuliah.disabled = true;
+            return;
+        }
+
+        const checkedCount = visibleCheckboxes.filter(checkbox => checkbox.checked).length;
+
+        selectAllMataKuliah.disabled = false;
+        selectAllMataKuliah.checked = checkedCount === visibleCheckboxes.length;
+        selectAllMataKuliah.indeterminate = checkedCount > 0 && checkedCount < visibleCheckboxes.length;
+    }
+
     function filterMataKuliah() {
         const semester = String(semesterSelect?.value || '');
         const prodi = String(prodiSelect?.value || '');
@@ -180,6 +216,8 @@
                 if (checkbox) checkbox.checked = false;
             }
         });
+
+        updateSelectAllState();
     }
 
     function updateSummary() {
@@ -188,16 +226,28 @@
 
         checkboxes.forEach(checkbox => {
             const mkId = parseInt(checkbox.value);
-            const mk = mkData.find(m => m.id === mkId);
-            if (mk) totalSks += mk.sks;
+            const mk = mkData.find(m => Number(m.id) === mkId);
+            if (mk) totalSks += Number(mk.sks || 0);
         });
 
         document.getElementById('jumlahMk').textContent = checkboxes.length;
         document.getElementById('totalSks').textContent = totalSks;
+
+        updateSelectAllState();
     }
 
     document.querySelectorAll('input[name="mata_kuliah[]"]').forEach(checkbox => {
         checkbox.addEventListener('change', updateSummary);
+    });
+
+    selectAllMataKuliah?.addEventListener('change', function () {
+        const visibleCheckboxes = getVisibleCheckboxes();
+
+        visibleCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+
+        updateSummary();
     });
 
     semesterSelect?.addEventListener('change', () => {
@@ -205,6 +255,7 @@
         filterMataKuliah();
         updateSummary();
     });
+
     prodiSelect?.addEventListener('change', () => {
         filterMataKuliah();
         updateSummary();
