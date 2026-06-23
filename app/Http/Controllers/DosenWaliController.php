@@ -161,12 +161,11 @@ class DosenWaliController extends Controller
         })->toArray();
 
         $totalMahasiswa = count($mahasiswaList);
-        $rataIpk   = $totalMahasiswa > 0 ? round(collect($mahasiswaList)->avg('ipk'), 2) : 0;
         $ipkTinggi = collect($mahasiswaList)->filter(fn($m) => $m['ipk'] >= 3.5)->count();
 
         return view('pages.dosen_wali.khs', compact(
             'mahasiswaList','allSem','filterSemesterId','filterKelas',
-            'kelasList','totalMahasiswa','rataIpk','ipkTinggi','isReadOnly',
+            'kelasList','totalMahasiswa','ipkTinggi','isReadOnly',
             'semAktif'
         ));
     }

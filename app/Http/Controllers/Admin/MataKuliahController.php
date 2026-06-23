@@ -15,15 +15,7 @@ class MataKuliahController extends Controller
 
     public function indexMatakuliah()
     {
-        $dosens = Schema::hasTable('dosen')
-            ? DB::table('dosen')
-                ->when(
-                    Schema::hasColumn('dosen', 'deleted_at'),
-                    fn ($query) => $query->whereNull('deleted_at')
-                )
-                ->orderBy('nama', 'asc')
-                ->get()
-            : collect();
+        $dosens = $this->getDosenPengampuOptions();
 
         $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
         $matakuliah = collect();
@@ -86,15 +78,7 @@ class MataKuliahController extends Controller
 
     public function createMatakuliah()
     {
-        $dosens = Schema::hasTable('dosen')
-            ? DB::table('dosen')
-                ->when(
-                    Schema::hasColumn('dosen', 'deleted_at'),
-                    fn ($query) => $query->whereNull('deleted_at')
-                )
-                ->orderBy('nama', 'asc')
-                ->get()
-            : collect();
+        $dosens = $this->getDosenPengampuOptions();
 
         $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
         $prodis = $this->getProdiOptions();
@@ -129,6 +113,12 @@ class MataKuliahController extends Controller
             'semester_ke.required' => 'Semester wajib dipilih.',
             'prodi.required' => 'Program studi wajib dipilih.',
         ]);
+
+        if (! $this->isValidDosenPengampuForProdi($validated['dosen_id'] ?? null, $validated['prodi'])) {
+            return back()
+                ->withErrors(['dosen_id' => 'Dosen pengampu harus dosen mata kuliah dari program studi yang dipilih.'])
+                ->withInput();
+        }
 
         try {
             $dosen = !empty($validated['dosen_id'])
@@ -182,15 +172,7 @@ class MataKuliahController extends Controller
             abort(404, 'Data mata kuliah tidak ditemukan.');
         }
 
-        $dosens = Schema::hasTable('dosen')
-            ? DB::table('dosen')
-                ->when(
-                    Schema::hasColumn('dosen', 'deleted_at'),
-                    fn ($query) => $query->whereNull('deleted_at')
-                )
-                ->orderBy('nama', 'asc')
-                ->get()
-            : collect();
+        $dosens = $this->getDosenPengampuOptions();
 
         $semesters = collect(['1', '2', '3', '4', '5', '6', '7', '8']);
         $prodis = $this->getProdiOptions();
@@ -226,6 +208,12 @@ class MataKuliahController extends Controller
             'semester_ke.required' => 'Semester wajib dipilih.',
             'prodi.required' => 'Program studi wajib dipilih.',
         ]);
+
+        if (! $this->isValidDosenPengampuForProdi($validated['dosen_id'] ?? null, $validated['prodi'])) {
+            return back()
+                ->withErrors(['dosen_id' => 'Dosen pengampu harus dosen mata kuliah dari program studi yang dipilih.'])
+                ->withInput();
+        }
 
         try {
             $dosen = !empty($validated['dosen_id'])
@@ -330,5 +318,79 @@ class MataKuliahController extends Controller
             return back()
                 ->with('error', 'Gagal menghapus mata kuliah: '.$e->getMessage());
         }
+    }
+
+    private function getDosenPengampuOptions()
+    {
+        if (! Schema::hasTable('dosen')) {
+            return collect();
+        }
+
+        return DB::table('dosen')
+            ->select(
+                'id',
+                'nama',
+                'nik',
+                DB::raw(Schema::hasColumn('dosen', 'tipe_dosen') ? 'tipe_dosen' : 'NULL as tipe_dosen'),
+                DB::raw(Schema::hasColumn('dosen', 'fakultas') ? 'fakultas' : 'NULL as fakultas')
+            )
+            ->when(
+                Schema::hasColumn('dosen', 'deleted_at'),
+                fn ($query) => $query->whereNull('deleted_at')
+            )
+            ->when(Schema::hasColumn('dosen', 'tipe_dosen'), function ($query) {
+                $query->where(function ($query) {
+                    $query->where('tipe_dosen', 'keduanya')
+                        ->orWhere('tipe_dosen', 'like', '%Mata Kuliah%')
+                        ->orWhere('tipe_dosen', 'like', '%mk%');
+                });
+            })
+            ->orderBy('nama', 'asc')
+            ->get();
+    }
+
+    private function isValidDosenPengampuForProdi(?string $dosenId, string $prodi): bool
+    {
+        if (empty($dosenId)) {
+            return true;
+        }
+
+        if (! Schema::hasTable('dosen')) {
+            return false;
+        }
+
+        $dosen = DB::table('dosen')
+            ->where('id', $dosenId)
+            ->when(
+                Schema::hasColumn('dosen', 'deleted_at'),
+                fn ($query) => $query->whereNull('deleted_at')
+            )
+            ->first();
+
+        if (! $dosen) {
+            return false;
+        }
+
+        if (
+            Schema::hasColumn('dosen', 'tipe_dosen') &&
+            ! $this->isDosenMataKuliahRole($dosen->tipe_dosen ?? null)
+        ) {
+            return false;
+        }
+
+        if (! Schema::hasColumn('dosen', 'fakultas')) {
+            return true;
+        }
+
+        return strcasecmp(trim((string) ($dosen->fakultas ?? '')), trim($prodi)) === 0;
+    }
+
+    private function isDosenMataKuliahRole(?string $tipeDosen): bool
+    {
+        $tipeDosen = strtolower(trim((string) $tipeDosen));
+
+        return $tipeDosen === 'keduanya' ||
+            str_contains($tipeDosen, 'mata kuliah') ||
+            str_contains($tipeDosen, 'mk');
     }
 }

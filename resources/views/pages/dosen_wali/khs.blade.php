@@ -18,10 +18,6 @@
         <div class="flex items-center gap-3"><div class="nb-stat-icon"><span class="material-symbols-outlined filled">groups</span></div><p class="nb-stat-label">Total Mahasiswa</p></div>
         <div class="nb-stat-value">{{ $totalMahasiswa }}</div>
     </div>
-    <div class="nb-stat nb-stat--accent nb-stat--ribbon">
-        <div class="flex items-center gap-3"><div class="nb-stat-icon"><span class="material-symbols-outlined filled">analytics</span></div><p class="nb-stat-label">Rata-rata IPK</p></div>
-        <div class="nb-stat-value">{{ number_format($rataIpk,2) }}</div>
-    </div>
     <div class="nb-stat nb-stat--success nb-stat--ribbon">
         <div class="flex items-center gap-3"><div class="nb-stat-icon"><span class="material-symbols-outlined filled">star</span></div><p class="nb-stat-label">IPK ≥ 3.5</p></div>
         <div class="nb-stat-value">{{ $ipkTinggi }}</div>

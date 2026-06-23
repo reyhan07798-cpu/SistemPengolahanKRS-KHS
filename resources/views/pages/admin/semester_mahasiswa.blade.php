@@ -153,13 +153,17 @@
                     <p class="text-sm text-muted mt-1">Proses hanya mengambil mahasiswa aktif sesuai filter prodi dan kelas.</p>
                 </div>
             </div>
-            <form method="POST" action="{{ route('pages.admin.semester-mahasiswa.promote') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+            @php
+                $selectedPeriodOrder = (int) ($selectedSemester->period_order ?? 0);
+                $firstPromotableSemester = $semesters->first(fn ($semester) => (int) $semester->period_order > $selectedPeriodOrder);
+            @endphp
+            <form method="POST" action="{{ route('pages.admin.semester-mahasiswa.promote') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end" id="promote-semester-form">
                 @csrf
                 <div>
                     <label class="nb-label">Dari Semester</label>
-                    <select name="from_semester_id" required>
+                    <select name="from_semester_id" required id="from_semester_id">
                         @foreach($semesters as $semester)
-                            <option value="{{ $semester->id }}" {{ (int) $selectedSemesterId === (int) $semester->id ? 'selected' : '' }}>
+                            <option value="{{ $semester->id }}" data-period-order="{{ $semester->period_order }}" {{ (int) $selectedSemesterId === (int) $semester->id ? 'selected' : '' }}>
                                 {{ $semester->semester }} {{ $semester->tahun_ajaran }}
                             </option>
                         @endforeach
@@ -167,9 +171,15 @@
                 </div>
                 <div>
                     <label class="nb-label">Ke Semester</label>
-                    <select name="to_semester_id" required>
+                    <select name="to_semester_id" required id="to_semester_id">
                         @foreach($semesters as $semester)
-                            <option value="{{ $semester->id }}">
+                            @php
+                                $isPromotable = (int) $semester->period_order > $selectedPeriodOrder;
+                            @endphp
+                            <option value="{{ $semester->id }}"
+                                data-period-order="{{ $semester->period_order }}"
+                                {{ $isPromotable ? '' : 'disabled' }}
+                                {{ $firstPromotableSemester && (int) $firstPromotableSemester->id === (int) $semester->id ? 'selected' : '' }}>
                                 {{ $semester->semester }} {{ $semester->tahun_ajaran }}
                                 @if($semester->is_active) - Aktif @endif
                             </option>
@@ -242,6 +252,7 @@
                     @forelse($mahasiswa as $mhs)
                         @php
                             $status = $mhs->status ?? 'belum_diatur';
+                            $currentSemesterKe = (int) ($mhs->semester_ke ?? 1);
                             $statusLabels = [
                                 'aktif' => 'Aktif',
                                 'cuti' => 'Cuti',
@@ -286,7 +297,7 @@
                                     <input type="hidden" name="semester_id" value="{{ $selectedSemesterId }}">
                                     <input type="hidden" name="prodi" value="{{ $selectedProdi }}">
                                     <input type="hidden" name="kelas" value="{{ $selectedKelas }}">
-                                    <input type="number" name="semester_ke" min="1" max="14" value="{{ old('semester_ke', $mhs->semester_ke ?? ($selectedSemester->semester_ke ?? 1)) }}" class="w-20 text-center">
+                                    <input type="number" name="semester_ke" min="{{ $mhs->progress_id ? $currentSemesterKe : 1 }}" max="14" value="{{ old('semester_ke', $mhs->semester_ke ?? ($selectedSemester->semester_ke ?? 1)) }}" class="w-20 text-center">
                                 </form>
                             </td>
                             <td class="text-center">
@@ -320,4 +331,42 @@
             </table>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fromSemester = document.getElementById('from_semester_id');
+            const toSemester = document.getElementById('to_semester_id');
+
+            const syncPromotableOptions = () => {
+                if (!fromSemester || !toSemester) {
+                    return;
+                }
+
+                const selectedFrom = fromSemester.options[fromSemester.selectedIndex];
+                const fromOrder = Number(selectedFrom?.dataset.periodOrder || 0);
+                let selectedOptionIsValid = false;
+                let firstValidOption = null;
+
+                Array.from(toSemester.options).forEach((option) => {
+                    const isValid = Number(option.dataset.periodOrder || 0) > fromOrder;
+                    option.disabled = !isValid;
+
+                    if (isValid && !firstValidOption) {
+                        firstValidOption = option;
+                    }
+
+                    if (option.selected && isValid) {
+                        selectedOptionIsValid = true;
+                    }
+                });
+
+                if (!selectedOptionIsValid && firstValidOption) {
+                    toSemester.value = firstValidOption.value;
+                }
+            };
+
+            syncPromotableOptions();
+            fromSemester?.addEventListener('change', syncPromotableOptions);
+        });
+    </script>
 @endsection

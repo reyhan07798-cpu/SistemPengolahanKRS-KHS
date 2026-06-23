@@ -82,7 +82,7 @@
 
                 <div>
                     <label class="nb-label">Program Studi <span class="text-danger">*</span></label>
-                    <select name="prodi" required class="w-full @error('prodi') nb-input-error @enderror">
+                    <select id="input_prodi" name="prodi" required class="w-full @error('prodi') nb-input-error @enderror">
                         <option value="">Pilih Program Studi</option>
                         @foreach($prodis ?? [] as $prodi)
                             <option value="{{ $prodi }}" {{ old('prodi') == $prodi ? 'selected' : '' }}>{{ $prodi }}</option>
@@ -96,10 +96,17 @@
 
             <div class="mb-6">
                 <label class="nb-label">Dosen Pengampu</label>
-                <select name="dosen_id" class="w-full @error('dosen_id') nb-input-error @enderror">
-                    <option value="">-- Pilih Dosen --</option>
+                <select id="input_dosen_id" name="dosen_id" class="w-full @error('dosen_id') nb-input-error @enderror">
+                    <option value="">Pilih prodi dulu</option>
                     @foreach($dosens ?? [] as $dosen)
-                        <option value="{{ $dosen->id }}" {{ old('dosen_id') == $dosen->id ? 'selected' : '' }}>{{ $dosen->nama }}</option>
+                        <option
+                            value="{{ $dosen->id }}"
+                            data-prodi="{{ $dosen->fakultas ?? '' }}"
+                            data-role="{{ $dosen->tipe_dosen ?? '' }}"
+                            {{ old('dosen_id') == $dosen->id ? 'selected' : '' }}
+                        >
+                            {{ $dosen->nama }}
+                        </option>
                     @endforeach
                 </select>
                 @error('dosen_id')
@@ -169,3 +176,55 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    const prodiSelect = document.getElementById('input_prodi');
+    const dosenSelect = document.getElementById('input_dosen_id');
+    const dosenOptionItems = Array.from(dosenSelect?.options || []).filter(option => option.value);
+
+    function normalizeValue(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function isDosenMataKuliah(option) {
+        const role = normalizeValue(option.dataset.role);
+
+        return role === 'keduanya' || role.includes('mata kuliah') || role.includes('mk');
+    }
+
+    function filterDosenOptions() {
+        if (!prodiSelect || !dosenSelect) return;
+
+        const selectedProdi = prodiSelect.value;
+        const normalizedProdi = normalizeValue(selectedProdi);
+        let visibleCount = 0;
+        let selectedOptionVisible = !dosenSelect.value;
+
+        dosenSelect.options[0].textContent = selectedProdi ? '-- Pilih Dosen --' : 'Pilih prodi dulu';
+
+        dosenOptionItems.forEach(option => {
+            const match = normalizedProdi &&
+                normalizeValue(option.dataset.prodi) === normalizedProdi &&
+                isDosenMataKuliah(option);
+
+            option.hidden = !match;
+            option.disabled = !match;
+
+            if (match) visibleCount++;
+            if (option.selected && match) selectedOptionVisible = true;
+        });
+
+        if (!selectedOptionVisible) {
+            dosenSelect.value = '';
+        }
+
+        dosenSelect.options[0].textContent = selectedProdi && visibleCount === 0
+            ? 'Tidak ada dosen mata kuliah untuk prodi ini'
+            : dosenSelect.options[0].textContent;
+    }
+
+    prodiSelect?.addEventListener('change', filterDosenOptions);
+    document.addEventListener('DOMContentLoaded', filterDosenOptions);
+</script>
+@endpush

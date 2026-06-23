@@ -21,7 +21,12 @@ class SemesterMahasiswaController extends Controller
         $semesters = DB::table('semesters')
             ->orderByDesc('tahun_ajaran')
             ->orderByDesc('semester_ke')
-            ->get();
+            ->get()
+            ->map(function ($semester) {
+                $semester->period_order = $this->semesterPeriodOrder($semester);
+
+                return $semester;
+            });
         $activeSemester = $semesters->firstWhere('is_active', 1) ?? $semesters->first();
         $selectedSemesterId = (int) ($request->input('semester_id') ?: ($activeSemester->id ?? 0));
         $selectedSemester = $semesters->firstWhere('id', $selectedSemesterId) ?? $activeSemester;
@@ -95,6 +100,23 @@ class SemesterMahasiswaController extends Controller
             'kelas' => 'nullable|string|max:50',
         ]);
         $mahasiswa = Mahasiswa::with('prodi')->findOrFail($mahasiswaId);
+
+        $existingSemester = MahasiswaSemester::where('mahasiswa_id', $mahasiswaId)
+            ->where('semester_id', $validated['semester_id'])
+            ->first();
+
+        if ($existingSemester && (int) $validated['semester_ke'] < (int) $existingSemester->semester_ke) {
+            return back()
+                ->withErrors([
+                    'semester_ke' => 'Semester mahasiswa tidak boleh diturunkan dari Semester '
+                        . $existingSemester->semester_ke
+                        . ' ke Semester '
+                        . $validated['semester_ke']
+                        . '.',
+                ])
+                ->withInput();
+        }
+
         MahasiswaSemester::updateOrCreate(
             [
                 'mahasiswa_id' => $mahasiswaId,
@@ -126,6 +148,17 @@ class SemesterMahasiswaController extends Controller
             'kelas' => 'nullable|string|max:50',
         ]);
         $targetSemesterId = (int) $validated['to_semester_id'];
+        $sourceSemester = DB::table('semesters')->where('id', $validated['from_semester_id'])->first();
+        $targetSemester = DB::table('semesters')->where('id', $targetSemesterId)->first();
+
+        if (! $this->isLaterSemesterPeriod($sourceSemester, $targetSemester)) {
+            return back()
+                ->withErrors([
+                    'to_semester_id' => 'Semester tujuan harus lebih baru dari semester asal.',
+                ])
+                ->withInput();
+        }
+
         $sourceRecords = DB::table('mahasiswa_semester')
             ->join('mahasiswa', 'mahasiswa_semester.mahasiswa_id', '=', 'mahasiswa.id')
             ->leftJoin('prodi', 'mahasiswa.prodi_id', '=', 'prodi.id')
@@ -176,6 +209,22 @@ class SemesterMahasiswaController extends Controller
                 'kelas' => $validated['kelas'] ?? null,
             ])
             ->with('success', "Naik semester selesai. {$created} mahasiswa dibuat, {$skipped} dilewati karena sudah ada di semester tujuan.");
+    }
+
+    private function isLaterSemesterPeriod(?object $sourceSemester, ?object $targetSemester): bool
+    {
+        if (! $sourceSemester || ! $targetSemester) {
+            return false;
+        }
+
+        return $this->semesterPeriodOrder($targetSemester) > $this->semesterPeriodOrder($sourceSemester);
+    }
+
+    private function semesterPeriodOrder(object $semester): int
+    {
+        $startYear = (int) substr((string) $semester->tahun_ajaran, 0, 4);
+
+        return ($startYear * 10) + (int) $semester->semester_ke;
     }
     // ==========================================
     // 3. DOSEN CRUD

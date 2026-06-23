@@ -38,17 +38,6 @@
         </div>
     </div>
 
-    <div class="nb-stat nb-stat--warning nb-stat--ribbon">
-        <div class="flex items-center gap-4">
-            <div class="nb-stat-icon">
-                <span class="material-symbols-outlined filled">analytics</span>
-            </div>
-            <div>
-                <p class="nb-stat-label">Rata-rata Nilai</p>
-                <p class="nb-stat-value mt-1">{{ $stats['rata_nilai'] }}</p>
-            </div>
-        </div>
-    </div>
 </div>
 
 {{-- Filter --}}

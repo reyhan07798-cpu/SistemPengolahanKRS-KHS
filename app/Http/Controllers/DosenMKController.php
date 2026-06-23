@@ -800,9 +800,6 @@ class DosenMKController extends Controller
             'nilai_terinput' => collect($mahasiswa)->filter(function ($m) {
                 return !is_null($m['grade']);
             })->count(),
-            'rata_nilai' => count($mahasiswa) > 0
-                ? number_format(collect($mahasiswa)->whereNotNull('nilai_akhir')->avg('nilai_akhir') ?? 0, 2)
-                : '0.00',
         ];
 
         return view('pages.dosen_matkul.lihat-nilai', compact(

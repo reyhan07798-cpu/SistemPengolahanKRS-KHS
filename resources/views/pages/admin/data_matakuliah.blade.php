@@ -187,12 +187,7 @@
                         <div>
                             <label class="nb-label">Dosen Pengampu</label>
                             <select id="input_dosen_id" name="dosen_id">
-                                <option value="">-- Pilih Dosen --</option>
-                                @foreach($dosens ?? [] as $dosen)
-                                    <option value="{{ $dosen->id }}" {{ old('dosen_id') == $dosen->id ? 'selected' : '' }}>
-                                        {{ $dosen->nama }}
-                                    </option>
-                                @endforeach
+                                <option value="">Pilih prodi dulu</option>
                             </select>
                             @error('dosen_id')
                                 <p class="nb-form-error">{{ $message }}</p>
@@ -382,8 +377,21 @@
     }
 </style>
 
+@php
+    $oldInput = [
+        'kode_mk' => old('kode_mk'),
+        'sks' => old('sks'),
+        'nama' => old('nama'),
+        'semester_ke' => old('semester_ke'),
+        'prodi' => old('prodi'),
+        'dosen_id' => old('dosen_id'),
+    ];
+@endphp
+
 <script>
     let rawData = @json($matakuliah ?? []);
+    const dosenOptions = @json($dosens ?? []);
+    const oldInput = @json($oldInput);
     const tableBody = document.getElementById('tableBody');
     const emptyState = document.getElementById('emptyState');
 
@@ -394,20 +402,22 @@
     const baseUrl = "{{ url('admin/matakuliah') }}";
     let pendingDeleteResolver = null;
 
-    function openModal() {
+    function openModal(prefill = null) {
         const form = document.getElementById('modalForm');
+        const values = prefill || {};
+
         document.getElementById('modal-title').innerText = 'Tambah Mata Kuliah Baru';
         form.action = storeUrl;
 
         const methodInput = form.querySelector('input[name="_method"]');
         if (methodInput) methodInput.remove();
 
-        document.getElementById('input_kode_mk').value = '';
-        document.getElementById('input_sks').value = '';
-        document.getElementById('input_nama').value = '';
-        document.getElementById('input_semester_ke').value = '';
-        document.getElementById('input_prodi').value = '';
-        document.getElementById('input_dosen_id').value = '';
+        document.getElementById('input_kode_mk').value = values.kode_mk || '';
+        document.getElementById('input_sks').value = values.sks || '';
+        document.getElementById('input_nama').value = values.nama || '';
+        document.getElementById('input_semester_ke').value = values.semester_ke || '';
+        document.getElementById('input_prodi').value = values.prodi || '';
+        renderDosenOptions(values.dosen_id || '');
 
         const submitBtn = document.querySelector('#modalForm button[type="submit"]');
         if (submitBtn) {
@@ -443,7 +453,7 @@
         document.getElementById('input_nama').value = mk.nama || '';
         document.getElementById('input_semester_ke').value = mk.semester_ke || '';
         document.getElementById('input_prodi').value = mk.prodi || '';
-        document.getElementById('input_dosen_id').value = mk.dosen_id ?? '';
+        renderDosenOptions(mk.dosen_id ?? '');
 
         const submitBtn = document.querySelector('#modalForm button[type="submit"]');
         if (submitBtn) {
@@ -465,7 +475,7 @@
 
     @if(old('_token') || $errors->any())
         document.addEventListener('DOMContentLoaded', () => {
-            openModal();
+            openModal(oldInput);
         });
     @endif
 
@@ -479,6 +489,54 @@
             .replace(/"/g, '&quot;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
+    }
+
+    function normalizeValue(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function isDosenMataKuliah(dosen) {
+        const tipe = normalizeValue(dosen.tipe_dosen);
+
+        return tipe === 'keduanya' || tipe.includes('mata kuliah') || tipe.includes('mk');
+    }
+
+    function renderDosenOptions(selectedId = '') {
+        const prodiSelect = document.getElementById('input_prodi');
+        const dosenSelect = document.getElementById('input_dosen_id');
+        const selectedProdi = prodiSelect?.value || '';
+        const normalizedProdi = normalizeValue(selectedProdi);
+
+        if (!dosenSelect) return;
+
+        dosenSelect.innerHTML = '';
+
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = selectedProdi ? '-- Pilih Dosen --' : 'Pilih prodi dulu';
+        dosenSelect.appendChild(placeholder);
+
+        const filteredDosens = dosenOptions.filter(dosen => {
+            const dosenProdi = normalizeValue(dosen.fakultas || dosen.prodi);
+
+            return normalizedProdi && isDosenMataKuliah(dosen) && dosenProdi === normalizedProdi;
+        });
+
+        filteredDosens.forEach(dosen => {
+            const option = document.createElement('option');
+            option.value = dosen.id;
+            option.textContent = dosen.nama;
+            option.selected = String(selectedId || '') === String(dosen.id);
+            dosenSelect.appendChild(option);
+        });
+
+        if (selectedProdi && filteredDosens.length === 0) {
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = 'Tidak ada dosen mata kuliah untuk prodi ini';
+            emptyOption.disabled = true;
+            dosenSelect.appendChild(emptyOption);
+        }
     }
 
     function openDeleteModal(name) {
@@ -655,6 +713,7 @@
     }
 
     document.getElementById('searchInput')?.addEventListener('keyup', applyFilters);
+    document.getElementById('input_prodi')?.addEventListener('change', () => renderDosenOptions());
     document.getElementById('adminDeleteCancel')?.addEventListener('click', () => closeDeleteModal(false));
     document.getElementById('adminDeleteClose')?.addEventListener('click', () => closeDeleteModal(false));
     document.getElementById('adminDeleteConfirm')?.addEventListener('click', () => closeDeleteModal(true));
@@ -673,6 +732,7 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+        renderDosenOptions(oldInput.dosen_id || '');
         renderTable(rawData);
     });
 </script>
