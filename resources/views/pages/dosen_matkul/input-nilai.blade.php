@@ -326,6 +326,8 @@ const URL_KELAS = '{{ route("dosen.mk.kelas-by-mk") }}';
 function onMKChange(sel) {
     const kodeMk = sel.value;
     const kelasSelect = document.getElementById('selectKelas');
+    const semesterId = document.getElementById('selectSemester')?.value || '';
+    const tahunAjaran = document.getElementById('selectTahunAjaran')?.value || '';
 
     if (!kodeMk) {
         kelasSelect.innerHTML = '<option value="">Semua Kelas</option>';
@@ -333,7 +335,17 @@ function onMKChange(sel) {
         return;
     }
 
-    fetch(URL_KELAS + '?kode_mk=' + encodeURIComponent(kodeMk))
+    const params = new URLSearchParams({ kode_mk: kodeMk });
+
+    if (semesterId) {
+        params.set('semester_id', semesterId);
+    }
+
+    if (tahunAjaran) {
+        params.set('tahun_ajaran', tahunAjaran);
+    }
+
+    fetch(URL_KELAS + '?' + params.toString())
         .then(r => r.json())
         .then(data => {
             kelasSelect.innerHTML = '<option value="">Semua Kelas</option>';

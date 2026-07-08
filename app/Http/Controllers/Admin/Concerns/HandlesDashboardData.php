@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 
 trait HandlesDashboardData
 {
+    // Query ranking mahasiswa dipisah karena rumus IPK dan join tabelnya cukup panjang.
     protected function dashboardMahasiswaRankingQuery()
     {
         $query = DB::table('mahasiswa')
@@ -21,12 +22,16 @@ trait HandlesDashboardData
                 Schema::hasColumn('mahasiswa', 'deleted_at'),
                 fn ($query) => $query->whereNull('mahasiswa.deleted_at')
             );
+
+        // leftJoin membuat mahasiswa tetap tampil walaupun data prodi belum lengkap.
         if (Schema::hasTable('prodi') && Schema::hasColumn('mahasiswa', 'prodi_id')) {
             $query->leftJoin('prodi', 'mahasiswa.prodi_id', '=', 'prodi.id')
                 ->addSelect(DB::raw("COALESCE(prodi.nama_prodi, '-') as prodi"));
         } else {
             $query->addSelect(DB::raw("'-' as prodi"));
         }
+
+        // Rumus IPK: total bobot nilai x SKS, lalu dibagi total SKS.
         if (Schema::hasTable('nilai')) {
             $query->leftJoin('nilai', 'mahasiswa.id', '=', 'nilai.mahasiswa_id')
                 ->addSelect(DB::raw('COALESCE(ROUND(SUM(COALESCE(nilai.bobot, 0) * COALESCE(nilai.sks, 0)) / NULLIF(SUM(COALESCE(nilai.sks, 0)), 0), 2), 0) as ipk'))
@@ -52,6 +57,7 @@ trait HandlesDashboardData
             }
         }
 
+        // Ranking ditampilkan dari IPK tertinggi, lalu nama sebagai urutan cadangan.
         return $query
             ->orderByDesc('ipk')
             ->orderBy('mahasiswa.nama');

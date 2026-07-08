@@ -13,6 +13,7 @@ class PaketMataKuliahController extends Controller
 {
     use HandlesAdminData;
 
+    // Menampilkan daftar paket mata kuliah untuk setiap prodi dan semester.
     public function indexPaketMK()
     {
         $allMataKuliah = $this->getMataKuliahOptions();
@@ -22,6 +23,7 @@ class PaketMataKuliahController extends Controller
         ? $this->paketMataKuliahListQuery()->get()
         : collect();
         if ($paketMK->isNotEmpty() && Schema::hasTable('paket_mata_kuliah_details')) {
+            // Detail mata kuliah digabung agar view tahu isi setiap paket.
             $detailIds = DB::table('paket_mata_kuliah_details')
                 ->whereIn('paket_mata_kuliah_id', $paketMK->pluck('id'))
                 ->get()
@@ -37,6 +39,7 @@ class PaketMataKuliahController extends Controller
         return view('pages.admin.data_paketmk', compact('paketMK', 'allMataKuliah', 'prodis', 'semesters'));
     }
 
+    // Membuka halaman/form tambah paket mata kuliah.
     public function createPaketMK()
     {
         $allMataKuliah = $this->getMataKuliahOptions();
@@ -46,6 +49,7 @@ class PaketMataKuliahController extends Controller
         return view('pages.admin.paketmk_create', compact('allMataKuliah', 'prodis', 'semesters'));
     }
 
+    // Menyimpan paket MK baru beserta daftar mata kuliah di dalamnya.
     public function storePaketMK(Request $request)
     {
         $validated = $request->validate([
@@ -62,6 +66,7 @@ class PaketMataKuliahController extends Controller
         $this->validatePaketMataKuliahScope($mataKuliahIds, (int) $validated['semester'], $prodiId);
         $this->validatePaketMataKuliahSks($mataKuliahIds);
         try {
+            // Transaction dipakai karena paket utama dan detail mata kuliah harus tersimpan bersama.
             DB::transaction(function () use ($validated, $mataKuliahIds, $prodiId, $semesterId) {
                 $this->archiveExistingPaketMataKuliah($prodiId, $semesterId);
                 $paketId = DB::table('paket_mata_kuliahs')->insertGetId([
@@ -81,6 +86,7 @@ class PaketMataKuliahController extends Controller
         }
     }
 
+    // Mengambil paket yang dipilih beserta mata kuliah yang sudah tercentang.
     public function editPaketMK($id)
     {
         $paketMK = $this->paketMataKuliahListQuery()
@@ -107,6 +113,7 @@ class PaketMataKuliahController extends Controller
         ));
     }
 
+    // Memperbarui paket MK dan menyinkronkan ulang detail mata kuliahnya.
     public function updatePaketMK(Request $request, $id)
     {
         $validated = $request->validate([
@@ -123,6 +130,7 @@ class PaketMataKuliahController extends Controller
         $this->validatePaketMataKuliahScope($mataKuliahIds, (int) $validated['semester'], $prodiId);
         $this->validatePaketMataKuliahSks($mataKuliahIds);
         try {
+            // Isi detail paket bisa berubah, jadi proses update dibuat satu transaction.
             DB::transaction(function () use ($validated, $id, $mataKuliahIds, $prodiId, $semesterId) {
                 $this->archiveExistingPaketMataKuliah($prodiId, $semesterId, (int) $id);
                 DB::table('paket_mata_kuliahs')
@@ -143,6 +151,7 @@ class PaketMataKuliahController extends Controller
         }
     }
 
+    // Menghapus paket mata kuliah dari daftar admin.
     public function destroyPaketMK($id)
     {
         try {

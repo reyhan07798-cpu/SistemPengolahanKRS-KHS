@@ -131,6 +131,106 @@ class MahasiswaController extends Controller
             ->toArray();
     }
 
+    private function formatMataKuliahUntukKrs($mk, bool $isMengulang = false): array
+    {
+        $namaDosen = $mk->dosen
+            ? $mk->dosen.($mk->nik ? ' (NIK: '.$mk->nik.')' : '')
+            : '-';
+
+        $data = [
+            'id' => (int) $mk->id,
+            'kode' => $mk->kode,
+            'matkul' => $mk->matkul,
+            'dosen' => $namaDosen,
+            'sks' => (int) $mk->sks,
+            'kelas' => $mk->kelas ?? '-',
+        ];
+
+        if ($isMengulang) {
+            $data['isMengulang'] = true;
+            $data['nilaiLama'] = $mk->nilai_lama ?? '-';
+            $data['semesterAsal'] = $mk->semester_asal ?? '-';
+        } else {
+            $data['prasyarat'] = $mk->prasyarat ?? '-';
+        }
+
+        return $data;
+    }
+
+    private function mataKuliahPaketWajib($mahasiswa, $semester, $progressSemester)
+    {
+        $paketIds = $this->paketIdsUntukMahasiswa($mahasiswa, $semester, $progressSemester);
+
+        $query = DB::table('mata_kuliah')
+            ->leftJoin('dosen', 'mata_kuliah.dosen_id', '=', 'dosen.id');
+
+        if (! empty($paketIds)) {
+            $query
+                ->join('paket_mata_kuliah_details', 'mata_kuliah.id', '=', 'paket_mata_kuliah_details.mata_kuliah_id')
+                ->whereIn('paket_mata_kuliah_details.paket_mata_kuliah_id', $paketIds);
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query
+            ->where('mata_kuliah.semester_ke', $progressSemester->semester_ke)
+            ->when(DB::getSchemaBuilder()->hasColumn('mata_kuliah', 'deleted_at'), function ($query) {
+                $query->whereNull('mata_kuliah.deleted_at');
+            })
+            ->select(
+                'mata_kuliah.id',
+                'mata_kuliah.kode_mk as kode',
+                'mata_kuliah.nama as matkul',
+                'mata_kuliah.sks',
+                'mata_kuliah.kelas',
+                'mata_kuliah.prasyarat',
+                'dosen.nama as dosen',
+                'dosen.nik'
+            )
+            ->distinct()
+            ->orderBy('mata_kuliah.kode_mk', 'asc')
+            ->get()
+            ->unique('id')
+            ->values();
+    }
+
+    private function mataKuliahMengulang($mahasiswa, $progressSemester, array $excludeIds = [])
+    {
+        $semesterKeAktif = (int) $progressSemester->semester_ke;
+        $paritasAktif = $semesterKeAktif % 2;
+
+        return DB::table('nilai')
+            ->join('mata_kuliah', 'nilai.mata_kuliah_id', '=', 'mata_kuliah.id')
+            ->leftJoin('dosen', 'mata_kuliah.dosen_id', '=', 'dosen.id')
+            ->where('nilai.mahasiswa_id', $mahasiswa->mahasiswa_id)
+            ->where('nilai.status', 'final')
+            ->whereNotIn('mata_kuliah.id', $excludeIds ?: [0])
+            ->whereNotNull('mata_kuliah.semester_ke')
+            ->where('mata_kuliah.semester_ke', '<', $semesterKeAktif)
+            ->whereRaw('(mata_kuliah.semester_ke % 2) = ?', [$paritasAktif])
+            ->when(DB::getSchemaBuilder()->hasColumn('mata_kuliah', 'deleted_at'), function ($query) {
+                $query->whereNull('mata_kuliah.deleted_at');
+            })
+            ->select(
+                'mata_kuliah.id',
+                'mata_kuliah.kode_mk as kode',
+                'mata_kuliah.nama as matkul',
+                'mata_kuliah.sks',
+                'mata_kuliah.kelas',
+                'mata_kuliah.semester_ke as semester_asal',
+                'dosen.nama as dosen',
+                'dosen.nik',
+                'nilai.nilai as nilai_lama',
+                'nilai.created_at as nilai_created_at'
+            )
+            ->orderBy('nilai.created_at', 'desc')
+            ->get()
+            ->unique('kode')
+            ->filter(fn ($mk) => in_array($mk->nilai_lama, ['D', 'E'], true))
+            ->sortBy('kode')
+            ->values();
+    }
+
     public function index()
     {
         $mahasiswa = $this->currentMahasiswa();
@@ -516,84 +616,19 @@ class MahasiswaController extends Controller
         }
 
         $kelasMahasiswa = $this->normalizeKelas($mahasiswa->kelas ?? '');
-        $paketIds = $this->paketIdsUntukMahasiswa($mahasiswa, $semester, $progressSemester);
+        $wajibRecords = $this->mataKuliahPaketWajib($mahasiswa, $semester, $progressSemester);
+        $wajibIds = $wajibRecords->pluck('id')->map(fn ($id) => (int) $id)->toArray();
+        $mengulangRecords = $this->mataKuliahMengulang($mahasiswa, $progressSemester, $wajibIds);
 
-        $mengulangIds = DB::table('nilai')
-            ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
-            ->where('status', 'final')
-            ->whereIn('nilai', ['D', 'E'])
-            ->pluck('mata_kuliah_id')
+        $mkWajib = $wajibRecords
+            ->map(fn ($mk) => $this->formatMataKuliahUntukKrs($mk))
+            ->values()
             ->toArray();
 
-        $mataKuliahQuery = DB::table('mata_kuliah')
-            ->leftJoin('dosen', 'mata_kuliah.dosen_id', '=', 'dosen.id');
-
-        if (! empty($paketIds)) {
-            $mataKuliahQuery
-                ->join('paket_mata_kuliah_details', 'mata_kuliah.id', '=', 'paket_mata_kuliah_details.mata_kuliah_id')
-                ->whereIn('paket_mata_kuliah_details.paket_mata_kuliah_id', $paketIds);
-        } else {
-            $mataKuliahQuery->whereRaw('1 = 0');
-        }
-
-        $allMk = $mataKuliahQuery
-            ->where('mata_kuliah.semester_ke', $progressSemester->semester_ke)
-            ->when(DB::getSchemaBuilder()->hasColumn('mata_kuliah', 'deleted_at'), function ($query) {
-                $query->whereNull('mata_kuliah.deleted_at');
-            })
-            ->select(
-                'mata_kuliah.id',
-                'mata_kuliah.kode_mk as kode',
-                'mata_kuliah.nama as matkul',
-                'mata_kuliah.sks',
-                'mata_kuliah.kelas',
-                'dosen.nama as dosen',
-                'dosen.nik'
-            )
-            ->distinct()
-            ->orderBy('mata_kuliah.kode_mk', 'asc')
-            ->get()
-            ->unique(fn ($mk) => $mk->kode.'|'.$mk->matkul.'|'.$mk->sks)
-            ->values();
-
-        $mkWajib = [];
-        $mkMengulang = [];
-
-        foreach ($allMk as $mk) {
-            $namaDosen = $mk->dosen
-                ? $mk->dosen.($mk->nik ? ' (NIK: '.$mk->nik.')' : '')
-                : '-';
-
-            if (in_array($mk->id, $mengulangIds)) {
-                $nilaiLama = DB::table('nilai')
-                    ->where('mahasiswa_id', $mahasiswa->mahasiswa_id)
-                    ->where('mata_kuliah_id', $mk->id)
-                    ->where('status', 'final')
-                    ->orderByDesc('created_at')
-                    ->value('nilai');
-
-                $mkMengulang[] = [
-                    'id' => $mk->id,
-                    'kode' => $mk->kode,
-                    'matkul' => $mk->matkul,
-                    'dosen' => $namaDosen,
-                    'sks' => $mk->sks,
-                    'kelas' => $mk->kelas ?? '-',
-                    'isMengulang' => true,
-                    'nilaiLama' => $nilaiLama ?? '-',
-                ];
-            } else {
-                $mkWajib[] = [
-                    'id' => $mk->id,
-                    'kode' => $mk->kode,
-                    'matkul' => $mk->matkul,
-                    'dosen' => $namaDosen,
-                    'sks' => $mk->sks,
-                    'kelas' => $mk->kelas ?? '-',
-                    'prasyarat' => '-',
-                ];
-            }
-        }
+        $mkMengulang = $mengulangRecords
+            ->map(fn ($mk) => $this->formatMataKuliahUntukKrs($mk, true))
+            ->values()
+            ->toArray();
 
         return response()->json([
             'error' => false,
@@ -653,32 +688,37 @@ class MahasiswaController extends Controller
         }
 
         $kelasMahasiswa = $this->normalizeKelas($mahasiswa->kelas ?? '');
-        $paketIds = $this->paketIdsUntukMahasiswa($mahasiswa, $semesterAktif, $progressSemester);
-
-        $validMataKuliahQuery = DB::table('mata_kuliah')
-            ->whereIn('mata_kuliah.id', $mataKuliahIds)
-            ->where('mata_kuliah.semester_ke', $progressSemester->semester_ke);
-
-        if (! empty($paketIds)) {
-            $validMataKuliahQuery
-                ->join('paket_mata_kuliah_details', 'mata_kuliah.id', '=', 'paket_mata_kuliah_details.mata_kuliah_id')
-                ->whereIn('paket_mata_kuliah_details.paket_mata_kuliah_id', $paketIds);
-        } else {
-            $validMataKuliahQuery->whereRaw('1 = 0');
-        }
-
-        $validMataKuliahIds = $validMataKuliahQuery
-            ->pluck('mata_kuliah.id')
+        $wajibRecords = $this->mataKuliahPaketWajib($mahasiswa, $semesterAktif, $progressSemester);
+        $wajibIds = $wajibRecords->pluck('id')->map(fn ($id) => (int) $id)->unique()->values()->toArray();
+        $mengulangIds = $this->mataKuliahMengulang($mahasiswa, $progressSemester, $wajibIds)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
             ->unique()
             ->values()
             ->toArray();
 
-        if (count($validMataKuliahIds) !== count($mataKuliahIds)) {
-            return back()->with('error', 'Ada mata kuliah yang tidak sesuai dengan kelas Anda. Silakan pilih ulang KRS.');
+        $validMataKuliahIds = collect($wajibIds)
+            ->merge($mengulangIds)
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $mataKuliahIds = collect($mataKuliahIds)
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->toArray();
+
+        if (count(array_diff($mataKuliahIds, $validMataKuliahIds)) > 0) {
+            return back()->with('error', 'Ada mata kuliah yang tidak sesuai dengan aturan semester aktif atau aturan mengulang. Silakan pilih ulang KRS.');
+        }
+
+        if (count($wajibIds) > 0 && count(array_diff($wajibIds, $mataKuliahIds)) > 0) {
+            return back()->with('error', 'Mata kuliah paket semester aktif harus dipilih lengkap sebelum KRS diajukan.');
         }
 
         $totalSks = DB::table('mata_kuliah')
-            ->whereIn('id', $validMataKuliahIds)
+            ->whereIn('id', $mataKuliahIds)
             ->sum('sks');
 
         if ($totalSks > 24) {
@@ -726,7 +766,7 @@ class MahasiswaController extends Controller
                 'updated_at' => now(),
             ]);
 
-            foreach ($validMataKuliahIds as $mataKuliahId) {
+            foreach ($mataKuliahIds as $mataKuliahId) {
                 DB::table('krs_detail')->insert([
                     'krs_mahasiswa_id' => $krsId,
                     'mata_kuliah_id' => $mataKuliahId,

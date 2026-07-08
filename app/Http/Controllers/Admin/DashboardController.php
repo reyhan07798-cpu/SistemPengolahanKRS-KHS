@@ -12,8 +12,10 @@ class DashboardController extends Controller
 {
     use HandlesAdminData;
 
+    // Menyiapkan data ringkasan untuk kartu statistik dan tabel ranking di dashboard.
     public function dashboardAdmin()
     {
+        // Cek tabel dulu supaya dashboard tetap aman saat database belum lengkap.
         $totalMahasiswa = Schema::hasTable('mahasiswa')
         ? DB::table('mahasiswa')
             ->when(
@@ -39,6 +41,8 @@ class DashboardController extends Controller
             ->count()
         : 0;
         $prodis = $this->getProdiOptions();
+
+        // Query ranking IPK dibuat di trait agar controller dashboard tetap ringkas.
         $mahasiswa = Schema::hasTable('mahasiswa')
         ? $this->dashboardMahasiswaRankingQuery()
             ->get()
@@ -58,7 +62,4 @@ class DashboardController extends Controller
             'mahasiswa', 'totalMahasiswa', 'totalDosen', 'totalMataKuliah', 'avgIpk', 'prodis', 'angkatans'
         ));
     }
-    // ==========================================
-    // 2. MAHASISWA CRUD
-    // ==========================================
 }

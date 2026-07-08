@@ -14,6 +14,7 @@ class TahunAjaranController extends Controller
 {
     use HandlesAdminData;
 
+    // Menampilkan daftar tahun ajaran dari database.
     public function indexTahunAjaran()
     {
         if (Schema::hasTable('tahun_ajarans')) {
@@ -36,11 +37,13 @@ class TahunAjaranController extends Controller
         return view('pages.admin.data_tahunajaran', compact('tahunAjaran'));
     }
 
+    // Membuka halaman/form tambah tahun ajaran.
     public function createTahunAjaran()
     {
         return view('pages.admin.tahunajaran_create');
     }
 
+    // Menyimpan tahun ajaran baru dan mengatur status aktifnya.
     public function storeTahunAjaran(Request $request)
     {
         $validated = $request->validate([
@@ -63,6 +66,7 @@ class TahunAjaranController extends Controller
         try {
             $status = $request->has('status') ? 'Aktif' : 'Nonaktif';
             if (Schema::hasTable('tahun_ajarans')) {
+                // Jika tahun ajaran baru aktif, tahun ajaran aktif sebelumnya dibuat nonaktif.
                 DB::transaction(function () use ($validated, $status) {
                     if ($status === 'Aktif') {
                         TahunAjaran::where('status', 'Aktif')
@@ -84,6 +88,7 @@ class TahunAjaranController extends Controller
         }
     }
 
+    // Mengambil tahun ajaran yang akan diedit.
     public function editTahunAjaran($id)
     {
         $tahunAjaran = TahunAjaran::findOrFail($id);
@@ -92,6 +97,7 @@ class TahunAjaranController extends Controller
         return view('pages.admin.tahunajaran_edit', compact('tahunAjaran'));
     }
 
+    // Memperbarui tahun ajaran dan menyinkronkan status ke tabel semester.
     public function updateTahunAjaran(Request $request, $id)
     {
         $tahunAjaran = TahunAjaran::findOrFail($id);
@@ -116,6 +122,7 @@ class TahunAjaranController extends Controller
         try {
             $status = $request->has('status') ? 'Aktif' : 'Nonaktif';
             DB::transaction(function () use ($tahunAjaran, $validated, $status) {
+                // Hanya satu periode yang boleh aktif agar proses KRS tidak bingung.
                 if ($status === 'Aktif') {
                     TahunAjaran::where('id', '!=', $tahunAjaran->id)
                         ->where(function ($query) {
@@ -138,6 +145,7 @@ class TahunAjaranController extends Controller
         }
     }
 
+    // Menghapus tahun ajaran dan menonaktifkan pasangan semesternya.
     public function destroyTahunAjaran($id)
     {
         try {

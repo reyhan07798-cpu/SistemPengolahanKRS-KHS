@@ -44,8 +44,12 @@ class DosenController extends Controller
             'fakultas' => 'required|string|max:100',
             'alamat' => 'nullable|string',
             'no_hp' => 'nullable|string|max:20',
-            'password' => 'required|string|min:4',
+            'password' => 'nullable|string|min:4',
         ]);
+
+        if (empty($validated['password'])) {
+            $validated['password'] = $validated['nik'];
+        }
         try {
             $user = User::create([
                 'name' => $validated['nama'],

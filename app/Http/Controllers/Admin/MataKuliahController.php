@@ -13,6 +13,7 @@ class MataKuliahController extends Controller
 {
     use HandlesAdminData;
 
+    // Menampilkan daftar mata kuliah beserta dosen pengampu, semester, dan prodi.
     public function indexMatakuliah()
     {
         $dosens = $this->getDosenPengampuOptions();
@@ -76,6 +77,7 @@ class MataKuliahController extends Controller
         ));
     }
 
+    // Membuka halaman/form tambah mata kuliah.
     public function createMatakuliah()
     {
         $dosens = $this->getDosenPengampuOptions();
@@ -90,6 +92,7 @@ class MataKuliahController extends Controller
         ));
     }
 
+    // Menyimpan mata kuliah baru.
     public function storeMatakuliah(Request $request)
     {
         $kodeRule = Rule::unique('mata_kuliah', 'kode_mk');
@@ -114,6 +117,7 @@ class MataKuliahController extends Controller
             'prodi.required' => 'Program studi wajib dipilih.',
         ]);
 
+        // Dosen pengampu harus sesuai prodi dan memang bertipe dosen mata kuliah.
         if (! $this->isValidDosenPengampuForProdi($validated['dosen_id'] ?? null, $validated['prodi'])) {
             return back()
                 ->withErrors(['dosen_id' => 'Dosen pengampu harus dosen mata kuliah dari program studi yang dipilih.'])
@@ -155,6 +159,7 @@ class MataKuliahController extends Controller
         }
     }
 
+    // Mengambil satu mata kuliah untuk ditampilkan di form edit.
     public function editMatakuliah($id)
     {
         $query = DB::table('mata_kuliah')->where('mata_kuliah.id', $id);
@@ -185,6 +190,7 @@ class MataKuliahController extends Controller
         ));
     }
 
+    // Memperbarui data mata kuliah.
     public function updateMatakuliah(Request $request, $id)
     {
         $kodeRule = Rule::unique('mata_kuliah', 'kode_mk')->ignore($id);
@@ -209,6 +215,7 @@ class MataKuliahController extends Controller
             'prodi.required' => 'Program studi wajib dipilih.',
         ]);
 
+        // Validasi ini mencegah dosen dari prodi lain menjadi pengampu mata kuliah ini.
         if (! $this->isValidDosenPengampuForProdi($validated['dosen_id'] ?? null, $validated['prodi'])) {
             return back()
                 ->withErrors(['dosen_id' => 'Dosen pengampu harus dosen mata kuliah dari program studi yang dipilih.'])
@@ -246,6 +253,7 @@ class MataKuliahController extends Controller
                 Schema::hasColumn('nilai', 'dosen_nik') &&
                 Schema::hasColumn('nilai', 'mata_kuliah_id')
             ) {
+                // Jika pengampu berubah, data nilai lama ikut disesuaikan dengan NIK dosen baru.
                 DB::table('nilai')
                     ->where('mata_kuliah_id', $id)
                     ->update([
@@ -264,6 +272,7 @@ class MataKuliahController extends Controller
         }
     }
 
+    // Menghapus mata kuliah dari tampilan admin memakai kolom deleted_at.
     public function destroyMatakuliah(Request $request, $id)
     {
         try {

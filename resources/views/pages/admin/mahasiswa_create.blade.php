@@ -149,8 +149,8 @@
             {{-- Password & Alamat --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                    <label class="nb-label">Password Default <span class="text-danger">*</span></label>
-                    <input type="text" name="password" value="{{ old('password', 'mhs123') }}" placeholder="mhs123" required
+                    <label class="nb-label">Password Default <span class="text-muted text-xs font-normal">(Opsional, default: NIM)</span></label>
+                    <input type="text" name="password" value="{{ old('password') }}" placeholder="Default: NIM jika kosong"
                         class="w-full @error('password') nb-input-error @enderror">
                     @error('password')
                         <span class="nb-error-text">{{ $message }}</span>

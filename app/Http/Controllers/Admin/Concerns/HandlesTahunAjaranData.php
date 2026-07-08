@@ -35,13 +35,76 @@ trait HandlesTahunAjaranData
                 fn ($query) => $query->where('semester_ke', $this->semesterKeFromLabel($tahunAjaran->semester))
             )
             ->first();
+
+        $targetSemesterId = null;
         if ($existing) {
             unset($semesterData['created_at']);
             DB::table('semesters')->where('id', $existing->id)->update($semesterData);
-
-            return;
+            $targetSemesterId = $existing->id;
+        } else {
+            $targetSemesterId = DB::table('semesters')->insertGetId($semesterData);
         }
-        DB::table('semesters')->insert($semesterData);
+
+        // Jika semester ini aktif, lakukan propagasi status mahasiswa secara otomatis
+        if ($isActive && $targetSemesterId && Schema::hasTable('mahasiswa') && Schema::hasTable('mahasiswa_semester')) {
+            $this->autoPropagateStudentStatuses($targetSemesterId);
+        }
+    }
+
+    protected function autoPropagateStudentStatuses(int $toSemesterId): void
+    {
+        // Dapatkan ID mahasiswa yang sudah memiliki status di semester baru ini
+        $hasRecordIds = DB::table('mahasiswa_semester')
+            ->where('semester_id', $toSemesterId)
+            ->pluck('mahasiswa_id')
+            ->toArray();
+
+        // Cari mahasiswa yang belum memiliki status di semester baru ini
+        $mahasiswaList = DB::table('mahasiswa')
+            ->when(
+                Schema::hasColumn('mahasiswa', 'deleted_at'),
+                fn ($query) => $query->whereNull('mahasiswa.deleted_at')
+            )
+            ->whereNotIn('id', $hasRecordIds)
+            ->get();
+
+        foreach ($mahasiswaList as $mhs) {
+            // Temukan record status semester terakhir dari mahasiswa ini
+            $latestRecord = DB::table('mahasiswa_semester')
+                ->where('mahasiswa_id', $mhs->id)
+                ->orderByDesc('id')
+                ->first();
+
+            if ($latestRecord) {
+                $status = $latestRecord->status;
+                $newSemesterKe = (int) $latestRecord->semester_ke;
+
+                // Naikkan semester jika sebelumnya aktif atau mengulang
+                if (in_array($status, ['aktif', 'mengulang'])) {
+                    $newSemesterKe = min(14, $newSemesterKe + 1);
+                }
+            } else {
+                // Default untuk mahasiswa baru yang tidak punya riwayat semester sama sekali
+                $status = 'aktif';
+                $newSemesterKe = 1;
+            }
+
+            DB::table('mahasiswa_semester')->insert([
+                'mahasiswa_id' => $mhs->id,
+                'semester_id' => $toSemesterId,
+                'semester_ke' => $newSemesterKe,
+                'status' => $status,
+                'catatan' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Sinkronisasi kelas berdasarkan semester_ke yang baru
+            $mahasiswaModel = \App\Models\Mahasiswa::with('prodi')->find($mhs->id);
+            if ($mahasiswaModel && method_exists($this, 'syncMahasiswaKelasForSemester')) {
+                $this->syncMahasiswaKelasForSemester($mahasiswaModel, $newSemesterKe);
+            }
+        }
     }
 
     protected function setSemesterActiveState(string $semester, string $tahunAjaran, bool $isActive): void

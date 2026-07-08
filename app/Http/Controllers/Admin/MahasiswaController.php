@@ -17,6 +17,7 @@ class MahasiswaController extends Controller
 {
     use HandlesAdminData;
 
+    // Menampilkan daftar mahasiswa beserta data pilihan untuk filter dan form.
     public function indexMahasiswa()
     {
         $mahasiswa = Schema::hasTable('mahasiswa')
@@ -32,6 +33,7 @@ class MahasiswaController extends Controller
         return view('pages.admin.data_mahasiswa', compact('mahasiswa', 'prodis', 'angkatans', 'dosens', 'kelasOptions', 'kelasGroups', 'sesiOptions'));
     }
 
+    // Membuka halaman/form tambah mahasiswa.
     public function createMahasiswa()
     {
         $prodis = $this->getProdiOptions();
@@ -44,8 +46,10 @@ class MahasiswaController extends Controller
         return view('pages.admin.mahasiswa_create', compact('prodis', 'angkatans', 'dosens', 'kelasOptions', 'kelasGroups', 'sesiOptions'));
     }
 
+    // Menyimpan mahasiswa baru sekaligus membuat akun login mahasiswa.
     public function storeMahasiswa(Request $request)
     {
+        // Validasi memastikan data wajib terisi dan NIM/email tidak kembar.
         $validated = $request->validate([
             'nim' => [
                 'required',
@@ -71,8 +75,14 @@ class MahasiswaController extends Controller
             'dosen_wali_id' => 'nullable|exists:dosen,id',
             'no_hp' => 'nullable|string|max:15',
             'alamat' => 'nullable|string',
-            'password' => 'required|string|min:4',
+            'password' => 'nullable|string|min:4',
         ]);
+
+        if (empty($validated['password'])) {
+            $validated['password'] = $validated['nim'];
+        }
+
+        // Nama kelas dibentuk otomatis dari prodi, semester awal, grup, dan sesi.
         $validated['kelas'] = $this->buildKelasName(
             $validated['prodi'],
             (int) $validated['semester_ke_awal'],
@@ -80,6 +90,7 @@ class MahasiswaController extends Controller
             $validated['sesi_kelas']
         );
         try {
+            // Transaction menjaga akun user, data mahasiswa, dan semester awal tersimpan bersama.
             DB::transaction(function () use ($validated) {
                 $user = User::create($this->mahasiswaUserData($validated));
                 $mahasiswa = Mahasiswa::create([
@@ -111,6 +122,7 @@ class MahasiswaController extends Controller
         }
     }
 
+    // Mengambil satu data mahasiswa untuk ditampilkan di form edit.
     public function editMahasiswa($id)
     {
         $mahasiswa = Mahasiswa::with(['prodi', 'dosenWali'])->findOrFail($id);
@@ -124,6 +136,7 @@ class MahasiswaController extends Controller
         return view('pages.admin.mahasiswa_edit', compact('mahasiswa', 'prodis', 'angkatans', 'dosens', 'kelasOptions', 'kelasGroups', 'sesiOptions'));
     }
 
+    // Memperbarui data mahasiswa dan akun login yang terhubung.
     public function updateMahasiswa(Request $request, $id)
     {
         $mahasiswa = Mahasiswa::findOrFail($id);
@@ -161,6 +174,7 @@ class MahasiswaController extends Controller
             $validated['sesi_kelas']
         );
         try {
+            // Data mahasiswa dan user login diperbarui dalam satu proses.
             DB::transaction(function () use ($mahasiswa, $validated, $request) {
                 $mahasiswa->update([
                     'dosen_wali_id' => $validated['dosen_wali_id'] ?? null,
@@ -189,6 +203,7 @@ class MahasiswaController extends Controller
         }
     }
 
+    // Menghapus mahasiswa dari tampilan admin memakai soft delete.
     public function destroyMahasiswa($id)
     {
         try {
@@ -200,6 +215,8 @@ class MahasiswaController extends Controller
                 }
                 $mahasiswa = Mahasiswa::findOrFail($id);
                 $user = $mahasiswa->user;
+
+                // User login ikut disembunyikan agar akun mahasiswa tidak aktif lagi.
                 DB::transaction(function () use ($mahasiswa, $user) {
                     $mahasiswa->delete();
                     if ($user && Schema::hasColumn('users', 'deleted_at')) {

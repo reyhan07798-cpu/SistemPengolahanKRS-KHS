@@ -253,6 +253,11 @@
                         @php
                             $status = $mhs->status ?? 'belum_diatur';
                             $currentSemesterKe = (int) ($mhs->semester_ke ?? 1);
+                            $minimumSemesterKe = max(1, (int) ($mhs->max_semester_ke ?? $currentSemesterKe));
+                            $displaySemesterKe = max(
+                                $minimumSemesterKe,
+                                (int) old('semester_ke', $mhs->semester_ke ?? ($selectedSemester->semester_ke ?? 1))
+                            );
                             $statusLabels = [
                                 'aktif' => 'Aktif',
                                 'cuti' => 'Cuti',
@@ -297,7 +302,7 @@
                                     <input type="hidden" name="semester_id" value="{{ $selectedSemesterId }}">
                                     <input type="hidden" name="prodi" value="{{ $selectedProdi }}">
                                     <input type="hidden" name="kelas" value="{{ $selectedKelas }}">
-                                    <input type="number" name="semester_ke" min="{{ $mhs->progress_id ? $currentSemesterKe : 1 }}" max="14" value="{{ old('semester_ke', $mhs->semester_ke ?? ($selectedSemester->semester_ke ?? 1)) }}" class="w-20 text-center">
+                                    <input type="number" name="semester_ke" min="{{ $minimumSemesterKe }}" max="14" value="{{ $displaySemesterKe }}" class="w-20 text-center">
                                 </form>
                             </td>
                             <td class="text-center">
@@ -306,14 +311,14 @@
                                         {{ $statusLabels[$status] ?? ucfirst($status) }}
                                     </span>
                                 </div>
-                                <select name="status" form="form-semester-{{ $mhs->id }}">
+                                <select name="status" form="form-semester-{{ $mhs->id }}" class="w-full min-w-[125px]">
                                     @foreach(['aktif' => 'Aktif', 'cuti' => 'Cuti', 'mengulang' => 'Mengulang', 'lulus' => 'Lulus', 'nonaktif' => 'Nonaktif'] as $value => $label)
                                         <option value="{{ $value }}" {{ ($mhs->status ?? 'aktif') === $value ? 'selected' : '' }}>{{ $label }}</option>
                                     @endforeach
                                 </select>
                             </td>
                             <td>
-                                <input type="text" name="catatan" form="form-semester-{{ $mhs->id }}" value="{{ old('catatan', $mhs->catatan) }}" placeholder="Opsional">
+                                <input type="text" name="catatan" form="form-semester-{{ $mhs->id }}" value="{{ old('catatan', $mhs->catatan) }}" placeholder="Opsional" class="w-full min-w-[150px]">
                             </td>
                             <td class="text-center">
                                 <button type="submit" form="form-semester-{{ $mhs->id }}" class="nb-btn nb-btn-primary nb-btn-sm">

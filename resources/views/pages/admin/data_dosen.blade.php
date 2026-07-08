@@ -218,8 +218,8 @@
                         </div>
 
                         <div>
-                            <label class="nb-label">Password <span class="text-danger js-password-required">*</span></label>
-                            <input type="text" name="password" value="{{ old('password', 'dosen123') }}" placeholder="dosen123" required>
+                            <label class="nb-label">Password <span class="text-muted text-xs font-normal">(Opsional, default: NIK)</span></label>
+                            <input type="text" name="password" value="{{ old('password') }}" placeholder="Default: NIK jika kosong">
                             @error('password') <p class="nb-form-error">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -417,10 +417,10 @@
         modalTitle.textContent = dosen ? 'Edit Data Dosen' : 'Tambah Dosen Baru';
 
         const passwordInput = dosenForm.elements.password;
-        passwordInput.required = !dosen;
-        passwordInput.value = dosen ? '' : 'dosen123';
-        passwordInput.placeholder = dosen ? 'Kosongkan jika tidak diubah' : 'dosen123';
-        passwordRequiredMark?.classList.toggle('hidden', !!dosen);
+        passwordInput.required = false;
+        passwordInput.value = '';
+        passwordInput.placeholder = dosen ? 'Kosongkan jika tidak diubah' : 'Default: NIK jika kosong';
+        passwordRequiredMark?.classList.add('hidden');
 
         if (dosen) {
             dosenForm.elements.nik.value = dosen.nik || '';

@@ -16,6 +16,7 @@ class SemesterMahasiswaController extends Controller
 {
     use HandlesAdminData;
 
+    // Menampilkan status semester mahasiswa berdasarkan filter semester, prodi, dan kelas.
     public function indexSemesterMahasiswa(Request $request)
     {
         $semesters = DB::table('semesters')
@@ -36,11 +37,19 @@ class SemesterMahasiswaController extends Controller
         $kelasList = $this->getKelasOptions();
         $mahasiswa = collect();
         if ($selectedSemester && Schema::hasTable('mahasiswa_semester')) {
+            $maxSemesterMahasiswa = DB::table('mahasiswa_semester')
+                ->select('mahasiswa_id', DB::raw('MAX(semester_ke) as max_semester_ke'))
+                ->groupBy('mahasiswa_id');
+
+            // leftJoin dipakai agar mahasiswa yang belum punya status semester tetap terlihat.
             $mahasiswa = DB::table('mahasiswa')
                 ->leftJoin('prodi', 'mahasiswa.prodi_id', '=', 'prodi.id')
                 ->leftJoin('mahasiswa_semester', function ($join) use ($selectedSemester) {
                     $join->on('mahasiswa.id', '=', 'mahasiswa_semester.mahasiswa_id')
                         ->where('mahasiswa_semester.semester_id', $selectedSemester->id);
+                })
+                ->leftJoinSub($maxSemesterMahasiswa, 'max_semester_mahasiswa', function ($join) {
+                    $join->on('mahasiswa.id', '=', 'max_semester_mahasiswa.mahasiswa_id');
                 })
                 ->select(
                     'mahasiswa.id',
@@ -52,7 +61,8 @@ class SemesterMahasiswaController extends Controller
                     'mahasiswa_semester.id as progress_id',
                     'mahasiswa_semester.semester_ke',
                     'mahasiswa_semester.status',
-                    'mahasiswa_semester.catatan'
+                    'mahasiswa_semester.catatan',
+                    DB::raw('COALESCE(max_semester_mahasiswa.max_semester_ke, mahasiswa_semester.semester_ke, 1) as max_semester_ke')
                 )
                 ->when(
                     Schema::hasColumn('mahasiswa', 'deleted_at'),
@@ -68,6 +78,8 @@ class SemesterMahasiswaController extends Controller
                 ->orderBy('mahasiswa.nama')
                 ->get();
         }
+
+        // Statistik kecil untuk kartu ringkasan di atas tabel.
         $stats = [
             'total' => $mahasiswa->count(),
             'aktif' => $mahasiswa->where('status', 'aktif')->count(),
@@ -89,6 +101,7 @@ class SemesterMahasiswaController extends Controller
         ));
     }
 
+    // Mengubah semester ke, status, dan catatan untuk satu mahasiswa.
     public function updateSemesterMahasiswa(Request $request, $mahasiswaId)
     {
         $validated = $request->validate([
@@ -101,15 +114,15 @@ class SemesterMahasiswaController extends Controller
         ]);
         $mahasiswa = Mahasiswa::with('prodi')->findOrFail($mahasiswaId);
 
-        $existingSemester = MahasiswaSemester::where('mahasiswa_id', $mahasiswaId)
-            ->where('semester_id', $validated['semester_id'])
-            ->first();
+        $maxSemesterKe = (int) MahasiswaSemester::where('mahasiswa_id', $mahasiswaId)
+            ->max('semester_ke');
 
-        if ($existingSemester && (int) $validated['semester_ke'] < (int) $existingSemester->semester_ke) {
+        // Semester mahasiswa tidak boleh diturunkan agar riwayat akademik tetap runtut.
+        if ($maxSemesterKe > 0 && (int) $validated['semester_ke'] < $maxSemesterKe) {
             return back()
                 ->withErrors([
                     'semester_ke' => 'Semester mahasiswa tidak boleh diturunkan dari Semester '
-                        . $existingSemester->semester_ke
+                        . $maxSemesterKe
                         . ' ke Semester '
                         . $validated['semester_ke']
                         . '.',
@@ -117,6 +130,7 @@ class SemesterMahasiswaController extends Controller
                 ->withInput();
         }
 
+        // updateOrCreate: kalau record sudah ada maka update, kalau belum ada maka buat baru.
         MahasiswaSemester::updateOrCreate(
             [
                 'mahasiswa_id' => $mahasiswaId,
@@ -139,6 +153,7 @@ class SemesterMahasiswaController extends Controller
             ->with('success', 'Status semester mahasiswa berhasil diperbarui.');
     }
 
+    // Memproses naik semester massal untuk mahasiswa yang masih aktif.
     public function promoteSemesterMahasiswa(Request $request)
     {
         $validated = $request->validate([
@@ -151,6 +166,7 @@ class SemesterMahasiswaController extends Controller
         $sourceSemester = DB::table('semesters')->where('id', $validated['from_semester_id'])->first();
         $targetSemester = DB::table('semesters')->where('id', $targetSemesterId)->first();
 
+        // Semester tujuan harus periode yang lebih baru dari semester asal.
         if (! $this->isLaterSemesterPeriod($sourceSemester, $targetSemester)) {
             return back()
                 ->withErrors([
@@ -175,6 +191,7 @@ class SemesterMahasiswaController extends Controller
         $created = 0;
         $skipped = 0;
         DB::transaction(function () use ($sourceRecords, $targetSemesterId, &$created, &$skipped) {
+            // Mahasiswa yang sudah punya record di semester tujuan dilewati.
             foreach ($sourceRecords as $record) {
                 $exists = DB::table('mahasiswa_semester')
                     ->where('mahasiswa_id', $record->mahasiswa_id)
@@ -220,13 +237,11 @@ class SemesterMahasiswaController extends Controller
         return $this->semesterPeriodOrder($targetSemester) > $this->semesterPeriodOrder($sourceSemester);
     }
 
+    // Mengubah tahun ajaran dan semester menjadi angka agar mudah dibandingkan.
     private function semesterPeriodOrder(object $semester): int
     {
         $startYear = (int) substr((string) $semester->tahun_ajaran, 0, 4);
 
         return ($startYear * 10) + (int) $semester->semester_ke;
     }
-    // ==========================================
-    // 3. DOSEN CRUD
-    // ==========================================
 }

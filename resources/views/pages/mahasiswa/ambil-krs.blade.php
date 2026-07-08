@@ -357,6 +357,11 @@
                 ? `<span class="nb-badge nb-badge-danger">${nilaiLama}</span>`
                 : `<span class="text-muted text-sm">${prasyarat}</span>`;
 
+            const matkulCell = isMengulang
+                ? `<div class="font-medium text-ink">${mk.matkul || '-'}</div>
+                   <div class="text-xs text-muted mt-1">Semester asal: ${mk.semesterAsal || '-'}</div>`
+                : `<span class="font-medium text-ink">${mk.matkul || '-'}</span>`;
+
             row.innerHTML = `
                 <td class="text-center">
                     <input
@@ -370,7 +375,7 @@
                     >
                 </td>
                 <td class="font-bold text-primary" style="font-family:var(--font-heading);">${mk.kode || '-'}</td>
-                <td class="font-medium text-ink">${mk.matkul || '-'}</td>
+                <td>${matkulCell}</td>
                 <td class="text-sm text-muted">${mk.dosen || '-'}</td>
                 <td class="text-center font-bold">${mk.sks || 0}</td>
                 <td class="text-center">${lastCell}</td>
@@ -420,6 +425,12 @@
             warningInner.classList.remove('nb-alert-warning');
             warningInner.classList.add('nb-alert-danger');
             btnSubmit.disabled = true;
+        } else if (!allWajibChecked) {
+            warning.classList.remove('hidden');
+            warningText.textContent = 'Pilih semua mata kuliah wajib paket semester aktif terlebih dahulu.';
+            warningInner.classList.remove('nb-alert-danger');
+            warningInner.classList.add('nb-alert-warning');
+            btnSubmit.disabled = true;
         } else if (selectedSks === MAX_SKS) {
             warning.classList.remove('hidden');
             warningText.textContent = `Anda telah mencapai batas maksimal ${MAX_SKS} SKS.`;
@@ -452,7 +463,7 @@
         }
 
         if (!allWajibChecked && document.querySelectorAll('.chk-mengulang').length > 0) {
-            helpText.textContent = '⚠ Pilih semua Mata Kuliah Wajib terlebih dahulu sebelum memilih MK Mengulang.';
+            helpText.textContent = 'Pilih semua Mata Kuliah Wajib terlebih dahulu sebelum memilih MK Mengulang.';
             helpText.style.color = 'var(--color-warning)';
         } else if (selectedSks === 0) {
             helpText.textContent = 'Pilih minimal 1 mata kuliah untuk mengaktifkan tombol Ajukan KRS.';
@@ -468,11 +479,9 @@
 
     function resetForm() {
         document.querySelectorAll('.chk-mk').forEach(chk => {
-            chk.checked = false;
+            chk.checked = chk.classList.contains('chk-wajib');
             chk.disabled = false;
         });
-
-        selectedSks = 0;
 
         const totalSksEl = document.getElementById('totalSks');
         const sisaSksEl = document.getElementById('sisaSks');
@@ -497,17 +506,8 @@
                 btnSubmit.disabled = true;
             }
         } else {
-            if (totalSksEl) {
-                totalSksEl.textContent = '0';
-            }
-
-            if (sisaSksEl) {
-                sisaSksEl.textContent = MAX_SKS;
-            }
-
-            if (btnSubmit) {
-                btnSubmit.disabled = true;
-            }
+            hitungSks();
+            return;
         }
 
         updateHelpText();
