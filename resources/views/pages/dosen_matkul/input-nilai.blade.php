@@ -318,6 +318,7 @@
 <script>
 const KODE_MK = '{{ $filterKodeMK ?? "" }}';
 const KELAS = '{{ $filterKelas ?? "" }}';
+const SEMESTER_ID = '{{ $filterSemesterId ?? "" }}';
 const CSRF = '{{ csrf_token() }}';
 const URL_SIMPAN = '{{ route("dosen.mk.simpan-nilai") }}';
 const URL_FINALISASI = '{{ route("dosen.mk.finalisasi-nilai") }}';
@@ -487,6 +488,7 @@ async function simpanSatu(id, opts = {}) {
     fd.append('kode_mk', KODE_MK);
     fd.append('kelas', KELAS);
     fd.append('mahasiswa_id', id);
+    if (SEMESTER_ID) fd.append('semester_id', SEMESTER_ID);
 
     ['tugas', 'praktikum', 'uts', 'uas', 'kehadiran'].forEach(k => {
         fd.append('bobot_' + k, b[k]);
@@ -587,6 +589,7 @@ async function finalisasi() {
     fd.append('_token', CSRF);
     fd.append('kode_mk', KODE_MK);
     fd.append('kelas', KELAS);
+    if (SEMESTER_ID) fd.append('semester_id', SEMESTER_ID);
 
     try {
         const res = await fetch(URL_FINALISASI, {

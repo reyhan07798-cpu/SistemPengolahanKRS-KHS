@@ -171,12 +171,12 @@ class DosenMKController extends Controller
         return null;
     }
 
-    private function queryMataKuliahDiampuByKode(string $kodeMK)
+    private function queryMataKuliahDiampuByKode(string $kodeMK, ?int $semesterId = null)
     {
         $dosenId = $this->dosenId();
         $nik = $this->dosenNik();
 
-        return DB::table('mata_kuliah')
+        $query = DB::table('mata_kuliah')
             ->join('semesters', 'mata_kuliah.semester_id', '=', 'semesters.id')
             ->leftJoin('dosen_matakuliah', 'mata_kuliah.id', '=', 'dosen_matakuliah.mata_kuliah_id')
             ->leftJoin('dosen', 'dosen_matakuliah.dosen_id', '=', 'dosen.id')
@@ -201,15 +201,21 @@ class DosenMKController extends Controller
                 'semesters.tahun_ajaran as sem_tahun',
                 'semesters.id as sem_id'
             )
-            ->distinct()
-            ->orderByDesc('semesters.is_active')
-            ->orderByDesc('semesters.id')
-            ->get();
+            ->distinct();
+
+        // Jika semester_id diberikan, prioritaskan semester tersebut
+        if ($semesterId) {
+            $query->orderByRaw('CASE WHEN semesters.id = ? THEN 0 ELSE 1 END', [$semesterId]);
+        } else {
+            $query->orderByDesc('semesters.is_active');
+        }
+
+        return $query->orderByDesc('semesters.id')->get();
     }
 
-    private function mataKuliahDiampuUntukKelas(string $kodeMK, string $kelas)
+    private function mataKuliahDiampuUntukKelas(string $kodeMK, string $kelas, ?int $semesterId = null)
     {
-        $rows = $this->queryMataKuliahDiampuByKode($kodeMK);
+        $rows = $this->queryMataKuliahDiampuByKode($kodeMK, $semesterId);
         $kelasPendek = str_replace('-PAGI', '-', $kelas);
 
         $exact = $rows->first(function ($mk) use ($kelas, $kelasPendek) {
@@ -376,9 +382,9 @@ class DosenMKController extends Controller
         $filterKodeMK = $request->input('kode_mk', '');
         $filterKelas = $request->input('kelas', '');
 
-        if (!$filterSemesterId && !$filterTahunAjaran) {
-            $filterSemesterId = $semAktif ? $semAktif->id : '';
-        }
+        // Tidak memaksa ke semester aktif secara default.
+        // Dosen bisa melihat semua semester yang pernah dia ampu.
+        // Jika ingin default ke semester aktif, user harus pilih sendiri.
 
         $mataKuliahDiampu = $allMataKuliahDiampu->filter(function ($mk) use ($filterTahunAjaran, $filterSemesterId) {
             if ($filterSemesterId && $mk->semester_id != $filterSemesterId) {
@@ -508,8 +514,9 @@ class DosenMKController extends Controller
         }
 
         $nik = $this->dosenNik();
+        $semesterId = $request->input('semester_id') ? (int) $request->input('semester_id') : null;
 
-        $mk = $this->mataKuliahDiampuUntukKelas($kodeMK, $kelas);
+        $mk = $this->mataKuliahDiampuUntukKelas($kodeMK, $kelas, $semesterId);
 
         if (!$mk) {
             return response()->json([
@@ -667,75 +674,6 @@ class DosenMKController extends Controller
     {
         $kodeMK = $request->input('kode_mk');
         $kelas = $request->input('kelas');
-
-        if (!$kodeMK || !$kelas) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Mata kuliah dan kelas wajib dipilih.',
-            ], 422);
-        }
-
-        $mk = $this->mataKuliahDiampuUntukKelas($kodeMK, $kelas);
-
-        if (!$mk) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Mata kuliah atau kelas tidak ditemukan.',
-            ], 404);
-        }
-
-        if (!(bool) $mk->is_active) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak bisa finalisasi nilai di semester yang tidak aktif.',
-            ], 403);
-        }
-
-        $mahasiswaIds = $this->getMahasiswaByMK($mk->id, $kelas)->pluck('id')->toArray();
-
-        if (empty($mahasiswaIds)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak ada mahasiswa pada kelas ini.',
-            ], 404);
-        }
-
-        $kelasFinal = $mk->kelas_final ?? $kelas;
-        $kelasPendek = str_replace('-PAGI', '-', $kelasFinal);
-
-        $jumlahDifinalisasi = DB::table('nilai')
-            ->whereIn('mahasiswa_id', $mahasiswaIds)
-            ->where('mata_kuliah_id', $mk->id)
-            ->where('semester_id', $mk->sem_id)
-            ->where(function ($q) use ($kelasFinal, $kelasPendek) {
-                $q->where('kelas', $kelasFinal)
-                    ->orWhere('kelas', $kelasPendek)
-                    ->orWhereNull('kelas');
-            })
-            ->whereNotNull('nilai_akhir')
-            ->update([
-                'status' => 'final',
-                'updated_at' => now(),
-            ]);
-
-        if ($jumlahDifinalisasi === 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Belum ada nilai yang diisi untuk difinalisasi.',
-            ], 422);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => "Nilai $jumlahDifinalisasi mahasiswa berhasil difinalisasi dan kini dapat dilihat mahasiswa.",
-            'jumlah' => $jumlahDifinalisasi,
-        ]);
-    }
-
-    public function lihatNilai(Request $request)
-    {
-        $allMataKuliahDiampu = $this->getMataKuliahDiampu();
-        $allSem = DB::table('semesters')->orderByDesc('id')->get();
 
         $filterTahunAjaran = $request->input('tahun_ajaran', '');
         $filterSemesterId = $request->input('semester_id', '');
