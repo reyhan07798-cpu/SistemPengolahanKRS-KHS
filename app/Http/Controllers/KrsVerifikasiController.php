@@ -28,13 +28,9 @@ class KrsVerifikasiController extends Controller
 
     private function isDetailMkValidForKrs($krs, $mk): bool
     {
-        if ((int) $mk->semester_ke !== (int) $krs->semester_ke) {
-            return false;
-        }
-
-        $kelasMk = $this->normalizeKelas($mk->kelas_mk ?? '');
-
-        return $kelasMk === '' || $kelasMk === $this->normalizeKelas($krs->kelas ?? '');
+        // Valid if semester_ke matches. Kelas tidak lagi menjadi syarat
+        // karena paket MK dikelompokkan berdasarkan semester, bukan kelas.
+        return (int) $mk->semester_ke === (int) $krs->semester_ke;
     }
 
     // ═══════════════════════════════════════════════════════

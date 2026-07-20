@@ -124,6 +124,9 @@
                 </button>
             </div>
         </div>
+        <div class="mt-3 text-sm text-muted">
+            <strong>Catatan:</strong> Paket mata kuliah dikelompokkan berdasarkan <em>semester</em>. Kelas mahasiswa hanya memengaruhi pengampu (dosen) atau jadwal, bukan ketersediaan mata kuliah pada paket.
+        </div>
     </div>
 
     <div id="warningSks" class="hidden mb-4">
