@@ -34,13 +34,23 @@ class DosenMKController extends Controller
         return collect($data)->only($columns)->toArray();
     }
 
+    private function inferredSemesterSelect(string $column, string $alias): \Illuminate\Database\Query\Expression
+    {
+        return DB::raw("COALESCE(semesters.$column, (SELECT s.$column FROM semesters s WHERE s.semester_ke = mata_kuliah.semester_ke ORDER BY s.is_active DESC, s.id DESC LIMIT 1)) as $alias");
+    }
+
+    private function inferredSemesterIdSelect(): \Illuminate\Database\Query\Expression
+    {
+        return DB::raw('COALESCE(mata_kuliah.semester_id, (SELECT s.id FROM semesters s WHERE s.semester_ke = mata_kuliah.semester_ke ORDER BY s.is_active DESC, s.id DESC LIMIT 1)) as semester_id');
+    }
+
     private function getMataKuliahDiampu()
     {
         $dosenId = $this->dosenId();
         $nik = $this->dosenNik();
 
         return DB::table('mata_kuliah')
-            ->join('semesters', 'mata_kuliah.semester_id', '=', 'semesters.id')
+            ->leftJoin('semesters', 'mata_kuliah.semester_id', '=', 'semesters.id')
             ->leftJoin('dosen_matakuliah', 'mata_kuliah.id', '=', 'dosen_matakuliah.mata_kuliah_id')
             ->leftJoin('dosen', 'dosen_matakuliah.dosen_id', '=', 'dosen.id')
             ->leftJoin('kelas', 'dosen_matakuliah.kelas_id', '=', 'kelas.id')
@@ -55,6 +65,9 @@ class DosenMKController extends Controller
                         ->orWhere('mata_kuliah.dosen_nik', $nik);
                 }
             })
+            ->when(Schema::hasColumn('mata_kuliah', 'deleted_at'), function ($query) {
+                $query->whereNull('mata_kuliah.deleted_at');
+            })
             ->select(
                 'mata_kuliah.id',
                 'mata_kuliah.kode_mk',
@@ -63,12 +76,12 @@ class DosenMKController extends Controller
                 'mata_kuliah.semester_ke',
                 DB::raw('COALESCE(kelas.nama_kelas, mata_kuliah.kelas) as kelas'),
                 'mata_kuliah.tahun_ajaran',
-                'mata_kuliah.semester_id',
+                $this->inferredSemesterIdSelect(),
                 'mata_kuliah.dosen_nik',
-                'semesters.tahun_ajaran as sem_tahun',
-                'semesters.semester as sem_nama',
-                'semesters.semester_ke as sem_ke',
-                'semesters.is_active'
+                $this->inferredSemesterSelect('tahun_ajaran', 'sem_tahun'),
+                $this->inferredSemesterSelect('semester', 'sem_nama'),
+                $this->inferredSemesterSelect('semester_ke', 'sem_ke'),
+                $this->inferredSemesterSelect('is_active', 'is_active')
             )
             ->distinct()
             ->get();
@@ -177,7 +190,7 @@ class DosenMKController extends Controller
         $nik = $this->dosenNik();
 
         $query = DB::table('mata_kuliah')
-            ->join('semesters', 'mata_kuliah.semester_id', '=', 'semesters.id')
+            ->leftJoin('semesters', 'mata_kuliah.semester_id', '=', 'semesters.id')
             ->leftJoin('dosen_matakuliah', 'mata_kuliah.id', '=', 'dosen_matakuliah.mata_kuliah_id')
             ->leftJoin('dosen', 'dosen_matakuliah.dosen_id', '=', 'dosen.id')
             ->leftJoin('kelas', 'dosen_matakuliah.kelas_id', '=', 'kelas.id')
@@ -193,13 +206,16 @@ class DosenMKController extends Controller
                         ->orWhere('mata_kuliah.dosen_nik', $nik);
                 }
             })
+            ->when(Schema::hasColumn('mata_kuliah', 'deleted_at'), function ($query) {
+                $query->whereNull('mata_kuliah.deleted_at');
+            })
             ->select(
                 'mata_kuliah.*',
                 DB::raw('COALESCE(kelas.nama_kelas, mata_kuliah.kelas) as kelas_final'),
-                'semesters.is_active',
-                'semesters.semester as sem_nama',
-                'semesters.tahun_ajaran as sem_tahun',
-                'semesters.id as sem_id'
+                $this->inferredSemesterSelect('is_active', 'is_active'),
+                $this->inferredSemesterSelect('semester', 'sem_nama'),
+                $this->inferredSemesterSelect('tahun_ajaran', 'sem_tahun'),
+                DB::raw('COALESCE(semesters.id, (SELECT s.id FROM semesters s WHERE s.semester_ke = mata_kuliah.semester_ke ORDER BY s.is_active DESC, s.id DESC LIMIT 1)) as sem_id')
             )
             ->distinct();
 
@@ -207,10 +223,12 @@ class DosenMKController extends Controller
         if ($semesterId) {
             $query->orderByRaw('CASE WHEN semesters.id = ? THEN 0 ELSE 1 END', [$semesterId]);
         } else {
-            $query->orderByDesc('semesters.is_active');
+            $query->orderByDesc(DB::raw('COALESCE(semesters.is_active, (SELECT s.is_active FROM semesters s WHERE s.semester_ke = mata_kuliah.semester_ke ORDER BY s.is_active DESC, s.id DESC LIMIT 1))'));
         }
 
-        return $query->orderByDesc('semesters.id')->get();
+        return $query
+            ->orderByDesc(DB::raw('COALESCE(semesters.id, (SELECT s.id FROM semesters s WHERE s.semester_ke = mata_kuliah.semester_ke ORDER BY s.is_active DESC, s.id DESC LIMIT 1))'))
+            ->get();
     }
 
     private function mataKuliahDiampuUntukKelas(string $kodeMK, string $kelas, ?int $semesterId = null)
@@ -358,6 +376,7 @@ class DosenMKController extends Controller
                 'nama' => $mk->nama,
                 'sks' => $mk->sks,
                 'kelas' => $mk->kelas ?? '-',
+                'semester' => $mk->sem_ke ?? $mk->semester_ke ?? '-',
                 'mahasiswa' => $this->getMahasiswaByMK($mk->id, $mk->kelas)->count(),
                 'kapasitas' => 40,
                 'is_active' => (bool) $mk->is_active,
@@ -672,6 +691,12 @@ class DosenMKController extends Controller
 
     public function finalisasiNilai(Request $request)
     {
+        if ($request->isMethod('post')) {
+            return $this->prosesFinalisasiNilai($request);
+        }
+
+        $allMataKuliahDiampu = $this->getMataKuliahDiampu();
+        $allSem = DB::table('semesters')->orderByDesc('id')->get();
         $kodeMK = $request->input('kode_mk');
         $kelas = $request->input('kelas');
 
@@ -856,6 +881,82 @@ class DosenMKController extends Controller
         ));
     }
 
+    private function prosesFinalisasiNilai(Request $request)
+    {
+        $kodeMK = $request->input('kode_mk');
+        $kelas = $request->input('kelas');
+        $semesterId = $request->input('semester_id') ? (int) $request->input('semester_id') : null;
+
+        if (!$kodeMK || !$kelas) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mata kuliah dan kelas wajib dipilih sebelum finalisasi.',
+            ], 422);
+        }
+
+        $mk = $this->mataKuliahDiampuUntukKelas($kodeMK, $kelas, $semesterId);
+
+        if (!$mk) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mata kuliah atau kelas tidak ditemukan untuk akun dosen ini.',
+            ], 404);
+        }
+
+        if (!(bool) $mk->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nilai hanya bisa difinalisasi pada semester aktif.',
+            ], 403);
+        }
+
+        $kelasFinal = $mk->kelas_final ?? $kelas;
+        $kelasPendek = str_replace('-PAGI', '-', $kelasFinal);
+
+        $mahasiswaIds = $this->getMahasiswaByMK($mk->id, $kelasFinal)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        if ($mahasiswaIds->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Belum ada mahasiswa dengan KRS disetujui untuk mata kuliah dan kelas ini.',
+            ], 422);
+        }
+
+        $nilaiIds = DB::table('nilai')
+            ->whereIn('mahasiswa_id', $mahasiswaIds)
+            ->where('mata_kuliah_id', $mk->id)
+            ->where('semester_id', $mk->sem_id)
+            ->whereNotNull('nilai')
+            ->where(function ($query) use ($kelasFinal, $kelasPendek) {
+                $query->where('kelas', $kelasFinal)
+                    ->orWhere('kelas', $kelasPendek)
+                    ->orWhereNull('kelas');
+            })
+            ->pluck('id');
+
+        if ($nilaiIds->count() < $mahasiswaIds->count()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Masih ada mahasiswa yang nilainya belum lengkap/disimpan.',
+            ], 422);
+        }
+
+        DB::table('nilai')
+            ->whereIn('id', $nilaiIds)
+            ->update([
+                'status' => 'final',
+                'updated_at' => now(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Nilai berhasil difinalisasi untuk '.$nilaiIds->count().' mahasiswa.',
+        ]);
+    }
+
     public function getKelasByMK(Request $request)
     {
         $mataKuliahId = $request->input('mata_kuliah_id');
@@ -872,7 +973,7 @@ class DosenMKController extends Controller
         $nik = $this->dosenNik();
 
         $query = DB::table('mata_kuliah')
-            ->join('semesters', 'mata_kuliah.semester_id', '=', 'semesters.id')
+            ->leftJoin('semesters', 'mata_kuliah.semester_id', '=', 'semesters.id')
             ->leftJoin('dosen_matakuliah', 'mata_kuliah.id', '=', 'dosen_matakuliah.mata_kuliah_id')
             ->leftJoin('dosen', 'dosen_matakuliah.dosen_id', '=', 'dosen.id')
             ->leftJoin('kelas', 'dosen_matakuliah.kelas_id', '=', 'kelas.id')
@@ -894,11 +995,14 @@ class DosenMKController extends Controller
                         ->orWhere('mata_kuliah.dosen_nik', $nik);
                 }
             })
+            ->when(Schema::hasColumn('mata_kuliah', 'deleted_at'), function ($query) {
+                $query->whereNull('mata_kuliah.deleted_at');
+            })
             ->when($filterSemesterId, function ($q) use ($filterSemesterId) {
-                $q->where('mata_kuliah.semester_id', $filterSemesterId);
+                $q->whereRaw('COALESCE(mata_kuliah.semester_id, (SELECT s.id FROM semesters s WHERE s.semester_ke = mata_kuliah.semester_ke ORDER BY s.is_active DESC, s.id DESC LIMIT 1)) = ?', [$filterSemesterId]);
             })
             ->when($filterTahunAjaran, function ($q) use ($filterTahunAjaran) {
-                $q->where('semesters.tahun_ajaran', $filterTahunAjaran);
+                $q->whereRaw('COALESCE(semesters.tahun_ajaran, (SELECT s.tahun_ajaran FROM semesters s WHERE s.semester_ke = mata_kuliah.semester_ke ORDER BY s.is_active DESC, s.id DESC LIMIT 1)) = ?', [$filterTahunAjaran]);
             });
 
         $mkIds = (clone $query)
@@ -917,7 +1021,7 @@ class DosenMKController extends Controller
             ->values();
 
         $isAnyActive = DB::table('mata_kuliah')
-            ->join('semesters', 'mata_kuliah.semester_id', '=', 'semesters.id')
+            ->leftJoin('semesters', 'mata_kuliah.semester_id', '=', 'semesters.id')
             ->when($mataKuliahId, function ($q) use ($mataKuliahId) {
                 $q->where('mata_kuliah.id', $mataKuliahId);
             })
@@ -925,12 +1029,12 @@ class DosenMKController extends Controller
                 $q->where('mata_kuliah.kode_mk', $kodeMK);
             })
             ->when($filterSemesterId, function ($q) use ($filterSemesterId) {
-                $q->where('mata_kuliah.semester_id', $filterSemesterId);
+                $q->whereRaw('COALESCE(mata_kuliah.semester_id, (SELECT s.id FROM semesters s WHERE s.semester_ke = mata_kuliah.semester_ke ORDER BY s.is_active DESC, s.id DESC LIMIT 1)) = ?', [$filterSemesterId]);
             })
             ->when($filterTahunAjaran, function ($q) use ($filterTahunAjaran) {
-                $q->where('semesters.tahun_ajaran', $filterTahunAjaran);
+                $q->whereRaw('COALESCE(semesters.tahun_ajaran, (SELECT s.tahun_ajaran FROM semesters s WHERE s.semester_ke = mata_kuliah.semester_ke ORDER BY s.is_active DESC, s.id DESC LIMIT 1)) = ?', [$filterTahunAjaran]);
             })
-            ->where('semesters.is_active', 1)
+            ->whereRaw('COALESCE(semesters.is_active, (SELECT s.is_active FROM semesters s WHERE s.semester_ke = mata_kuliah.semester_ke ORDER BY s.is_active DESC, s.id DESC LIMIT 1)) = 1')
             ->exists();
 
         return response()->json([

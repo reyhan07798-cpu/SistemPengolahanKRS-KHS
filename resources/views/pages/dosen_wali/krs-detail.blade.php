@@ -15,6 +15,16 @@
     </div>
 </div>
 
+@if($hasInvalidDetail ?? false)
+<div class="nb-alert nb-alert-danger mb-6 flex items-center gap-2">
+    <span class="material-symbols-outlined">warning</span>
+    <div>
+        <strong>KRS tidak sesuai aturan.</strong>
+        <p class="text-sm mt-1">Ada mata kuliah yang semester atau kelasnya tidak sesuai dengan data mahasiswa. KRS ini harus ditolak dan diajukan ulang.</p>
+    </div>
+</div>
+@endif
+
 <div class="nb-card mb-6">
     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div><p class="nb-label">Nama</p><p class="font-bold">{{ $krs->nama }}</p></div>
@@ -53,7 +63,12 @@
             <td class="font-medium">{{ $mk->nama }}</td>
             <td class="text-center font-bold">{{ $mk->sks }}</td>
             <td class="text-sm text-muted">{{ $mk->nama_dosen ?? '-' }}</td>
-            <td>{{ $mk->kelas_mk ?? '-' }}</td>
+            <td>
+                {{ $mk->kelas_mk ?? '-' }}
+                @if(!($mk->is_valid_for_krs ?? true))
+                    <span class="nb-badge nb-badge-danger ml-2">Tidak Sesuai</span>
+                @endif
+            </td>
         </tr>
         @empty
         <tr><td colspan="6" class="text-center py-8 text-muted">Tidak ada detail MK</td></tr>
@@ -73,7 +88,7 @@
 <div class="nb-card mt-6 flex gap-4 justify-end">
     <form method="POST" action="{{ route('dosen.wali.krs.approve', $krs->id) }}">
         @csrf @method('PATCH')
-        <button type="submit" class="nb-btn nb-btn-primary"
+        <button type="submit" class="nb-btn nb-btn-primary" {{ ($hasInvalidDetail ?? false) ? 'disabled' : '' }}
                 onclick="return confirm('Setujui KRS ini?')">
             <span class="material-symbols-outlined" style="font-size:16px;">check_circle</span> Setujui KRS
         </button>

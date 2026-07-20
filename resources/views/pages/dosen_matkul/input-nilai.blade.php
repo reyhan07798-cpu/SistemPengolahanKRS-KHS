@@ -601,9 +601,20 @@ async function finalisasi() {
             }
         });
 
-        const data = await res.json();
+        const contentType = res.headers.get('content-type');
+        let data = {};
 
-        if (data.success) {
+        if (contentType && contentType.includes('application/json')) {
+            data = await res.json();
+        } else {
+            console.error(await res.text());
+            data = {
+                success: false,
+                message: 'Server tidak mengembalikan JSON. Periksa session login atau log Laravel.'
+            };
+        }
+
+        if (res.ok && data.success) {
             document.querySelectorAll('[id^="row_"]').forEach(row => {
                 setStatusBadge(row.id.replace('row_', ''), 'Final', 'nb-badge-success');
             });

@@ -17,6 +17,26 @@ class KrsVerifikasiController extends Controller
         return DB::table('semesters')->where('is_active', 1)->first();
     }
 
+    private function normalizeKelas(?string $kelas): string
+    {
+        $kelas = strtoupper(trim((string) $kelas));
+        $kelas = preg_replace('/\s+/', '-', $kelas);
+        $kelas = preg_replace('/-+/', '-', $kelas);
+
+        return trim($kelas, '-');
+    }
+
+    private function isDetailMkValidForKrs($krs, $mk): bool
+    {
+        if ((int) $mk->semester_ke !== (int) $krs->semester_ke) {
+            return false;
+        }
+
+        $kelasMk = $this->normalizeKelas($mk->kelas_mk ?? '');
+
+        return $kelasMk === '' || $kelasMk === $this->normalizeKelas($krs->kelas ?? '');
+    }
+
     // ═══════════════════════════════════════════════════════
     //  INDEX — daftar KRS mahasiswa bimbingan
     // ═══════════════════════════════════════════════════════
@@ -129,13 +149,20 @@ class KrsVerifikasiController extends Controller
             ->join('mata_kuliah','krs_detail.mata_kuliah_id','=','mata_kuliah.id')
             ->leftJoin('dosen','mata_kuliah.dosen_id','=','dosen.id')
             ->where('krs_detail.krs_mahasiswa_id', $krsId)
-            ->select('mata_kuliah.kode_mk','mata_kuliah.nama','mata_kuliah.sks',
+            ->select('mata_kuliah.id','mata_kuliah.kode_mk','mata_kuliah.nama','mata_kuliah.sks',
+                     'mata_kuliah.semester_ke',
                      'mata_kuliah.kelas as kelas_mk','dosen.nama as nama_dosen')
-            ->get();
+            ->get()
+            ->map(function ($mk) use ($krs) {
+                $mk->is_valid_for_krs = $this->isDetailMkValidForKrs($krs, $mk);
+
+                return $mk;
+            });
 
         $isReadOnly = !(bool)$krs->is_active;
+        $hasInvalidDetail = $detailMK->contains(fn ($mk) => ! $mk->is_valid_for_krs);
 
-        return view('pages.dosen_wali.krs-detail', compact('krs','detailMK','isReadOnly'));
+        return view('pages.dosen_wali.krs-detail', compact('krs','detailMK','isReadOnly','hasInvalidDetail'));
     }
 
     // ═══════════════════════════════════════════════════════
@@ -151,6 +178,16 @@ class KrsVerifikasiController extends Controller
 
         if (!$krs) return redirect()->back()->with('error', 'KRS tidak ditemukan.');
         if (!$krs->is_active) return redirect()->back()->with('error', 'Tidak bisa memverifikasi KRS di semester yang tidak aktif.');
+
+        $invalidDetailExists = DB::table('krs_detail')
+            ->join('mata_kuliah','krs_detail.mata_kuliah_id','=','mata_kuliah.id')
+            ->where('krs_detail.krs_mahasiswa_id', $krsId)
+            ->get(['mata_kuliah.semester_ke','mata_kuliah.kelas as kelas_mk'])
+            ->contains(fn ($mk) => ! $this->isDetailMkValidForKrs($krs, $mk));
+
+        if ($invalidDetailExists) {
+            return redirect()->back()->with('error', 'KRS tidak bisa disetujui karena ada mata kuliah yang tidak sesuai semester atau kelas mahasiswa.');
+        }
 
         DB::table('krs_mahasiswa')->where('id', $krsId)->update([
             'status'     => 'disetujui',

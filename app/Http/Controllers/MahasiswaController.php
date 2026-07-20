@@ -120,9 +120,14 @@ class MahasiswaController extends Controller
             ->when(! empty($mahasiswa->prodi_id), function ($query) use ($mahasiswa) {
                 $query->where('paket_mata_kuliahs.prodi_id', $mahasiswa->prodi_id);
             })
-            ->where(function ($query) use ($semester, $progressSemester) {
+            ->where(function ($query) use ($semester) {
+                // Match packages that are either tied to the specific semester id
+                // or defined by the same `semester_ke` as the requested semester.
+                // Previously this compared to the student's progress semester_ke,
+                // which allowed selecting packages for a different requested
+                // semester when the student's progress matched that paket.
                 $query->where('paket_mata_kuliahs.semester_id', $semester->id)
-                    ->orWhere('paket_semesters.semester_ke', $progressSemester->semester_ke);
+                    ->orWhere('paket_semesters.semester_ke', $semester->semester_ke);
             })
             ->pluck('paket_mata_kuliahs.id')
             ->map(fn ($id) => (int) $id)
@@ -160,6 +165,7 @@ class MahasiswaController extends Controller
     private function mataKuliahPaketWajib($mahasiswa, $semester, $progressSemester)
     {
         $paketIds = $this->paketIdsUntukMahasiswa($mahasiswa, $semester, $progressSemester);
+        $kelasMahasiswa = $this->normalizeKelas($mahasiswa->kelas ?? '');
 
         $query = DB::table('mata_kuliah')
             ->leftJoin('dosen', 'mata_kuliah.dosen_id', '=', 'dosen.id');
@@ -173,7 +179,14 @@ class MahasiswaController extends Controller
         }
 
         return $query
-            ->where('mata_kuliah.semester_ke', $progressSemester->semester_ke)
+            ->where('mata_kuliah.semester_ke', $semester->semester_ke)
+            ->when($kelasMahasiswa !== '', function ($query) use ($kelasMahasiswa) {
+                $query->where(function ($query) use ($kelasMahasiswa) {
+                    $query->whereNull('mata_kuliah.kelas')
+                        ->orWhere('mata_kuliah.kelas', '')
+                        ->orWhereRaw("UPPER(REPLACE(REPLACE(TRIM(mata_kuliah.kelas), ' ', '-'), '--', '-')) = ?", [$kelasMahasiswa]);
+                });
+            })
             ->when(DB::getSchemaBuilder()->hasColumn('mata_kuliah', 'deleted_at'), function ($query) {
                 $query->whereNull('mata_kuliah.deleted_at');
             })
@@ -192,6 +205,31 @@ class MahasiswaController extends Controller
             ->get()
             ->unique('id')
             ->values();
+    }
+
+    private function krsHasInvalidDetails($krs, ?string $kelasMahasiswa = null): bool
+    {
+        if (! $krs) {
+            return false;
+        }
+
+        $kelasMahasiswa = $this->normalizeKelas($kelasMahasiswa ?? $krs->kelas ?? '');
+        $semesterKe = (int) ($krs->semester_ke ?? 0);
+
+        return DB::table('krs_detail')
+            ->join('mata_kuliah', 'krs_detail.mata_kuliah_id', '=', 'mata_kuliah.id')
+            ->where('krs_detail.krs_mahasiswa_id', $krs->id)
+            ->select('mata_kuliah.semester_ke', 'mata_kuliah.kelas')
+            ->get()
+            ->contains(function ($mk) use ($semesterKe, $kelasMahasiswa) {
+                if ((int) $mk->semester_ke !== $semesterKe) {
+                    return true;
+                }
+
+                $kelasMk = $this->normalizeKelas($mk->kelas ?? '');
+
+                return $kelasMk !== '' && $kelasMk !== $kelasMahasiswa;
+            });
     }
 
     private function mataKuliahMengulang($mahasiswa, $progressSemester, array $excludeIds = [])
@@ -517,8 +555,12 @@ class MahasiswaController extends Controller
             if ($krsAktif) {
                 $statusKrs = ucfirst($krsAktif->status);
                 $totalSksDiambil = (int) $krsAktif->total_sks;
+                $hasInvalidKrs = $this->krsHasInvalidDetails($krsAktif, $mahasiswa->kelas ?? '');
 
-                if (in_array($krsAktif->status, ['menunggu', 'disetujui'])) {
+                if ($hasInvalidKrs) {
+                    $statusKrs = 'Perlu Diajukan Ulang';
+                    $isReadOnlyKrs = false;
+                } elseif (in_array($krsAktif->status, ['menunggu', 'disetujui'])) {
                     $isReadOnlyKrs = true;
                 }
             }
@@ -611,7 +653,7 @@ class MahasiswaController extends Controller
             ->first();
 
         if ($existingKrs) {
-            $isReadOnly = true;
+            $isReadOnly = ! $this->krsHasInvalidDetails($existingKrs, $mahasiswa->kelas ?? '');
             $totalSksDiambil = (int) $existingKrs->total_sks;
         }
 
@@ -734,7 +776,7 @@ class MahasiswaController extends Controller
                 ->first();
 
             if ($existingKrs) {
-                if ($existingKrs->status === 'ditolak') {
+                if ($existingKrs->status === 'ditolak' || $this->krsHasInvalidDetails($existingKrs, $mahasiswa->kelas ?? '')) {
                     DB::table('krs_detail')
                         ->where('krs_mahasiswa_id', $existingKrs->id)
                         ->delete();

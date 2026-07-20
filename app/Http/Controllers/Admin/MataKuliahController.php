@@ -139,6 +139,10 @@ class MataKuliahController extends Controller
                 'updated_at' => now(),
             ];
 
+            if (Schema::hasColumn('mata_kuliah', 'semester_id')) {
+                $data['semester_id'] = $this->resolveSemesterId((int) $validated['semester_ke']);
+            }
+
             if (Schema::hasColumn('mata_kuliah', 'dosen_nik')) {
                 $data['dosen_nik'] = $dosen?->nik;
             }
@@ -235,6 +239,10 @@ class MataKuliahController extends Controller
                 'semester_ke' => $validated['semester_ke'],
                 'updated_at' => now(),
             ];
+
+            if (Schema::hasColumn('mata_kuliah', 'semester_id')) {
+                $data['semester_id'] = $this->resolveSemesterId((int) $validated['semester_ke']);
+            }
 
             if (Schema::hasColumn('mata_kuliah', 'dosen_nik')) {
                 $data['dosen_nik'] = $dosen?->nik;
