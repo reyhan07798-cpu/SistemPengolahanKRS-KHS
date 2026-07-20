@@ -165,7 +165,6 @@ class MahasiswaController extends Controller
     private function mataKuliahPaketWajib($mahasiswa, $semester, $progressSemester)
     {
         $paketIds = $this->paketIdsUntukMahasiswa($mahasiswa, $semester, $progressSemester);
-        $kelasMahasiswa = $this->normalizeKelas($mahasiswa->kelas ?? '');
 
         $query = DB::table('mata_kuliah')
             ->leftJoin('dosen', 'mata_kuliah.dosen_id', '=', 'dosen.id');
@@ -180,13 +179,6 @@ class MahasiswaController extends Controller
 
         return $query
             ->where('mata_kuliah.semester_ke', $semester->semester_ke)
-            ->when($kelasMahasiswa !== '', function ($query) use ($kelasMahasiswa) {
-                $query->where(function ($query) use ($kelasMahasiswa) {
-                    $query->whereNull('mata_kuliah.kelas')
-                        ->orWhere('mata_kuliah.kelas', '')
-                        ->orWhereRaw("UPPER(REPLACE(REPLACE(TRIM(mata_kuliah.kelas), ' ', '-'), '--', '-')) = ?", [$kelasMahasiswa]);
-                });
-            })
             ->when(DB::getSchemaBuilder()->hasColumn('mata_kuliah', 'deleted_at'), function ($query) {
                 $query->whereNull('mata_kuliah.deleted_at');
             })
@@ -213,22 +205,15 @@ class MahasiswaController extends Controller
             return false;
         }
 
-        $kelasMahasiswa = $this->normalizeKelas($kelasMahasiswa ?? $krs->kelas ?? '');
         $semesterKe = (int) ($krs->semester_ke ?? 0);
 
         return DB::table('krs_detail')
             ->join('mata_kuliah', 'krs_detail.mata_kuliah_id', '=', 'mata_kuliah.id')
             ->where('krs_detail.krs_mahasiswa_id', $krs->id)
-            ->select('mata_kuliah.semester_ke', 'mata_kuliah.kelas')
+            ->select('mata_kuliah.semester_ke')
             ->get()
-            ->contains(function ($mk) use ($semesterKe, $kelasMahasiswa) {
-                if ((int) $mk->semester_ke !== $semesterKe) {
-                    return true;
-                }
-
-                $kelasMk = $this->normalizeKelas($mk->kelas ?? '');
-
-                return $kelasMk !== '' && $kelasMk !== $kelasMahasiswa;
+            ->contains(function ($mk) use ($semesterKe) {
+                return (int) $mk->semester_ke !== $semesterKe;
             });
     }
 
